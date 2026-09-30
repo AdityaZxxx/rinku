@@ -21,8 +21,8 @@ alter table public.profile_usernames enable row level security;
 -- Paths that belong to the app itself. Without this a profile could claim
 -- "login" and shadow the sign-in route.
 --
--- Kept in sync with RESERVED_USERNAMES in lib/db/schema/profiles.ts. If you add
--- a route, add it here too.
+-- Kept in sync with PROTECTED_ROUTES in proxy.ts, the signed-in half of this
+-- list. If you add an app route, add it to both.
 create or replace function public.username_is_reserved(candidate text)
 returns boolean
 language sql

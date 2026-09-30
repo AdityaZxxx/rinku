@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
 
 import "./globals.css";
@@ -16,8 +17,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-full flex-col font-sans">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

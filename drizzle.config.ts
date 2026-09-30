@@ -9,7 +9,7 @@ import { defineConfig } from "drizzle-kit";
  * guide calls out the same caveat.
  */
 export default defineConfig({
-  schema: "./lib/db/schema.ts",
+  schema: "./lib/db/schema/index.ts",
   out: "./drizzle",
   dialect: "postgresql",
 

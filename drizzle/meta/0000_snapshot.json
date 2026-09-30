@@ -1,135 +1,9 @@
 {
-  "id": "c690e2f2-8177-439f-8c31-cddb12d57269",
+  "id": "18bb3802-e7f4-4fa5-a9d7-b627b1a8c8ae",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.link_clicks": {
-      "name": "link_clicks",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigserial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "link_id": {
-          "name": "link_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "country": {
-          "name": "country",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "device": {
-          "name": "device",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "referrer_host": {
-          "name": "referrer_host",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "link_clicks_user_created_idx": {
-          "name": "link_clicks_user_created_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "link_clicks_link_created_idx": {
-          "name": "link_clicks_link_created_idx",
-          "columns": [
-            {
-              "expression": "link_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "link_clicks_link_id_fkey": {
-          "name": "link_clicks_link_id_fkey",
-          "tableFrom": "link_clicks",
-          "tableTo": "links",
-          "columnsFrom": ["link_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "link_clicks_user_id_fkey": {
-          "name": "link_clicks_user_id_fkey",
-          "tableFrom": "link_clicks",
-          "tableTo": "profiles",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {
-        "users read own clicks": {
-          "name": "users read own clicks",
-          "as": "PERMISSIVE",
-          "for": "SELECT",
-          "to": ["authenticated"],
-          "using": "(select auth.uid()) = \"link_clicks\".\"user_id\""
-        }
-      },
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.links": {
       "name": "links",
       "schema": "",
@@ -141,8 +15,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "user_id": {
-          "name": "user_id",
+        "profile_id": {
+          "name": "profile_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -189,11 +63,11 @@
         }
       },
       "indexes": {
-        "links_user_id_position_idx": {
-          "name": "links_user_id_position_idx",
+        "links_profile_id_position_idx": {
+          "name": "links_profile_id_position_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "profile_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -212,12 +86,16 @@
         }
       },
       "foreignKeys": {
-        "links_user_id_fkey": {
-          "name": "links_user_id_fkey",
+        "links_profile_id_fkey": {
+          "name": "links_profile_id_fkey",
           "tableFrom": "links",
           "tableTo": "profiles",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -229,30 +107,39 @@
           "name": "active links are public",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["anon", "authenticated"],
-          "using": "\"links\".\"is_active\" or (select auth.uid()) = \"links\".\"user_id\""
+          "to": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "\"links\".\"is_active\" or (select auth.uid()) = \"links\".\"profile_id\""
         },
         "users insert own links": {
           "name": "users insert own links",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": ["authenticated"],
-          "withCheck": "(select auth.uid()) = \"links\".\"user_id\""
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid()) = \"links\".\"profile_id\""
         },
         "users update own links": {
           "name": "users update own links",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": ["authenticated"],
-          "using": "(select auth.uid()) = \"links\".\"user_id\"",
-          "withCheck": "(select auth.uid()) = \"links\".\"user_id\""
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid()) = \"links\".\"profile_id\"",
+          "withCheck": "(select auth.uid()) = \"links\".\"profile_id\""
         },
         "users delete own links": {
           "name": "users delete own links",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": ["authenticated"],
-          "using": "(select auth.uid()) = \"links\".\"user_id\""
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid()) = \"links\".\"profile_id\""
         }
       },
       "checkConstraints": {
@@ -267,62 +154,67 @@
       },
       "isRLSEnabled": false
     },
-    "public.profile_views": {
-      "name": "profile_views",
+    "public.profile_usernames": {
+      "name": "profile_usernames",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "bigserial",
+          "type": "uuid",
           "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "profile_id": {
+          "name": "profile_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "country": {
-          "name": "country",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "device": {
-          "name": "device",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "referrer_host": {
-          "name": "referrer_host",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
+        "acquired_at": {
+          "name": "acquired_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "released_at": {
+          "name": "released_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
-        "profile_views_user_created_idx": {
-          "name": "profile_views_user_created_idx",
+        "profile_usernames_active_key": {
+          "name": "profile_usernames_active_key",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "username",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
+            }
+          ],
+          "isUnique": true,
+          "where": "\"profile_usernames\".\"released_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "profile_usernames_username_idx": {
+          "name": "profile_usernames_username_idx",
+          "columns": [
             {
-              "expression": "created_at",
+              "expression": "username",
               "isExpression": false,
-              "asc": false,
+              "asc": true,
               "nulls": "last"
             }
           ],
@@ -333,27 +225,23 @@
         }
       },
       "foreignKeys": {
-        "profile_views_user_id_fkey": {
-          "name": "profile_views_user_id_fkey",
-          "tableFrom": "profile_views",
+        "profile_usernames_profile_id_fkey": {
+          "name": "profile_usernames_profile_id_fkey",
+          "tableFrom": "profile_usernames",
           "tableTo": "profiles",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {
-        "users read own views": {
-          "name": "users read own views",
-          "as": "PERMISSIVE",
-          "for": "SELECT",
-          "to": ["authenticated"],
-          "using": "(select auth.uid()) = \"profile_views\".\"user_id\""
-        }
-      },
+      "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
@@ -390,54 +278,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "background_path": {
-          "name": "background_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "theme": {
-          "name": "theme",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'minimal'"
-        },
-        "accent_color": {
-          "name": "accent_color",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'#6366f1'"
-        },
-        "background_type": {
-          "name": "background_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'gradient'"
-        },
-        "background_value": {
-          "name": "background_value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'from-indigo-500 via-purple-500 to-pink-500'"
-        },
-        "font": {
-          "name": "font",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'inter'"
-        },
-        "button_style": {
-          "name": "button_style",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'rounded'"
         },
         "created_at": {
           "name": "created_at",
@@ -477,8 +317,12 @@
           "tableFrom": "profiles",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": ["id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -490,21 +334,28 @@
           "name": "profiles are public",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": ["anon", "authenticated"],
+          "to": [
+            "anon",
+            "authenticated"
+          ],
           "using": "true"
         },
         "users insert own profile": {
           "name": "users insert own profile",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": ["authenticated"],
+          "to": [
+            "authenticated"
+          ],
           "withCheck": "(select auth.uid()) = \"profiles\".\"id\""
         },
         "users update own profile": {
           "name": "users update own profile",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": ["authenticated"],
+          "to": [
+            "authenticated"
+          ],
           "using": "(select auth.uid()) = \"profiles\".\"id\"",
           "withCheck": "(select auth.uid()) = \"profiles\".\"id\""
         },
@@ -512,7 +363,9 @@
           "name": "users delete own profile",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": ["authenticated"],
+          "to": [
+            "authenticated"
+          ],
           "using": "(select auth.uid()) = \"profiles\".\"id\""
         }
       },
@@ -532,26 +385,6 @@
         "profiles_bio_length": {
           "name": "profiles_bio_length",
           "value": "\"profiles\".\"bio\" is null or char_length(\"profiles\".\"bio\") <= 200"
-        },
-        "profiles_accent_color_format": {
-          "name": "profiles_accent_color_format",
-          "value": "\"profiles\".\"accent_color\" ~ '^#[0-9a-fA-F]{6}$'"
-        },
-        "profiles_theme_valid": {
-          "name": "profiles_theme_valid",
-          "value": "\"profiles\".\"theme\" in ('minimal', 'gradient', 'card', 'glass', 'bold')"
-        },
-        "profiles_font_valid": {
-          "name": "profiles_font_valid",
-          "value": "\"profiles\".\"font\" in ('inter', 'poppins', 'space-grotesk', 'playfair', 'jetbrains')"
-        },
-        "profiles_button_style_valid": {
-          "name": "profiles_button_style_valid",
-          "value": "\"profiles\".\"button_style\" in ('rounded', 'pill', 'square', 'outline', 'soft')"
-        },
-        "profiles_background_type_valid": {
-          "name": "profiles_background_type_valid",
-          "value": "\"profiles\".\"background_type\" in ('gradient', 'solid', 'image')"
         }
       },
       "isRLSEnabled": false

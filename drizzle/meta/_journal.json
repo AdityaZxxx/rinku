@@ -5,15 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1790738190846,
-      "tag": "0000_clever_tarantula",
+      "when": 1790744989799,
+      "tag": "0000_bizarre_golden_guardian",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1790738197980,
-      "tag": "0001_auth_triggers_and_storage",
+      "when": 1790744992062,
+      "tag": "0001_handles",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790744994174,
+      "tag": "0002_storage",
       "breakpoints": true
     }
   ]

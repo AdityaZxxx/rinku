@@ -52,6 +52,10 @@
     "react/hook-use-state": "error",
     "react/self-closing-comp": "error",
 
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "react-perf/jsx-no-jsx-as-prop": "off",
+    "react/no-children-prop": "off",
+
     "anti-slop/no-array-filter-map": "error",
     "anti-slop/no-reduce-accumulator-copy": "error",
     "anti-slop/no-chained-type-assertions": "error",

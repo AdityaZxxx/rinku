@@ -10,10 +10,23 @@ bun dev              # dev server
 bun build            # production build
 bun run check        # lint + format:check + typecheck + drizzle-kit check
 
-bun run db:generate  # generate a migration from lib/db/schema.ts
+bun run db:generate  # generate a migration from lib/db/schema
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse data
 ```
+
+## Three lint rules are off on purpose
+
+`react-perf/jsx-no-new-function-as-prop`, `react-perf/jsx-no-jsx-as-prop`, and
+`react/no-children-prop` are disabled in `.oxlintrc.json`.
+
+- The first exists to stop closure churn, which the React Compiler now handles
+  (it is enabled in `next.config.ts`). Keeping it would flag every inline
+  `onChange` and `onSubmit`.
+- The second fires on Base UI's `render` prop, which is how that library composes
+  a link or button.
+- The third fires on TanStack Form's `form.Field children={...}`, which is its
+  documented render-prop API and has no alternative.
 
 ## Three directories are excluded from lint, format, or typecheck
 
@@ -62,8 +75,16 @@ from `lib/db/with-user.ts` for any query that depends on the current user; it
 sets the claims and `set local role authenticated` inside a transaction. A missing
 `WHERE user_id` will then return nothing rather than another user's rows.
 
+## Server actions
+
+Server actions live in `app/actions/<domain>.ts` — currently `auth.ts` — each
+file starting with `"use server"`, following the Next.js docs convention of
+grouping actions by the segment they mutate.
+
 ## Not set up yet
 
 `.env.local` is required (`NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`). Migrations have not been
-run, so no tables exist.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`) and points at the remote
+project, where migrations have been applied. Not yet configured there: the
+Google OAuth provider (the Google button fails without it) and the production
+redirect URLs; localhost is covered by the defaults.

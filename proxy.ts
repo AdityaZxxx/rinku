@@ -11,6 +11,19 @@ import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/env";
  * signed-in user. The cookie alone is attacker-controllable, so anything that
  * gates on identity must go through this or a `getUserId()` helper.
  */
+/*
+ * The signed-in app routes. Mirrors the app-page half of username_is_reserved
+ * in the database: a route here must be reserved there too, or a profile could
+ * claim the path.
+ */
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/links",
+  "/appearance",
+  "/analytics",
+  "/settings",
+];
+
 export async function proxy(request: NextRequest) {
   // Without credentials there is no session to refresh. Returning early keeps
   // the site browsable on a fresh clone instead of 500-ing every request.
@@ -48,7 +61,17 @@ export async function proxy(request: NextRequest) {
 
   // Do not remove: this call is what triggers the refresh, and the writes above
   // are what persist it. Removing it silently signs users out.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+
+  const { pathname } = request.nextUrl;
+  const isProtected = PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  if (isProtected && !data?.claims) {
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", pathname);
+    return NextResponse.redirect(login);
+  }
 
   return supabaseResponse;
 }

@@ -17,8 +17,6 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
-comment on bucket public.avatars is 'Profile pictures, stored as <user_id>/<file>.';
-
 -- Objects are addressed as `<user_id>/<file>`, so ownership is readable from the
 -- first path segment without a join.
 create or replace function public.storage_object_is_owned_by(object_name text)

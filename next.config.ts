@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   // becomes a type error instead of a 404 at runtime.
   typedRoutes: true,
 
+  // Auto-memoizes components, so most `useMemo`/`useCallback` calls become
+  // unnecessary. Next.js only runs the compiler on files that actually contain
+  // JSX or hooks rather than the whole tree.
+  reactCompiler: true,
+
   // Generates editor IntelliSense for the env vars actually present at build
   // time, which is what makes the helper in `lib/supabase/env.ts` redundant.
   experimental: {

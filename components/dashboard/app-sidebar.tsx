@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   CaretLeftIcon,
   DotsThreeIcon,
+  GearIcon,
   HouseIcon,
   MonitorIcon,
   MoonIcon,
@@ -103,6 +104,13 @@ export function AppSidebar({ user }: { user: string | null }) {
                   <span className="sr-only">Account options</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="end" className="w-48">
+                  <DropdownMenuItem render={<Link href="/settings" />}>
+                    <GearIcon />
+                    Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
                   <DropdownMenuRadioGroup
                     value={theme ?? "system"}
                     onValueChange={(value) => setTheme(value)}

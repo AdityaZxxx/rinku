@@ -1,12 +1,23 @@
 import type { schema } from "./schema";
-import type { PgQueryResultHKT } from "drizzle-orm/pg-core";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type { PostgresJsTransaction } from "drizzle-orm/postgres-js/session";
 import { sql } from "drizzle-orm";
 
 import { db } from "./client";
 import "server-only";
 
 export type Database = PostgresJsDatabase<typeof schema>;
+
+/**
+ * What a query callback receives. Drizzle hands the transaction a distinct type
+ * from the top-level client, so this is a named alias rather than a cast at
+ * each call site.
+ */
+export type Transaction = PostgresJsTransaction<
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
 
 /**
  * Runs `fn` as `userId` with Row Level Security actually enforced.
@@ -27,7 +38,7 @@ export type Database = PostgresJsDatabase<typeof schema>;
  */
 export async function withUserDb<T>(
   userId: string,
-  fn: (tx: Database) => Promise<T>,
+  fn: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
   return db.transaction(async (tx) => {
     const claims = JSON.stringify({
@@ -43,19 +54,17 @@ export async function withUserDb<T>(
     // default role (usually `postgres`) bypasses RLS entirely.
     await tx.execute(sql`set local role authenticated`);
 
-    return fn(tx as unknown as Database);
+    return fn(tx);
   });
 }
 
 /** Read-only counterpart of {@link withUserDb}, for public pages. */
-export async function withAnonDb<T>(fn: (tx: Database) => Promise<T>): Promise<T> {
+export async function withAnonDb<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
   return db.transaction(async (tx) => {
     await tx.execute(
       sql`select set_config('request.jwt.claims', '{"role":"anon"}', true)`,
     );
     await tx.execute(sql`set local role anon`);
-    return fn(tx as unknown as Database);
+    return fn(tx);
   });
 }
-
-export type { PgQueryResultHKT };

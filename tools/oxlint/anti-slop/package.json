@@ -1,0 +1,8 @@
+{
+  "//": "Marks the vendored plugin as ESM so Node does not reparse it as CommonJS on every oxlint run. Scoped here rather than as a root \"type\": \"module\" so it cannot change how Next.js resolves the rest of the project.",
+  "name": "oxlint-plugin-anti-slop",
+  "version": "0.1.2",
+  "private": true,
+  "type": "module",
+  "exports": "./index.ts"
+}

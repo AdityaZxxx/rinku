@@ -17,7 +17,8 @@
  */
 
 /** Absolute paths, so match the segment anywhere rather than anchoring. */
-const VENDORED = /(^|[\\/])(components[\\/]ui|drizzle[\\/]meta)[\\/]/;
+const VENDORED =
+  /(^|[\\/])(components[\\/]ui|drizzle[\\/]meta|tools[\\/]oxlint[\\/]anti-slop)[\\/]/;
 
 const shellQuote = (path) => `'${path.replaceAll("'", "'\\''")}'`;
 

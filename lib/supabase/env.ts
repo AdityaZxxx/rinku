@@ -21,7 +21,12 @@ export function hasSupabaseEnv(): boolean {
   );
 }
 
-export function getSupabaseEnv(): { url: string; publishableKey: string } {
+/**
+ * The shape is inferred rather than annotated: both fields come from a truthiness
+ * check above, so an explicit annotation would only restate what the compiler
+ * already knows.
+ */
+export function getSupabaseEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 

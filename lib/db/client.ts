@@ -31,12 +31,18 @@ function connect() {
   return drizzle(client, { schema });
 }
 
-const globalForDb = globalThis as unknown as { rinkuDb?: ReturnType<typeof connect> };
+/**
+ * Next.js dev reloads modules on every edit. Without a process-wide cache each
+ * reload would open another pool until Postgres refuses connections. Declared
+ * as a global rather than reached for with an `as unknown as` cast.
+ */
+declare global {
+  // eslint-disable-next-line no-var
+  var rinkuDb: ReturnType<typeof connect> | undefined;
+}
 
-// Next.js dev reloads modules on every edit. Without this each reload would
-// open another pool until Postgres refuses connections.
-export const db = globalForDb.rinkuDb ?? connect();
+export const db = globalThis.rinkuDb ?? connect();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForDb.rinkuDb = db;
+  globalThis.rinkuDb = db;
 }

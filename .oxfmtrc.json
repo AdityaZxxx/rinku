@@ -40,6 +40,7 @@
     "dist",
     "bun.lock",
     "components/ui",
-    "drizzle/meta"
+    "drizzle/meta",
+    "tools/oxlint/anti-slop"
   ]
 }

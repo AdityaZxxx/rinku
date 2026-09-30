@@ -52,7 +52,16 @@
     "react/hook-use-state": "error",
     "react/self-closing-comp": "error"
   },
-  "ignorePatterns": ["node_modules", ".next", "out", "dist", "next-env.d.ts", "bun.lock"],
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "next-env.d.ts",
+    "bun.lock",
+    "components/ui",
+    "drizzle/meta"
+  ],
   "overrides": [
     {
       "files": ["proxy.ts", "next.config.ts", "postcss.config.mjs"],

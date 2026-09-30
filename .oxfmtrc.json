@@ -33,5 +33,13 @@
   },
   "sortPackageJson": true,
   "sortTailwindcss": true,
-  "ignorePatterns": ["node_modules", ".next", "out", "dist", "bun.lock"]
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "bun.lock",
+    "components/ui",
+    "drizzle/meta"
+  ]
 }

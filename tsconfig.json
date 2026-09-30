@@ -16,8 +16,14 @@
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
+
+    // `exactOptionalPropertyTypes` is deliberately off. It conflicts with
+    // vendored component types: both `sonner`'s ToasterProps and Phosphor's
+    // IconProps declare optional props as `T` instead of `T | undefined`, so
+    // spreading them into a component is a type error. Enabling it would mean
+    // editing files that the next `shadcn add` overwrites. Re-test if those
+    // dependencies ever widen their types.
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,

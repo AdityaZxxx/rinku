@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rinku
 
-## Getting Started
+Link-in-bio SaaS. One public page per user at `rinku.app/<username>`, built with
+Next.js 16, Supabase (auth + storage), and Drizzle (data).
 
-First, run the development server:
+## Commands
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun dev              # dev server
+bun build            # production build
+bun run check        # lint + format:check + typecheck + drizzle-kit check
+
+bun run db:generate  # generate a migration from lib/db/schema.ts
+bun run db:migrate   # apply pending migrations
+bun run db:studio    # browse data
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Two directories are excluded from lint and format
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`components/ui/` and `drizzle/meta/` are written by other tools, and both emit
+their own house style:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `components/ui/` comes from `shadcn add` and uses no semicolons; this project
+  uses semicolons.
+- `drizzle/meta/` comes from `drizzle-kit generate`.
 
-## Learn More
+Running a formatter over either one guarantees that `bun run check` fails the
+moment they are regenerated, and hand-editing them is pointless because the next
+tool run overwrites the file. Both are ignored in `.oxlintrc.json` and
+`.oxfmtrc.json` for that reason, not as a style preference.
 
-To learn more about Next.js, take a look at the following resources:
+They are still type-checked, which is where a genuine breakage in a vendored
+component would surface.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Querying data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`auth.uid()` in Supabase reads `request.jwt.claims`, a session setting that
+PostgREST normally populates from the bearer token. A direct Postgres connection
+never has it, so policies silently evaluate false. Use `withUserDb(userId, fn)`
+from `lib/db/with-user.ts` for any query that depends on the current user; it
+sets the claims and `set local role authenticated` inside a transaction. A missing
+`WHERE user_id` will then return nothing rather than another user's rows.
 
-## Deploy on Vercel
+## Not set up yet
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`.env.local` is required (`NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`). Migrations have not been
+run, so no tables exist.

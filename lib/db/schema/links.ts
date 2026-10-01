@@ -51,26 +51,43 @@ export const links = pgTable(
 
     // Deactivated means draft, so the row is withheld at the database rather
     // than filtered out in the app where a direct read would still expose it.
+    // Ownership goes through the parent profile: one account may hold many
+    // profiles, so profile_id no longer equals the user id.
     pgPolicy("active links are public", {
       for: "select",
       to: [anonRole, authenticatedRole],
-      using: sql`${t.isActive} or ${authUid} = ${t.profileId}`,
+      using: sql`${t.isActive} or exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
     }),
     pgPolicy("users insert own links", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: sql`${authUid} = ${t.profileId}`,
+      withCheck: sql`exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
     }),
     pgPolicy("users update own links", {
       for: "update",
       to: authenticatedRole,
-      using: sql`${authUid} = ${t.profileId}`,
-      withCheck: sql`${authUid} = ${t.profileId}`,
+      using: sql`exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
+      withCheck: sql`exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
     }),
     pgPolicy("users delete own links", {
       for: "delete",
       to: authenticatedRole,
-      using: sql`${authUid} = ${t.profileId}`,
+      using: sql`exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
     }),
   ],
 );

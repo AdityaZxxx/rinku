@@ -15,9 +15,14 @@ import { anonRole, authenticatedRole, authUid, authUsers } from "drizzle-orm/sup
 export const profiles = pgTable(
   "profiles",
   {
-    // Never updated, and the only foreign-key target in the database. Keying
-    // anything off `username` instead would let a handle change orphan rows.
-    id: uuid("id").primaryKey().notNull(),
+    // The profile's own permanent identity, referenced by links and the
+    // username history. Keying anything off `username` instead would let a
+    // handle change orphan rows.
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+
+    // The owning account. One account may hold many profiles; this column is
+    // the only ownership boundary — never a URL identity.
+    userId: uuid("user_id").notNull(),
 
     // A cache, not the source of truth. `profile_usernames` is authoritative; a
     // trigger keeps the two in step, so treat this column as read-only.
@@ -35,9 +40,9 @@ export const profiles = pgTable(
   },
   (t) => [
     foreignKey({
-      columns: [t.id],
+      columns: [t.userId],
       foreignColumns: [authUsers.id],
-      name: "profiles_id_fkey",
+      name: "profiles_user_id_fkey",
     }).onDelete("cascade"),
 
     // Mutable, yet still unique: the public page resolves a handle in one lookup.
@@ -65,18 +70,18 @@ export const profiles = pgTable(
     pgPolicy("users insert own profile", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: sql`${authUid} = ${t.id}`,
+      withCheck: sql`${authUid} = ${t.userId}`,
     }),
     pgPolicy("users update own profile", {
       for: "update",
       to: authenticatedRole,
-      using: sql`${authUid} = ${t.id}`,
-      withCheck: sql`${authUid} = ${t.id}`,
+      using: sql`${authUid} = ${t.userId}`,
+      withCheck: sql`${authUid} = ${t.userId}`,
     }),
     pgPolicy("users delete own profile", {
       for: "delete",
       to: authenticatedRole,
-      using: sql`${authUid} = ${t.id}`,
+      using: sql`${authUid} = ${t.userId}`,
     }),
   ],
 );

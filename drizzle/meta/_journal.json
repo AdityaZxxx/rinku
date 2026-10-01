@@ -29,6 +29,34 @@
       "when": 1790778118198,
       "tag": "0003_reserved_routes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790811088954,
+      "tag": "0004_projects_route",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790823115657,
+      "tag": "0005_profiles_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790823209161,
+      "tag": "0006_model_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790823264712,
+      "tag": "0007_onboarding_route",
+      "breakpoints": true
     }
   ]
 }

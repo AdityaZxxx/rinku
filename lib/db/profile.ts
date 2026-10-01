@@ -13,3 +13,10 @@ export const getProfiles = cache(async (userId: string) => {
       .orderBy(asc(profiles.createdAt)),
   );
 });
+
+export const getProfileByUsername = cache(async (userId: string, username: string) => {
+  const [profile] = await withUserDb(userId, (tx) =>
+    tx.select().from(profiles).where(eq(profiles.username, username)).limit(1),
+  );
+  return profile ?? null;
+});

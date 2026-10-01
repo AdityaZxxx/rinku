@@ -5,6 +5,7 @@ import {
   foreignKey,
   index,
   integer,
+  pgEnum,
   pgPolicy,
   pgTable,
   text,
@@ -15,12 +16,15 @@ import { anonRole, authenticatedRole, authUid } from "drizzle-orm/supabase";
 
 import { profiles } from "./profiles";
 
+export const linkVariant = pgEnum("link_variant", ["classic", "featured"]);
+
 /**
  * The ordered list of buttons on a public profile page.
  *
- * No `kind` discriminator, because nothing sets one yet. Vertical-specific
- * embeds would need it, and adding it later is a single-column migration with a
- * default.
+ * `variant` picks the display: `classic` renders a standard row, `featured` a
+ * large card with its thumbnail. Vertical-specific embeds would still need a
+ * `kind` discriminator, and adding one later is a single-column migration with
+ * a default.
  */
 export const links = pgTable(
   "links",
@@ -30,6 +34,11 @@ export const links = pgTable(
 
     title: text("title").notNull(),
     url: text("url").notNull(),
+
+    // Remote URL stored as-is: no storage, no download, so the origin keeps
+    // serving the bytes and Rinku never mirrors them.
+    imageUrl: text("image_url"),
+    variant: linkVariant("variant").notNull().default("classic"),
     isActive: boolean("is_active").notNull().default(true),
 
     // Sparse on purpose: reordering rewrites only the rows that moved, so a

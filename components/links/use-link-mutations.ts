@@ -1,0 +1,230 @@
+"use client";
+
+import type { Link } from "@/lib/db/schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import {
+  createLink,
+  deleteLink,
+  reorderLinks,
+  restoreLink,
+  updateLink,
+} from "@/app/actions/links";
+
+type LinkVariant = Link["variant"];
+type PositionUpdate = { id: string; position: number };
+
+function linksKey(profileId: string) {
+  return ["links", profileId] as const;
+}
+
+/** The order the server hands back, so optimistic writes sort the same way. */
+function byPosition(a: Link, b: Link): number {
+  return a.position - b.position || a.createdAt.getTime() - b.createdAt.getTime();
+}
+
+function rollback(
+  queryClient: ReturnType<typeof useQueryClient>,
+  key: readonly unknown[],
+  previous: Link[] | undefined,
+) {
+  if (previous) {
+    queryClient.setQueryData(key, previous);
+  }
+}
+
+/**
+ * Every link action returns an `{ error }` union, which React Query reads as a
+ * success. Each mutationFn narrows and throws, which is what makes onError —
+ * and the rollback inside it — fire.
+ */
+export function useUpdateLink(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      title: string;
+      url: string;
+      variant: LinkVariant;
+      isActive: boolean;
+    }) => {
+      const result = await updateLink(input);
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? []).map((link) =>
+          link.id === input.id ? Object.assign({}, link, input) : link,
+        ),
+      );
+      return { previous };
+    },
+    onError: (error, _input, context) => {
+      rollback(queryClient, key, context?.previous);
+      toast.error(
+        error instanceof Error ? error.message : "This link could not be saved.",
+      );
+    },
+    // Stale without refetching: a refetch here would land between an older
+    // save's response and the latest keystrokes and briefly clobber them.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key, refetchType: "none" });
+    },
+  });
+}
+
+export function useCreateLink(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (input: {
+      title: string;
+      url: string;
+      variant: LinkVariant;
+      imageUrl: string | null;
+    }) => {
+      const result = await createLink({ profileId, ...input });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      const tempId = crypto.randomUUID();
+      const optimistic: Link = {
+        id: tempId,
+        profileId,
+        title: "",
+        url: "",
+        imageUrl: null,
+        variant: "classic",
+        isActive: true,
+        // Sorts last, so the new row appears at the end of the list until the
+        // server hands back the real position.
+        position: Number.MAX_SAFE_INTEGER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      queryClient.setQueryData<Link[]>(key, (old) => [...(old ?? []), optimistic]);
+      return { previous, tempId };
+    },
+    onSuccess: (created, _input, context) => {
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? []).map((link) => (link.id === context?.tempId ? created : link)),
+      );
+    },
+    onError: (_error, _input, context) => {
+      rollback(queryClient, key, context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useDeleteLink(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const result = await deleteLink({ id });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? []).filter((link) => link.id !== id),
+      );
+      return { previous };
+    },
+    onError: (_error, _id, context) => {
+      rollback(queryClient, key, context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useRestoreLink(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (link: Link) => {
+      const result = await restoreLink({
+        id: link.id,
+        profileId: link.profileId,
+        title: link.title,
+        url: link.url,
+        imageUrl: link.imageUrl,
+        variant: link.variant,
+        isActive: link.isActive,
+        position: link.position,
+      });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (link) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        [...(old ?? []), link].toSorted(byPosition),
+      );
+      return { previous };
+    },
+    onError: (_error, _link, context) => {
+      rollback(queryClient, key, context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useReorderLinks(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: (updates: PositionUpdate[]) => reorderLinks({ profileId, updates }),
+    onMutate: async (updates) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      const positions = new Map(updates.map((update) => [update.id, update.position]));
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? [])
+          .map((link) => {
+            const position = positions.get(link.id);
+            return position === undefined ? link : Object.assign({}, link, { position });
+          })
+          .toSorted(byPosition),
+      );
+      return { previous };
+    },
+    onError: (_error, _updates, context) => {
+      rollback(queryClient, key, context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}

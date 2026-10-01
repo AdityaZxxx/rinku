@@ -12,17 +12,18 @@ import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/env";
  * gates on identity must go through this or a `getUserId()` helper.
  */
 /*
- * The signed-in app routes. Mirrors the app-page half of username_is_reserved
- * in the database: a route here must be reserved there too, or a profile could
- * claim the path.
+ * The signed-in app routes whose first segment is static. Mirrors the app-route
+ * half of username_is_reserved in the database: a route here must be reserved
+ * there too, or a profile could claim the path.
  */
-const PROTECTED_ROUTES = [
-  "/dashboard",
-  "/links",
-  "/appearance",
-  "/analytics",
-  "/settings",
-];
+const PROTECTED_ROUTES = ["/dashboard", "/account", "/onboarding"];
+
+/*
+ * The edit paths are keyed by username — /:username/links and friends — so a
+ * prefix match cannot find them. Auth is the proxy's job; ownership (does this
+ * account own that username) is the edit layout's.
+ */
+const EDIT_SECTION = /^\/[^/]+\/(links|appearance|analytics|settings)(?:\/|$)/;
 
 export async function proxy(request: NextRequest) {
   // Without credentials there is no session to refresh. Returning early keeps
@@ -64,9 +65,10 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
 
   const { pathname } = request.nextUrl;
-  const isProtected = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  const isProtected =
+    PROTECTED_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    ) || EDIT_SECTION.test(pathname);
   if (isProtected && !data?.claims) {
     const login = new URL("/login", request.url);
     login.searchParams.set("next", pathname);

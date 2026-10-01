@@ -1,11 +1,16 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { profiles } from "@/lib/db/schema";
 import {
+  ChartBarIcon,
   CaretLeftIcon,
   DotsThreeIcon,
   GearIcon,
   HouseIcon,
+  LinkIcon,
   MonitorIcon,
   MoonIcon,
   RabbitIcon,
@@ -32,18 +37,35 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuAction,
   SidebarMenuItem,
   useSidebar,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar({ user }: { user: string | null }) {
+type Profile = typeof profiles.$inferSelect;
+
+export function AppSidebar({
+  profiles,
+  email,
+}: {
+  profiles: Profile[];
+  email: string | null;
+}) {
   const { theme, setTheme } = useTheme();
   const { setOpenMobile } = useSidebar();
+  const pathname = usePathname();
+  const currentUsername = pathname.split("/")[1];
+  const current =
+    profiles.find((profile) => profile.username === currentUsername) ?? profiles[0];
+  const editing = current?.username;
+
+  const editPath = (section: string) =>
+    // SAFETY: /:username/<section>, the profile's own edit context; the typed
+    // route union is only knowable for literals.
+    `/${editing}/${section}` as Route;
 
   return (
     <Sidebar collapsible="icon">
@@ -65,19 +87,59 @@ export function AppSidebar({ user }: { user: string | null }) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive
+                  isActive={pathname === "/dashboard"}
                   tooltip="Dashboard"
                   render={<Link href="/dashboard" />}
                 >
                   <HouseIcon />
                   Dashboard
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === `/${editing}/links`}
+                  tooltip="Links"
+                  render={<Link href={editPath("links")} />}
+                >
+                  <LinkIcon />
+                  Links
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === `/${editing}/analytics`}
+                  tooltip="Analytics"
+                  render={<Link href={editPath("analytics")} />}
+                >
+                  <ChartBarIcon />
+                  Analytics
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === `/${editing}/settings`}
+                  tooltip="Profile settings"
+                  render={<Link href={editPath("settings")} />}
+                >
+                  <GearIcon />
+                  settings
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -86,60 +148,61 @@ export function AppSidebar({ user }: { user: string | null }) {
       </SidebarContent>
 
       <SidebarFooter>
-        {user && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <div className="flex h-8 items-center gap-2 overflow-hidden rounded-xl px-3 text-sm">
-                <Avatar className="size-6 shrink-0">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<SidebarMenuButton />}
+                className="cursor-pointer"
+              >
+                <Avatar className="size-6 shrink-0 group-data-[collapsible=icon]:size-4">
                   <AvatarFallback className="text-xs font-medium">
-                    {user[0]?.toUpperCase()}
+                    {email?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate font-medium">{user}</span>
-              </div>
+                <span className="text-muted-foreground truncate group-data-[collapsible=icon]:hidden">
+                  {email}
+                </span>
+                <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-md border group-data-[collapsible=icon]:hidden">
+                  <DotsThreeIcon className="rotate-90" />
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" className="w-48">
+                <DropdownMenuItem render={<Link href="/account/settings" />}>
+                  <GearIcon />
+                  Settings
+                </DropdownMenuItem>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<SidebarMenuAction />}>
-                  <DotsThreeIcon />
-                  <span className="sr-only">Account options</span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="end" className="w-48">
-                  <DropdownMenuItem render={<Link href="/settings" />}>
-                    <GearIcon />
-                    Settings
-                  </DropdownMenuItem>
+                <DropdownMenuSeparator />
 
-                  <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  value={theme ?? "system"}
+                  onValueChange={(value) => setTheme(value)}
+                >
+                  <DropdownMenuRadioItem value="light">
+                    <SunIcon />
+                    Light
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="dark">
+                    <MoonIcon />
+                    Dark
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="system">
+                    <MonitorIcon />
+                    System
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
 
-                  <DropdownMenuRadioGroup
-                    value={theme ?? "system"}
-                    onValueChange={(value) => setTheme(value)}
-                  >
-                    <DropdownMenuRadioItem value="light">
-                      <SunIcon />
-                      Light
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="dark">
-                      <MoonIcon />
-                      Dark
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="system">
-                      <MonitorIcon />
-                      System
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
 
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
-                    <SignOutIcon />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
+                <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+                  <SignOutIcon />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

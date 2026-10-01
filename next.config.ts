@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   // JSX or hooks rather than the whole tree.
   reactCompiler: true,
 
+  // Module scripts always send an Origin header, and the dev server 403-blocks
+  // requests whose Origin hostname is not localhost unless listed here. Without
+  // this entry the app loads over the LAN but renders without hydration —
+  // forms submit natively and sign-in silently does nothing.
+  allowedDevOrigins: ["192.168.1.6"],
+
   // Generates editor IntelliSense for the env vars actually present at build
   // time, which is what makes the helper in `lib/supabase/env.ts` redundant.
   experimental: {

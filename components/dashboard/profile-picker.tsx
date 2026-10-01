@@ -4,7 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { profiles } from "@/lib/db/schema";
-import { CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
+import { CheckIcon, CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EDIT_SECTIONS } from "@/lib/sections";
 
 type Profile = typeof profiles.$inferSelect;
 
 export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
   const pathname = usePathname();
-  const currentUsername = pathname.split("/")[1];
-  const current =
-    profiles.find((profile) => profile.username === currentUsername) ?? profiles[0];
+  const segments = pathname.split("/");
+  const currentUsername = segments[1];
+  const urlProfile = profiles.find((profile) => profile.username === currentUsername);
+  const current = urlProfile ?? profiles[0];
   const label = current ? (current.displayName ?? current.username) : null;
+
+  // Switching keeps the section being edited, /firstProfile/links to
+  // /secondProfile/links; only a profile-scoped URL carries it over.
+  const urlSection = EDIT_SECTIONS.find((section) => section === segments[2]);
+  const section = urlProfile && urlSection ? urlSection : "overview";
 
   return (
     <DropdownMenu>
@@ -49,9 +56,9 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
             <DropdownMenuItem
               key={profile.id}
               render={
-                // SAFETY: /:username/links, the profile's own edit context; the
-                // typed route union is only knowable for literals.
-                <Link href={`/${profile.username}/links` as Route} />
+                // SAFETY: /:username/:section; the typed route union is only
+                // knowable for literals.
+                <Link href={`/${profile.username}/${section}` as Route} />
               }
             >
               <Avatar className="size-5 shrink-0">
@@ -60,6 +67,9 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
                 </AvatarFallback>
               </Avatar>
               <span className="truncate">{profile.displayName ?? profile.username}</span>
+              {profile.id === urlProfile?.id && (
+                <CheckIcon className="ms-auto shrink-0" />
+              )}
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>

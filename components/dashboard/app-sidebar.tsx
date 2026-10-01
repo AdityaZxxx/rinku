@@ -15,6 +15,7 @@ import {
   MoonIcon,
   RabbitIcon,
   SignOutIcon,
+  SquaresFourIcon,
   SunIcon,
 } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
@@ -99,6 +100,17 @@ export function AppSidebar({
                 >
                   <HouseIcon />
                   Dashboard
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === `/${editing}/overview`}
+                  tooltip="Overview"
+                  render={<Link href={editPath("overview")} />}
+                >
+                  <SquaresFourIcon />
+                  Overview
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

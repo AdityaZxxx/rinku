@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { EDIT_SECTION } from "@/lib/sections";
 import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/env";
 
 /**
@@ -17,13 +18,6 @@ import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/env";
  * there too, or a profile could claim the path.
  */
 const PROTECTED_ROUTES = ["/dashboard", "/account", "/onboarding"];
-
-/*
- * The edit paths are keyed by username — /:username/links and friends — so a
- * prefix match cannot find them. Auth is the proxy's job; ownership (does this
- * account own that username) is the edit layout's.
- */
-const EDIT_SECTION = /^\/[^/]+\/(links|appearance|analytics|settings)(?:\/|$)/;
 
 export async function proxy(request: NextRequest) {
   // Without credentials there is no session to refresh. Returning early keeps

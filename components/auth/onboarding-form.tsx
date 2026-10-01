@@ -53,9 +53,9 @@ export function OnboardingForm() {
         return;
       }
 
-      // SAFETY: the destination is /:username/links for the profile just
+      // SAFETY: the destination is /:username/overview for the profile just
       // created; the typed route union is only knowable for literals.
-      router.push(`/${result.username}/links` as Route);
+      router.push(`/${result.username}/overview` as Route);
       router.refresh();
     },
   });

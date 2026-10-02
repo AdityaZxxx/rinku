@@ -5,7 +5,12 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { links } from "@/lib/db/schema";
-import { CaretLeftIcon, GlobeSimpleIcon, TrashIcon } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwiseIcon,
+  CaretLeftIcon,
+  GlobeSimpleIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -24,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { displayUrl, faviconUrl } from "@/lib/links";
 import { useDeleteLink, useRestoreLink } from "./use-link-mutations";
 
@@ -52,8 +58,8 @@ export function ArchiveList({
   const archived = Array.isArray(query.data) ? query.data : [];
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-medium">Archive</h1>
           <p className="text-muted-foreground text-sm">
@@ -63,6 +69,7 @@ export function ArchiveList({
         <Button
           variant="ghost"
           size="sm"
+          nativeButton={false}
           // SAFETY: /:username/links for the current profile; the typed route
           // union is only knowable for literals.
           render={<Link href={`/${username}/links` as Route} />}
@@ -77,7 +84,7 @@ export function ArchiveList({
       )}
 
       {archived.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-10">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 sm:p-10">
           <p className="text-sm font-medium">Nothing archived</p>
           <p className="text-muted-foreground text-sm">
             Links you archive wait here — restore them or delete them for good.
@@ -149,21 +156,48 @@ function ArchivedRow({ link, profileId }: { link: ArchivedLink; profileId: strin
         </span>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm font-medium">{link.title}</span>
-        <span className="text-muted-foreground truncate text-xs">
+        <span className="max-w-full truncate text-sm font-medium">{link.title}</span>
+        <span className="text-muted-foreground max-w-full truncate text-xs">
           {displayUrl(link.url)}
         </span>
       </div>
 
-      <Button type="button" variant="ghost" size="sm" onClick={onRestore}>
-        Restore
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={onRestore}
+              aria-label={`Restore ${link.title}`}
+            >
+              <ArrowCounterClockwiseIcon />
+            </Button>
+          }
+        />
+        <TooltipContent>Restore</TooltipContent>
+      </Tooltip>
 
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger render={<Button variant="ghost" size="sm" />}>
-          <TrashIcon />
-          Delete
-        </AlertDialogTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="destructive"
+                    size="icon-sm"
+                    aria-label={`Delete ${link.title} permanently`}
+                  >
+                    <TrashIcon />
+                  </Button>
+                }
+              />
+            }
+          />
+          <TooltipContent>Delete permanently</TooltipContent>
+        </Tooltip>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-destructive/10 text-destructive">

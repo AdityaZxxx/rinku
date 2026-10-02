@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import Image from "next/image";
 import type { Link } from "@/lib/db/schema";
 import { useSortable } from "@dnd-kit/sortable";
@@ -9,11 +8,13 @@ import {
   ArchiveIcon,
   CaretDownIcon,
   DotsSixVerticalIcon,
+  EyeClosedIcon,
+  EyeIcon,
   GlobeSimpleIcon,
   LinkSimpleIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
-import { useSelector } from "@tanstack/react-store";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -23,8 +24,9 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Switch } from "@/components/ui/switch";
+import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { displayUrl, faviconUrl, linkInputSchema } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import { useUpdateLink } from "./use-link-mutations";
@@ -73,19 +75,21 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
 
   const icon = faviconUrl(link.url);
   const thumbnail = link.variant === "featured" && link.imageUrl ? link.imageUrl : null;
-  const dragStyle = useMemo(
-    () => ({ transform: CSS.Transform.toString(transform), transition }),
-    [transform, transition],
-  );
-  const variant = useSelector(form.store, (state) => state.values.variant);
-  const variantValue = useMemo(() => [variant], [variant]);
+  const hidden = !link.isActive;
 
   return (
     <div
       ref={setNodeRef}
-      style={dragStyle}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      // The whole row is the drag surface; the keyboard listener is dropped
+      // here so Space/Enter inside the expand button can't start a drag — the
+      // keyboard path stays on the grip button. The pointer gesture carries no
+      // control semantics, so the surface stays out of the a11y tree.
+      {...listeners}
+      onKeyDown={undefined}
+      role="presentation"
       className={cn(
-        "bg-card rounded-2xl border motion-reduce:transition-none!",
+        "bg-card cursor-grab rounded-2xl border motion-reduce:transition-none! active:cursor-grabbing",
         isDragging && "relative z-10 shadow-lg",
       )}
     >
@@ -95,7 +99,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           type="button"
           {...attributes}
           {...listeners}
-          className="text-muted-foreground hover:bg-muted -ml-1 touch-none rounded-lg p-2"
+          className="text-muted-foreground hover:bg-muted focus:bg-muted sr-only -ml-1 touch-none rounded-lg p-2 focus:not-sr-only"
           aria-label="Drag to reorder"
         >
           <DotsSixVerticalIcon className="size-4" />
@@ -108,7 +112,10 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             alt=""
             width={40}
             height={40}
-            className="outline-foreground/10 size-10 shrink-0 rounded-xl object-cover outline-1"
+            className={cn(
+              "outline-foreground/10 size-10 shrink-0 rounded-xl object-cover outline-1",
+              hidden && "opacity-60 grayscale",
+            )}
           />
         ) : icon ? (
           <Image
@@ -117,10 +124,18 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             alt=""
             width={40}
             height={40}
-            className="bg-muted size-10 shrink-0 rounded-xl object-contain p-1.5"
+            className={cn(
+              "bg-muted size-10 shrink-0 rounded-xl object-contain p-1.5",
+              hidden && "opacity-60 grayscale",
+            )}
           />
         ) : (
-          <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
+          <span
+            className={cn(
+              "bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl",
+              hidden && "opacity-60",
+            )}
+          >
             <GlobeSimpleIcon className="text-muted-foreground size-5" />
           </span>
         )}
@@ -131,36 +146,40 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left"
           aria-expanded={expanded}
         >
-          <span className="truncate text-sm font-medium">{link.title}</span>
-          <span className="text-muted-foreground truncate text-xs">
+          <span
+            className={cn(
+              "max-w-full truncate text-sm",
+              hidden ? "text-muted-foreground" : "font-medium",
+            )}
+          >
+            {link.title}
+          </span>
+          <span className="text-muted-foreground max-w-full truncate text-xs">
             {displayUrl(link.url)}
           </span>
         </button>
 
-        <form.Field name="isActive">
-          {(field) => (
-            <Switch
-              checked={field.state.value}
-              onCheckedChange={(checked) => field.handleChange(checked)}
-              aria-label={field.state.value ? "Hide link" : "Show link"}
-            />
-          )}
-        </form.Field>
-
-        <button
-          type="button"
-          onClick={onToggleExpand}
-          className="text-muted-foreground hover:bg-muted rounded-lg p-2"
-          aria-expanded={expanded}
-          aria-label={expanded ? "Collapse link" : "Expand link"}
-        >
-          <CaretDownIcon
-            className={cn(
-              "size-4 transition-transform duration-200 motion-reduce:transition-none",
-              expanded && "rotate-180",
-            )}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                onClick={onToggleExpand}
+                className="text-muted-foreground hover:bg-muted rounded-lg p-2"
+                aria-expanded={expanded}
+                aria-label={expanded ? "Collapse link" : "Expand link"}
+              >
+                <CaretDownIcon
+                  className={cn(
+                    "size-4 transition-transform duration-200 motion-reduce:transition-none",
+                    expanded && "rotate-180",
+                  )}
+                />
+              </button>
+            }
           />
-        </button>
+          <TooltipContent>{expanded ? "Collapse" : "Expand"}</TooltipContent>
+        </Tooltip>
       </div>
 
       {expanded && (
@@ -221,7 +240,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                 <Field>
                   <FieldLabel id="link-style-label">Style</FieldLabel>
                   <ToggleGroup
-                    value={variantValue}
+                    value={[field.state.value]}
                     aria-labelledby="link-style-label"
                     onValueChange={(groupValue) => {
                       const next = groupValue[0];
@@ -238,7 +257,23 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             }}
           </form.Field>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <form.Field name="isActive">
+              {(field) => (
+                <Toggle
+                  size="sm"
+                  pressed={field.state.value}
+                  onPressedChange={(pressed) => {
+                    field.handleChange(pressed);
+                    toast(pressed ? "Link shown" : "Link hidden");
+                  }}
+                >
+                  {field.state.value ? <EyeIcon /> : <EyeClosedIcon />}
+                  {field.state.value ? "Hide" : "Show"}
+                </Toggle>
+              )}
+            </form.Field>
+
             <Button
               type="button"
               variant="ghost"

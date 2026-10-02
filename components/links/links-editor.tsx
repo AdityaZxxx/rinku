@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import type { Link as LinkData } from "@/lib/db/schema";
 import {
   DndContext,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -48,7 +49,8 @@ export function LinksEditor({
   const reorder = useReorderLinks(profileId);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -63,11 +65,8 @@ export function LinksEditor({
     },
     initialData: initialLinks,
   });
-  const links = useMemo(
-    () => (Array.isArray(query.data) ? query.data : []),
-    [query.data],
-  );
-  const itemIds = useMemo(() => links.map((link) => link.id), [links]);
+  const links = Array.isArray(query.data) ? query.data : [];
+  const itemIds = links.map((link) => link.id);
 
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -110,8 +109,8 @@ export function LinksEditor({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-medium">Links</h1>
           <p className="text-muted-foreground text-sm">
@@ -122,6 +121,7 @@ export function LinksEditor({
           <Button
             variant="outline"
             size="sm"
+            nativeButton={false}
             // SAFETY: /:username/links/archive for the current profile; the
             // typed route union is only knowable for literals.
             render={<Link href={`/${username}/links/archive` as Route} />}
@@ -138,7 +138,7 @@ export function LinksEditor({
       )}
 
       {links.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-10">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 sm:p-10">
           <p className="text-sm font-medium">No links yet</p>
           <p className="text-muted-foreground text-sm">
             Links show up on your page in the order you set here.

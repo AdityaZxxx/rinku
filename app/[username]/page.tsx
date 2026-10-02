@@ -1,14 +1,56 @@
-export const metadata = { title: "Rinku" };
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
+import { getPublicLinksByProfile } from "@/lib/db/links";
+import { getPublicProfileByUsername } from "@/lib/db/profile";
+import { avatarUrl, bannerUrl } from "@/lib/storage";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[username]">): Promise<Metadata> {
+  const { username } = await params;
+  const profile = await getPublicProfileByUsername(username);
+  if (!profile) {
+    return { title: "Not found" };
+  }
+
+  const displayName = profile.displayName?.trim() ? profile.displayName : username;
+  return {
+    title: `${displayName} (@${username})`,
+    description: profile.bio ?? undefined,
+    openGraph: {
+      title: `${displayName} (@${username})`,
+      description: profile.bio ?? undefined,
+      images: profile.bannerPath
+        ? [bannerUrl(profile.bannerPath)]
+        : profile.avatarPath
+          ? [avatarUrl(profile.avatarPath)]
+          : undefined,
+    },
+  };
+}
 
 export default async function PublicProfilePage({ params }: PageProps<"/[username]">) {
   const { username } = await params;
+  const profile = await getPublicProfileByUsername(username);
+  if (!profile) {
+    notFound();
+  }
+
+  const links = await getPublicLinksByProfile(profile.id);
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-2 p-6">
-      <h1 className="text-lg font-medium">{username}</h1>
-      <p className="text-muted-foreground text-sm">
-        This Rinku page is under construction.
-      </p>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
+      <ProfilePreviewContent
+        displayName={profile.displayName}
+        username={profile.username}
+        bio={profile.bio}
+        avatarPath={profile.avatarPath}
+        bannerPath={profile.bannerPath}
+        links={links}
+        interactive
+      />
     </main>
   );
 }

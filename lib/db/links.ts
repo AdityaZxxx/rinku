@@ -2,7 +2,7 @@ import { cache } from "react";
 import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { links } from "@/lib/db/schema";
-import { withUserDb } from "@/lib/db/with-user";
+import { withAnonDb, withUserDb } from "@/lib/db/with-user";
 
 export const getLinksByProfile = cache(async (userId: string, profileId: string) => {
   return withUserDb(userId, (tx) =>
@@ -25,3 +25,13 @@ export const getArchivedLinksByProfile = cache(
     );
   },
 );
+
+export const getPublicLinksByProfile = cache(async (profileId: string) => {
+  return withAnonDb((tx) =>
+    tx
+      .select()
+      .from(links)
+      .where(eq(links.profileId, profileId))
+      .orderBy(asc(links.position), asc(links.createdAt)),
+  );
+});

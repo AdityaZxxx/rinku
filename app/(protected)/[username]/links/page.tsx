@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { LinksEditor } from "@/components/links/links-editor";
+import { EditorShell } from "@/components/profile/editor-shell";
+import { ProfilePreview } from "@/components/profile/profile-preview";
 import { getUserId } from "@/lib/auth";
 import { getLinksByProfile } from "@/lib/db/links";
 import { getProfileByUsername } from "@/lib/db/profile";
@@ -22,6 +24,21 @@ export default async function LinksPage({ params }: PageProps<"/[username]/links
   const initialLinks = await getLinksByProfile(userId, profile.id);
 
   return (
-    <LinksEditor profileId={profile.id} username={username} initialLinks={initialLinks} />
+    <EditorShell
+      preview={
+        <ProfilePreview
+          username={username}
+          profileId={profile.id}
+          initialProfile={profile}
+          initialLinks={initialLinks}
+        />
+      }
+    >
+      <LinksEditor
+        profileId={profile.id}
+        username={username}
+        initialLinks={initialLinks}
+      />
+    </EditorShell>
   );
 }

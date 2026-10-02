@@ -127,3 +127,30 @@ export const profileUsernames = pgTable(
 // trigger or a SECURITY DEFINER function. RLS is enabled by an explicit ALTER in
 // the custom migration, because Drizzle only emits it for tables that have a
 // policy — and a GRANT alone would leave this history readable by anyone.
+
+// Timestamped page views, mirroring link_clicks: the owner reads them for the
+// insights page; a SECURITY DEFINER function records them on render.
+export const profileVisits = pgTable(
+  "profile_visits",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    profileId: uuid("profile_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.profileId],
+      foreignColumns: [profiles.id],
+      name: "profile_visits_profile_id_fkey",
+    }).onDelete("cascade"),
+    index("profile_visits_profile_id_created_at_idx").on(t.profileId, t.createdAt),
+    pgPolicy("users read own visits", {
+      for: "select",
+      to: [authenticatedRole],
+      using: sql`exists (
+        select 1 from ${profiles}
+        where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
+    }),
+  ],
+);

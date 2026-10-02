@@ -96,7 +96,7 @@ export function ProfilePreviewContent({
               interactive ? (
                 <a
                   key={link.id}
-                  href={link.url}
+                  href={`/go/${link.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={

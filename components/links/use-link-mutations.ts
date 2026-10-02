@@ -114,6 +114,7 @@ export function useCreateLink(profileId: string) {
         url: "",
         imageUrl: null,
         variant: "classic",
+        clickCount: 0,
         isActive: true,
         archivedAt: null,
         // Sorts last, so the new row appears at the end of the list until the

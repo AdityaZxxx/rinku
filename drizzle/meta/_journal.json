@@ -92,6 +92,27 @@
       "when": 1790934081669,
       "tag": "0012_profile_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790954292507,
+      "tag": "0013_insights_clicks",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790982803075,
+      "tag": "0014_link_clicks",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790983056311,
+      "tag": "0015_profile_visits",
+      "breakpoints": true
     }
   ]
 }

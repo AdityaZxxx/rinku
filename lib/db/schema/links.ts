@@ -45,6 +45,9 @@ export const links = pgTable(
     // when the link comes back.
     archivedAt: timestamp("archived_at", { withTimezone: true }),
 
+    // Owner-facing activity metric; incremented by /go/:id, not by the editor.
+    clickCount: integer("click_count").notNull().default(0),
+
     // Sparse on purpose: reordering rewrites only the rows that moved, so a
     // dense 0..n sequence would churn the whole table on every drag.
     position: integer("position").notNull().default(0),
@@ -101,6 +104,35 @@ export const links = pgTable(
       using: sql`exists (
         select 1 from ${profiles}
         where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
+      )`,
+    }),
+  ],
+);
+
+// The timestamped rows behind the click counter: the denormalized
+// `links.click_count` answers "how many" instantly; this table answers
+// "when" for the insights chart. Both are written by record_click.
+export const linkClicks = pgTable(
+  "link_clicks",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    linkId: uuid("link_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.linkId],
+      foreignColumns: [links.id],
+      name: "link_clicks_link_id_fkey",
+    }).onDelete("cascade"),
+    index("link_clicks_link_id_created_at_idx").on(t.linkId, t.createdAt),
+    pgPolicy("users read own link clicks", {
+      for: "select",
+      to: [authenticatedRole],
+      using: sql`exists (
+        select 1 from ${links}
+          join ${profiles} on ${profiles.id} = ${links.profileId}
+        where ${links.id} = ${t.linkId} and ${profiles.userId} = ${authUid}
       )`,
     }),
   ],

@@ -1,10 +1,10 @@
-export { linkVariant, links } from "./links";
-export { profileUsernames, profiles } from "./profiles";
+export { linkClicks, linkVariant, links } from "./links";
+export { profileUsernames, profiles, profileVisits } from "./profiles";
 
-import { links } from "./links";
-import { profileUsernames, profiles } from "./profiles";
+import { linkClicks, links } from "./links";
+import { profileUsernames, profiles, profileVisits } from "./profiles";
 
-export const schema = { profiles, profileUsernames, links };
+export const schema = { profiles, profileUsernames, links, linkClicks, profileVisits };
 
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;

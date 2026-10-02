@@ -8,7 +8,7 @@ export const EDIT_SECTIONS = [
   "links",
   "profile",
   "appearance",
-  "analytics",
+  "insights",
   "settings",
 ] as const;
 

@@ -139,12 +139,12 @@ export function AppSidebar({
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={pathname === `/${editing}/analytics`}
-                  tooltip="Analytics"
-                  render={<Link href={editPath("analytics")} />}
+                  isActive={pathname === `/${editing}/insights`}
+                  tooltip="Insights"
+                  render={<Link href={editPath("insights")} />}
                 >
                   <ChartBarIcon />
-                  Analytics
+                  Insights
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

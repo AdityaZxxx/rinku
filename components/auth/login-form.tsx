@@ -21,6 +21,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/client";
 
 const loginSchema = z.object({
@@ -42,7 +43,7 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
       const { error } = await supabase.auth.signInWithPassword(value);
 
       if (error) {
-        console.error("[auth] signInWithPassword failed", error);
+        log.error("auth", "signInWithPassword failed", error.message);
         // Wrong credentials and unknown email get one message on purpose, so
         // this must not imply which one it was.
         setFormError("Unable to sign in. Check your email and password, then try again.");

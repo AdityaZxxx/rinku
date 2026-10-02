@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      console.error("[auth] exchangeCodeForSession failed", error.message);
+      log.error("auth", "exchangeCodeForSession failed", error.message);
       return redirectWithError(origin, error.message);
     }
   } else if (tokenHash && type) {
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       token_hash: tokenHash,
     });
     if (error) {
-      console.error("[auth] verifyOtp failed", error.message);
+      log.error("auth", "verifyOtp failed", error.message);
       return redirectWithError(origin, error.message);
     }
   } else if (oauthError) {

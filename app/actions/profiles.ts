@@ -5,6 +5,7 @@ import * as z from "zod";
 
 import { profiles, type Profile } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { log } from "@/lib/log";
 import {
   imageExtension,
   imageMaxBytes,
@@ -51,7 +52,7 @@ export async function renameProfile(input: {
     if (message.includes("taken or still in cooldown")) {
       return { error: "That username is taken or still in cooldown." };
     }
-    console.error("[profiles] renameProfile failed", message);
+    log.error("profiles", "renameProfile failed", message);
     return { error: "Renaming failed. Try again." };
   }
   if (renamed.length === 0) {
@@ -135,7 +136,7 @@ export async function checkUsernameAvailability(input: {
     candidate: parsed.data,
   });
   if (error) {
-    console.error("[profiles] checkUsernameAvailability failed", error.message);
+    log.error("profiles", "checkUsernameAvailability failed", error.message);
     return { error: "Checking this username failed. Try again." };
   }
   return { available: data === true };
@@ -200,7 +201,7 @@ export async function uploadProfileImage(
     .from(bucket)
     .upload(path, file, { contentType: file.type });
   if (uploadError) {
-    console.error(`[profiles] uploadProfileImage ${target} failed`, uploadError.message);
+    log.error("profiles", `uploadProfileImage ${target} failed`, uploadError.message);
     return { error: "Image upload failed. Try again." };
   }
 
@@ -228,8 +229,9 @@ export async function uploadProfileImage(
   if (oldPath) {
     const { error } = await supabase.storage.from(bucket).remove([oldPath]);
     if (error) {
-      console.error(
-        `[profiles] uploadProfileImage old ${target} cleanup failed`,
+      log.error(
+        "profiles",
+        `uploadProfileImage old ${target} cleanup failed`,
         error.message,
       );
     }
@@ -257,7 +259,7 @@ export async function createProfile(input: {
   });
 
   if (error) {
-    console.error("[profiles] createProfile failed", error.message);
+    log.error("profiles", "createProfile failed", error.message);
     return { error: error.message };
   }
 
@@ -305,7 +307,7 @@ export async function deleteProfile(input: {
   );
   const failure = failures.find((message) => message !== null);
   if (failure) {
-    console.error("[profiles] deleteProfile storage cleanup failed", failure);
+    log.error("profiles", "deleteProfile storage cleanup failed", failure);
     return { error: "Deleting this profile's files failed. Try again." };
   }
 

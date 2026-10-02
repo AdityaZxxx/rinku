@@ -19,6 +19,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/client";
 
 // 8 rather than Supabase's default of 6, so the client rejects what the server
@@ -48,7 +49,7 @@ export function SignupForm() {
       });
 
       if (error) {
-        console.error("[auth] signUp failed", error);
+        log.error("auth", "signUp failed", error.message);
         setFormError(
           error.code === "user_already_exists" || error.code === "email_exists"
             ? "An account with that email already exists. Sign in instead."

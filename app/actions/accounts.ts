@@ -2,6 +2,7 @@
 
 import { deleteAuthUser } from "@/lib/db/account";
 import { getProfiles } from "@/lib/db/profile";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 
 export async function deleteAccount(): Promise<{ ok: true } | { error: string }> {
@@ -36,14 +37,18 @@ export async function deleteAccount(): Promise<{ ok: true } | { error: string }>
   );
   const failure = failures.find((message) => message !== null);
   if (failure) {
-    console.error("[accounts] deleteAccount storage cleanup failed", failure);
+    log.error("accounts", "deleteAccount storage cleanup failed", failure);
     return { error: "Deleting your files failed. Try again." };
   }
 
   try {
     await deleteAuthUser(user.id);
   } catch (error) {
-    console.error("[accounts] deleteAccount failed", error);
+    log.error(
+      "accounts",
+      "deleteAccount failed",
+      error instanceof Error ? error.message : String(error),
+    );
     return {
       error:
         error instanceof Error

@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+import { log } from "@/lib/log";
+
 // An owner-controlled url renders on the public page for visitors, so the
 // scheme allow-list keeps javascript: and data: out rather than trusting the
 // renderer to escape.
@@ -51,7 +53,12 @@ export function faviconUrl(url: string): string | null {
       return null;
     }
     return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-  } catch {
+  } catch (error) {
+    log.warn(
+      "links",
+      "faviconUrl could not parse URL",
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
 }

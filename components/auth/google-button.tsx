@@ -5,6 +5,7 @@ import { GoogleLogoIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/client";
 
 export function GoogleButton({ disabled }: { disabled?: boolean }) {
@@ -21,7 +22,7 @@ export function GoogleButton({ disabled }: { disabled?: boolean }) {
     });
 
     if (error) {
-      console.error("[auth] signInWithOAuth failed", error);
+      log.error("auth", "signInWithOAuth failed", error.message);
       setPending(false);
       return;
     }

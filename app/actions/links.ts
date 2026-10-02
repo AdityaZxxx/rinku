@@ -15,6 +15,7 @@ import {
   normalizeUrl,
   positionAfter,
 } from "@/lib/links";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPageMetadata } from "@/lib/url-metadata";
 
@@ -129,9 +130,14 @@ export async function createLink(input: {
         .returning();
       return row;
     });
-  } catch {
+  } catch (error) {
     // An insert into a profile the account does not own dies on the RLS
     // with-check; the same catch covers a network drop.
+    log.error(
+      "links",
+      "createLink failed",
+      error instanceof Error ? error.message : String(error),
+    );
     return { error: "Adding this link failed. Try again." };
   }
 
@@ -304,7 +310,12 @@ export async function reorderLinks(input: {
             where links.id = data.id and links.profile_id = ${parsed.data.profileId}`,
       );
     });
-  } catch {
+  } catch (error) {
+    log.error(
+      "links",
+      "reorderLinks failed",
+      error instanceof Error ? error.message : String(error),
+    );
     return { error: "Reordering failed. Try again." };
   }
   return { ok: true };

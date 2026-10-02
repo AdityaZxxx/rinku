@@ -1,3 +1,4 @@
+import { log } from "@/lib/log";
 import "server-only";
 
 const FETCH_TIMEOUT_MS = 5000;
@@ -162,7 +163,12 @@ export async function fetchPageMetadata(url: string): Promise<UrlMetadata | null
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: { "user-agent": "Mozilla/5.0 (compatible; RinkuBot/1.0)" },
     });
-  } catch {
+  } catch (error) {
+    log.warn(
+      "url-metadata",
+      `metadata fetch failed for ${url}`,
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
   if (!response.ok) {

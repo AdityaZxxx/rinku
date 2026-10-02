@@ -17,6 +17,7 @@ import {
   SignOutIcon,
   SquaresFourIcon,
   SunIcon,
+  UserCircleIcon,
 } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 
@@ -122,6 +123,17 @@ export function AppSidebar({
                 >
                   <LinkIcon />
                   Links
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === `/${editing}/profile`}
+                  tooltip="Profile"
+                  render={<Link href={editPath("profile")} />}
+                >
+                  <UserCircleIcon />
+                  Profile
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

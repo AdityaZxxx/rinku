@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
   // time, which is what makes the helper in `lib/supabase/env.ts` redundant.
   experimental: {
     typedEnv: true,
+    serverActions: {
+      // Server actions cap bodies at 1 MB by default; the buckets accept 2 MB
+      // (avatars) and 5 MB (banners), so uploads need this headroom plus the
+      // multipart overhead.
+      bodySizeLimit: "6mb",
+    },
   },
 
   images: {

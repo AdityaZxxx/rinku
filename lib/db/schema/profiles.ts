@@ -34,6 +34,7 @@ export const profiles = pgTable(
     // Object path rather than a full URL, so moving to another CDN or domain
     // does not mean rewriting rows.
     avatarPath: text("avatar_path"),
+    bannerPath: text("banner_path"),
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

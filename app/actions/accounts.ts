@@ -14,27 +14,30 @@ export async function deleteAccount(): Promise<{ ok: true } | { error: string }>
   }
 
   const profiles = await getProfiles(user.id);
-  const listings = await Promise.all(
-    profiles.map(async (profile) => ({
-      profile,
-      result: await supabase.storage.from("avatars").list(profile.id),
-    })),
+  const buckets = ["avatars", "banners"] as const;
+  const failures = await Promise.all(
+    profiles.flatMap((profile) =>
+      buckets.map(async (bucket) => {
+        const { data: objects, error: listError } = await supabase.storage
+          .from(bucket)
+          .list(profile.id);
+        if (listError) {
+          return listError.message;
+        }
+        if (objects.length === 0) {
+          return null;
+        }
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove(objects.map((object) => `${profile.id}/${object.name}`));
+        return error ? error.message : null;
+      }),
+    ),
   );
-  for (const { result } of listings) {
-    if (result.error) {
-      console.error("[accounts] deleteAccount storage list failed", result.error.message);
-      return { error: "Checking your files failed. Try again." };
-    }
-  }
-  const paths = listings.flatMap(({ profile, result }) =>
-    (result.data ?? []).map((object) => `${profile.id}/${object.name}`),
-  );
-  if (paths.length > 0) {
-    const { error } = await supabase.storage.from("avatars").remove(paths);
-    if (error) {
-      console.error("[accounts] deleteAccount storage cleanup failed", error.message);
-      return { error: "Deleting your files failed. Try again." };
-    }
+  const failure = failures.find((message) => message !== null);
+  if (failure) {
+    console.error("[accounts] deleteAccount storage cleanup failed", failure);
+    return { error: "Deleting your files failed. Try again." };
   }
 
   try {

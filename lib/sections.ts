@@ -6,6 +6,7 @@
 export const EDIT_SECTIONS = [
   "overview",
   "links",
+  "profile",
   "appearance",
   "analytics",
   "settings",

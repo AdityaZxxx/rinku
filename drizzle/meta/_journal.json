@@ -78,6 +78,20 @@
       "when": 1790899719289,
       "tag": "0010_archived_links",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790926617778,
+      "tag": "0011_profile_route",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790934081669,
+      "tag": "0012_profile_banner",
+      "breakpoints": true
     }
   ]
 }

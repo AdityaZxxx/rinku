@@ -1,8 +1,9 @@
 "use server";
 
-import { asc, eq, max, sql } from "drizzle-orm";
+import { and, eq, isNotNull, max, sql } from "drizzle-orm";
 import * as z from "zod";
 
+import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
 import { links, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import {
@@ -29,12 +30,7 @@ const createLinkSchema = z.object({
   imageUrl: httpUrlSchema.nullable().optional(),
 });
 
-const restoreLinkSchema = linkInputSchema.extend({
-  id: z.uuid(),
-  profileId: z.uuid(),
-  imageUrl: httpUrlSchema.nullable(),
-  position: z.number().int().min(0),
-});
+const linkIdSchema = z.object({ id: z.uuid() });
 
 export async function getLinks(profileId: string): Promise<Link[] | { error: string }> {
   const supabase = await createClient();
@@ -49,13 +45,25 @@ export async function getLinks(profileId: string): Promise<Link[] | { error: str
     return { error: "Profile not found." };
   }
 
-  return withUserDb(user.id, (tx) =>
-    tx
-      .select()
-      .from(links)
-      .where(eq(links.profileId, profileId))
-      .orderBy(asc(links.position), asc(links.createdAt)),
-  );
+  return getLinksByProfile(user.id, profileId);
+}
+
+export async function getArchivedLinks(
+  profileId: string,
+): Promise<Link[] | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  if (!z.uuid().safeParse(profileId).success) {
+    return { error: "Profile not found." };
+  }
+
+  return getArchivedLinksByProfile(user.id, profileId);
 }
 
 export async function fetchUrlMetadata(input: {
@@ -172,9 +180,9 @@ export async function updateLink(input: {
   return { ok: true };
 }
 
-export async function deleteLink(input: {
+export async function archiveLink(input: {
   id: string;
-}): Promise<Link | { error: string }> {
+}): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -183,33 +191,30 @@ export async function deleteLink(input: {
     return { error: "Your session expired. Sign in again to continue." };
   }
 
-  if (!z.uuid().safeParse(input.id).success) {
-    return { error: "This link could not be deleted." };
+  if (!linkIdSchema.safeParse(input).success) {
+    return { error: "This link could not be archived." };
   }
 
-  const [deleted] = await withUserDb(user.id, (tx) =>
-    tx.delete(links).where(eq(links.id, input.id)).returning(),
+  const archived = await withUserDb(user.id, (tx) =>
+    tx
+      .update(links)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(links.id, input.id))
+      .returning({ id: links.id }),
   );
-  if (!deleted) {
-    return { error: "This link could not be deleted." };
+  if (archived.length === 0) {
+    return { error: "This link could not be archived." };
   }
-  return deleted;
+  return { ok: true };
 }
 
 /**
- * Undo for a delete: the row goes back with its old id and position, which the
- * sparse position column makes possible without shifting anything.
+ * Undo for an archive: the row keeps its old id and position, which the sparse
+ * position column preserves through the archive — nothing shifts.
  */
 export async function restoreLink(input: {
   id: string;
-  profileId: string;
-  title: string;
-  url: string;
-  imageUrl: string | null;
-  variant: "classic" | "featured";
-  isActive: boolean;
-  position: number;
-}): Promise<Link | { error: string }> {
+}): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -218,36 +223,50 @@ export async function restoreLink(input: {
     return { error: "Your session expired. Sign in again to continue." };
   }
 
-  const parsed = restoreLinkSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: "Restoring this link failed." };
+  if (!linkIdSchema.safeParse(input).success) {
+    return { error: "This link could not be restored." };
   }
 
-  let restored: Link | undefined;
-  try {
-    restored = await withUserDb(user.id, async (tx) => {
-      const [row] = await tx
-        .insert(links)
-        .values({
-          id: parsed.data.id,
-          profileId: parsed.data.profileId,
-          title: parsed.data.title,
-          url: parsed.data.url,
-          imageUrl: parsed.data.imageUrl,
-          variant: parsed.data.variant,
-          isActive: parsed.data.isActive,
-          position: parsed.data.position,
-        })
-        .returning();
-      return row;
-    });
-  } catch {
-    return { error: "Restoring this link failed. Try again." };
+  const restored = await withUserDb(user.id, (tx) =>
+    tx
+      .update(links)
+      .set({ archivedAt: null, updatedAt: new Date() })
+      .where(eq(links.id, input.id))
+      .returning({ id: links.id }),
+  );
+  if (restored.length === 0) {
+    return { error: "This link could not be restored." };
   }
-  if (!restored) {
-    return { error: "Restoring this link failed. Try again." };
+  return { ok: true };
+}
+
+// Permanent delete stays reachable only through the archive — the editor's own
+// remove is the reversible archive.
+export async function deleteLink(input: {
+  id: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
   }
-  return restored;
+
+  if (!linkIdSchema.safeParse(input).success) {
+    return { error: "This link could not be deleted." };
+  }
+
+  const deleted = await withUserDb(user.id, (tx) =>
+    tx
+      .delete(links)
+      .where(and(eq(links.id, input.id), isNotNull(links.archivedAt)))
+      .returning({ id: links.id }),
+  );
+  if (deleted.length === 0) {
+    return { error: "This link could not be deleted." };
+  }
+  return { ok: true };
 }
 
 export async function reorderLinks(input: {

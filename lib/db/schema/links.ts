@@ -41,6 +41,10 @@ export const links = pgTable(
     variant: linkVariant("variant").notNull().default("classic"),
     isActive: boolean("is_active").notNull().default(true),
 
+    // Null while on the list. Set on archive, which keeps the position for
+    // when the link comes back.
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+
     // Sparse on purpose: reordering rewrites only the rows that moved, so a
     // dense 0..n sequence would churn the whole table on every drag.
     position: integer("position").notNull().default(0),
@@ -58,14 +62,15 @@ export const links = pgTable(
     check("links_title_length", sql`char_length(${t.title}) between 1 and 100`),
     check("links_url_length", sql`char_length(${t.url}) between 1 and 2048`),
 
-    // Deactivated means draft, so the row is withheld at the database rather
-    // than filtered out in the app where a direct read would still expose it.
+    // Deactivated means draft; archived means off the list but kept for
+    // restore. Both are withheld from visitors at the database rather than
+    // filtered out in the app where a direct read would still expose them.
     // Ownership goes through the parent profile: one account may hold many
     // profiles, so profile_id no longer equals the user id.
     pgPolicy("active links are public", {
       for: "select",
       to: [anonRole, authenticatedRole],
-      using: sql`${t.isActive} or exists (
+      using: sql`(${t.isActive} and ${t.archivedAt} is null) or exists (
         select 1 from ${profiles}
         where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
       )`,

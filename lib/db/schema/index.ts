@@ -1,4 +1,4 @@
-export { links } from "./links";
+export { linkVariant, links } from "./links";
 export { profileUsernames, profiles } from "./profiles";
 
 import { links } from "./links";

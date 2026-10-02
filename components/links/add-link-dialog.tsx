@@ -113,6 +113,7 @@ export function AddLinkDialog({
               autoComplete="off"
               spellCheck={false}
               placeholder="example.com"
+              aria-label="URL"
               aria-invalid={Boolean(error)}
             />
           </InputGroup>
@@ -127,7 +128,7 @@ export function AddLinkDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={pending || !url.trim()}>
+            <Button type="submit" disabled={pending}>
               {pending && <Spinner />}
               Add link
             </Button>

@@ -1,11 +1,9 @@
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
 
 import { LinksEditor } from "@/components/links/links-editor";
 import { getUserId } from "@/lib/auth";
+import { getLinksByProfile } from "@/lib/db/links";
 import { getProfileByUsername } from "@/lib/db/profile";
-import { links } from "@/lib/db/schema";
-import { withUserDb } from "@/lib/db/with-user";
 
 export const metadata = { title: "Links" };
 
@@ -21,13 +19,9 @@ export default async function LinksPage({ params }: PageProps<"/[username]/links
     notFound();
   }
 
-  const initialLinks = await withUserDb(userId, (tx) =>
-    tx
-      .select()
-      .from(links)
-      .where(eq(links.profileId, profile.id))
-      .orderBy(asc(links.position), asc(links.createdAt)),
-  );
+  const initialLinks = await getLinksByProfile(userId, profile.id);
 
-  return <LinksEditor profileId={profile.id} initialLinks={initialLinks} />;
+  return (
+    <LinksEditor profileId={profile.id} username={username} initialLinks={initialLinks} />
+  );
 }

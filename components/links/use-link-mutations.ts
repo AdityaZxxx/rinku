@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
+  archiveLink,
   createLink,
   deleteLink,
   reorderLinks,
@@ -17,6 +18,10 @@ type PositionUpdate = { id: string; position: number };
 
 function linksKey(profileId: string) {
   return ["links", profileId] as const;
+}
+
+function archivedKey(profileId: string) {
+  return ["links", profileId, "archive"] as const;
 }
 
 /** The order the server hands back, so optimistic writes sort the same way. */
@@ -110,6 +115,7 @@ export function useCreateLink(profileId: string) {
         imageUrl: null,
         variant: "classic",
         isActive: true,
+        archivedAt: null,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,
@@ -133,13 +139,13 @@ export function useCreateLink(profileId: string) {
   });
 }
 
-export function useDeleteLink(profileId: string) {
+export function useArchiveLink(profileId: string) {
   const queryClient = useQueryClient();
   const key = linksKey(profileId);
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const result = await deleteLink({ id });
+      const result = await archiveLink({ id });
       if ("error" in result) {
         throw new Error(result.error);
       }
@@ -164,38 +170,76 @@ export function useDeleteLink(profileId: string) {
 
 export function useRestoreLink(profileId: string) {
   const queryClient = useQueryClient();
-  const key = linksKey(profileId);
+  const editorKey = linksKey(profileId);
+  const archiveKey = archivedKey(profileId);
 
   return useMutation({
     mutationFn: async (link: Link) => {
-      const result = await restoreLink({
-        id: link.id,
-        profileId: link.profileId,
-        title: link.title,
-        url: link.url,
-        imageUrl: link.imageUrl,
-        variant: link.variant,
-        isActive: link.isActive,
-        position: link.position,
-      });
+      const result = await restoreLink({ id: link.id });
       if ("error" in result) {
         throw new Error(result.error);
       }
       return result;
     },
     onMutate: async (link) => {
-      await queryClient.cancelQueries({ queryKey: key });
+      await queryClient.cancelQueries({ queryKey: ["links", profileId] });
+      const previousEditor = queryClient.getQueryData<Link[]>(editorKey);
+      const previousArchived = queryClient.getQueryData<Link[]>(archiveKey);
+      // Only write a cache that has data: creating an absent one would leave a
+      // stale list behind for the other page to flash on mount.
+      if (previousArchived) {
+        queryClient.setQueryData<Link[]>(
+          archiveKey,
+          previousArchived.filter((row) => row.id !== link.id),
+        );
+      }
+      if (previousEditor) {
+        queryClient.setQueryData<Link[]>(
+          editorKey,
+          [...previousEditor, link].toSorted(byPosition),
+        );
+      }
+      return { previousEditor, previousArchived };
+    },
+    onError: (_error, _link, context) => {
+      if (context?.previousArchived) {
+        queryClient.setQueryData(archiveKey, context.previousArchived);
+      }
+      if (context?.previousEditor) {
+        queryClient.setQueryData(editorKey, context.previousEditor);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", profileId] });
+    },
+  });
+}
+
+export function useDeleteLink(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = archivedKey(profileId);
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const result = await deleteLink({ id });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["links", profileId] });
       const previous = queryClient.getQueryData<Link[]>(key);
       queryClient.setQueryData<Link[]>(key, (old) =>
-        [...(old ?? []), link].toSorted(byPosition),
+        (old ?? []).filter((link) => link.id !== id),
       );
       return { previous };
     },
-    onError: (_error, _link, context) => {
+    onError: (_error, _id, context) => {
       rollback(queryClient, key, context?.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: ["links", profileId] });
     },
   });
 }

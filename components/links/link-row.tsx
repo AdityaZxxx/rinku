@@ -6,11 +6,11 @@ import type { Link } from "@/lib/db/schema";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  ArchiveIcon,
   CaretDownIcon,
   DotsSixVerticalIcon,
   GlobeSimpleIcon,
   LinkSimpleIcon,
-  TrashIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { useSelector } from "@tanstack/react-store";
@@ -33,10 +33,10 @@ type LinkRowProps = {
   link: Link;
   expanded: boolean;
   onToggleExpand: () => void;
-  onDelete: (link: Link) => void;
+  onArchive: (link: Link) => void;
 };
 
-export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowProps) {
+export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowProps) {
   const update = useUpdateLink(link.profileId);
 
   const {
@@ -85,9 +85,8 @@ export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowPro
       ref={setNodeRef}
       style={dragStyle}
       className={cn(
-        "bg-card rounded-2xl border",
+        "bg-card rounded-2xl border motion-reduce:transition-none!",
         isDragging && "relative z-10 shadow-lg",
-        !link.isActive && "opacity-60",
       )}
     >
       <div className="flex items-center gap-2 p-3">
@@ -96,7 +95,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowPro
           type="button"
           {...attributes}
           {...listeners}
-          className="text-muted-foreground hover:bg-muted -ml-1 touch-none rounded-lg p-1"
+          className="text-muted-foreground hover:bg-muted -ml-1 touch-none rounded-lg p-2"
           aria-label="Drag to reorder"
         >
           <DotsSixVerticalIcon className="size-4" />
@@ -151,13 +150,13 @@ export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowPro
         <button
           type="button"
           onClick={onToggleExpand}
-          className="text-muted-foreground hover:bg-muted rounded-lg p-1"
+          className="text-muted-foreground hover:bg-muted rounded-lg p-2"
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse link" : "Expand link"}
         >
           <CaretDownIcon
             className={cn(
-              "size-4 transition-transform duration-200",
+              "size-4 transition-transform duration-200 motion-reduce:transition-none",
               expanded && "rotate-180",
             )}
           />
@@ -220,9 +219,10 @@ export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowPro
             {(field) => {
               return (
                 <Field>
-                  <FieldLabel>Style</FieldLabel>
+                  <FieldLabel id="link-style-label">Style</FieldLabel>
                   <ToggleGroup
                     value={variantValue}
+                    aria-labelledby="link-style-label"
                     onValueChange={(groupValue) => {
                       const next = groupValue[0];
                       if (next === "classic" || next === "featured") {
@@ -243,11 +243,10 @@ export function LinkRow({ link, expanded, onToggleExpand, onDelete }: LinkRowPro
               type="button"
               variant="ghost"
               size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={() => onDelete(link)}
+              onClick={() => onArchive(link)}
             >
-              <TrashIcon />
-              Delete
+              <ArchiveIcon />
+              Archive
             </Button>
           </div>
         </div>

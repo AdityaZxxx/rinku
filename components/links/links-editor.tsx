@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Link } from "@/lib/db/schema";
+import type { Route } from "next";
+import Link from "next/link";
+import type { Link as LinkData } from "@/lib/db/schema";
 import {
   DndContext,
   KeyboardSensor,
@@ -18,26 +20,30 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { ArchiveIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getLinks } from "@/app/actions/links";
+import { Button } from "@/components/ui/button";
 import { changedPositions } from "@/lib/links";
 import { AddLinkDialog } from "./add-link-dialog";
 import { LinkRow } from "./link-row";
-import { useDeleteLink, useReorderLinks, useRestoreLink } from "./use-link-mutations";
+import { useArchiveLink, useReorderLinks, useRestoreLink } from "./use-link-mutations";
 
 const VERTICAL_AXIS = [restrictToVerticalAxis];
 
 export function LinksEditor({
   profileId,
+  username,
   initialLinks,
 }: {
   profileId: string;
-  initialLinks: Link[];
+  username: string;
+  initialLinks: LinkData[];
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const remove = useDeleteLink(profileId);
+  const archive = useArchiveLink(profileId);
   const restore = useRestoreLink(profileId);
   const reorder = useReorderLinks(profileId);
 
@@ -80,15 +86,15 @@ export function LinksEditor({
     }
   }
 
-  async function onDelete(link: Link) {
+  async function onArchive(link: LinkData) {
     setExpandedId(null);
     try {
-      await remove.mutateAsync(link.id);
+      await archive.mutateAsync(link.id);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Deleting this link failed.");
+      toast.error(error instanceof Error ? error.message : "Archiving this link failed.");
       return;
     }
-    toast("Link deleted", {
+    toast("Link archived", {
       action: { label: "Undo", onClick: () => restore.mutate(link) },
       duration: 6000,
     });
@@ -112,14 +118,31 @@ export function LinksEditor({
             Drag to reorder. Changes save as you make them.
           </p>
         </div>
-        <AddLinkDialog profileId={profileId} onCreated={onCreated} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            // SAFETY: /:username/links/archive for the current profile; the
+            // typed route union is only knowable for literals.
+            render={<Link href={`/${username}/links/archive` as Route} />}
+          >
+            <ArchiveIcon />
+            Archive
+          </Button>
+          <AddLinkDialog profileId={profileId} onCreated={onCreated} />
+        </div>
       </div>
 
-      {query.isError && <p className="text-destructive text-sm">{query.error.message}</p>}
+      {query.isError && (
+        <output className="text-destructive text-sm">{query.error.message}</output>
+      )}
 
       {links.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-10">
-          <p className="text-muted-foreground text-sm">No links yet.</p>
+          <p className="text-sm font-medium">No links yet</p>
+          <p className="text-muted-foreground text-sm">
+            Links show up on your page in the order you set here.
+          </p>
           <AddLinkDialog profileId={profileId} onCreated={onCreated} />
         </div>
       ) : (
@@ -130,7 +153,7 @@ export function LinksEditor({
           onDragEnd={onDragEnd}
         >
           <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {links.map((link) => (
                 <div key={link.id} id={`link-${link.id}`}>
                   <LinkRow
@@ -139,7 +162,7 @@ export function LinksEditor({
                     onToggleExpand={() =>
                       setExpandedId((current) => (current === link.id ? null : link.id))
                     }
-                    onDelete={onDelete}
+                    onArchive={onArchive}
                   />
                 </div>
               ))}

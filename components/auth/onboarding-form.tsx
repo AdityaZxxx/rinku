@@ -38,7 +38,13 @@ export function OnboardingForm() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm({
-    defaultValues: { username: "", displayName: "" },
+    defaultValues: {
+      username:
+        typeof window === "undefined"
+          ? ""
+          : (sessionStorage.getItem("rinku:claim") ?? ""),
+      displayName: "",
+    },
     validators: { onSubmit: onboardingSchema },
     onSubmit: async ({ value }) => {
       setFormError(null);
@@ -52,6 +58,8 @@ export function OnboardingForm() {
         setFormError(result.error);
         return;
       }
+
+      sessionStorage.removeItem("rinku:claim");
 
       // SAFETY: the destination is /:username/overview for the profile just
       // created; the typed route union is only knowable for literals.

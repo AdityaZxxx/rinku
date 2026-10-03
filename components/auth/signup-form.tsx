@@ -42,6 +42,11 @@ export function SignupForm() {
     onSubmit: async ({ value }) => {
       setFormError(null);
 
+      const claimed = new URLSearchParams(window.location.search).get("username");
+      if (claimed) {
+        sessionStorage.setItem("rinku:claim", claimed);
+      }
+
       const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({
         ...value,

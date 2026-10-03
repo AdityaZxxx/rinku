@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { and, gte, lte } from "drizzle-orm";
+import * as z from "zod";
 
 import { ActivityChart } from "@/components/insights/activity-chart";
 import { DateRangePicker } from "@/components/insights/date-range-picker";
@@ -11,21 +12,79 @@ import { withUserDb } from "@/lib/db/with-user";
 
 export const metadata = { title: "Insights" };
 
-import * as z from "zod";
-
-const daySchema = z
+const dayStringSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .transform((value) => {
-    const parsed = new Date(`${value}T00:00:00Z`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  });
+  .refine((value) => !Number.isNaN(new Date(`${value}T00:00:00Z`).getTime()));
 
-const dayKey = (day: Date) => day.toISOString().slice(0, 10);
+function parseDayString(value: string | string[] | undefined): string | undefined {
+  const parsed = dayStringSchema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+}
 
-function parseDay(value: string | string[] | undefined): Date | undefined {
-  const parsed = daySchema.safeParse(value);
-  return parsed.success && parsed.data ? parsed.data : undefined;
+function parseTimeZone(value: string | string[] | undefined): string {
+  const parsed = z.string().safeParse(value);
+  if (!parsed.success) {
+    return "UTC";
+  }
+  try {
+    const probe = new Intl.DateTimeFormat(undefined, { timeZone: parsed.data });
+    return probe.resolvedOptions().timeZone ?? "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+function wallParts(tz: string, date: Date): Intl.DateTimeFormatPart[] {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+}
+
+function partValue(parts: Intl.DateTimeFormatPart[], type: string): number {
+  return Number(parts.find((part) => part.type === type)?.value ?? 0);
+}
+
+function tzOffsetMs(tz: string, date: Date): number {
+  const parts = wallParts(tz, date);
+  const wallAsUtc = Date.UTC(
+    partValue(parts, "year"),
+    partValue(parts, "month") - 1,
+    partValue(parts, "day"),
+    partValue(parts, "hour"),
+    partValue(parts, "minute"),
+    partValue(parts, "second"),
+  );
+  return wallAsUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+function zonedDayStart(tz: string, day: string): Date {
+  const midnightUtc = new Date(`${day}T00:00:00Z`).getTime();
+  const once = new Date(midnightUtc - tzOffsetMs(tz, new Date(midnightUtc)));
+  return new Date(midnightUtc - tzOffsetMs(tz, once));
+}
+
+function tzDayKey(tz: string, date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function addDayStr(day: string, amount: number): string {
+  const [year = 0, month = 1, date = 1] = day.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, date + amount)).toISOString().slice(0, 10);
 }
 
 export default async function InsightsPage({
@@ -53,8 +112,13 @@ export default async function InsightsPage({
   // Insights is request-scoped (searchParams drive the page), so reading the
   // current time at the top is stable for this render.
   // eslint-disable-next-line react/purity
-  const to = parseDay(query.to) ?? new Date();
-  const from = parseDay(query.from) ?? to;
+  const timeZone = parseTimeZone(query.tz);
+  // eslint-disable-next-line react/purity
+  const toDay = parseDayString(query.to) ?? tzDayKey(timeZone, new Date());
+  const fromDay = parseDayString(query.from) ?? toDay;
+
+  const rangeStart = zonedDayStart(timeZone, fromDay);
+  const rangeEnd = new Date(zonedDayStart(timeZone, addDayStr(toDay, 1)).getTime() - 1);
 
   const [clicks, visits] = await withUserDb(userId, async (tx) =>
     Promise.all([
@@ -66,18 +130,15 @@ export default async function InsightsPage({
         })
         .from(linkClicks)
         .where(
-          and(
-            gte(linkClicks.createdAt, new Date(`${dayKey(from)}T00:00:00Z`)),
-            lte(linkClicks.createdAt, new Date(`${dayKey(to)}T23:59:59.999Z`)),
-          ),
+          and(gte(linkClicks.createdAt, rangeStart), lte(linkClicks.createdAt, rangeEnd)),
         ),
       tx
         .select({ id: profileVisits.id, createdAt: profileVisits.createdAt })
         .from(profileVisits)
         .where(
           and(
-            gte(profileVisits.createdAt, new Date(`${dayKey(from)}T00:00:00Z`)),
-            lte(profileVisits.createdAt, new Date(`${dayKey(to)}T23:59:59.999Z`)),
+            gte(profileVisits.createdAt, rangeStart),
+            lte(profileVisits.createdAt, rangeEnd),
           ),
         ),
     ]),
@@ -87,28 +148,26 @@ export default async function InsightsPage({
   const clicksByDay = new Map<string, number>();
   const visitsByDay = new Map<string, number>();
   for (const click of clicks) {
-    const day = dayKey(click.createdAt);
+    const day = tzDayKey(timeZone, click.createdAt);
     clicksByDay.set(day, (clicksByDay.get(day) ?? 0) + 1);
     totalsByLink.set(click.linkId, (totalsByLink.get(click.linkId) ?? 0) + 1);
   }
   for (const visit of visits) {
-    const day = dayKey(visit.createdAt);
+    const day = tzDayKey(timeZone, visit.createdAt);
     visitsByDay.set(day, (visitsByDay.get(day) ?? 0) + 1);
   }
 
   const clickRate =
     visits.length > 0 ? Math.round((clicks.length / visits.length) * 100) : 0;
 
+  const singleDay = fromDay === toDay;
+
   const chartData: { day: string; clicks: number; visits: number }[] = [];
-  const dayMs = 24 * 60 * 60 * 1000;
-  const spanDays = Math.round((to.getTime() - from.getTime()) / dayMs) + 1;
-  for (let i = 0; i < spanDays; i += 1) {
-    const day = new Date(from.getTime() + i * dayMs);
-    const key = dayKey(day);
+  for (let day = fromDay; day <= toDay; day = addDayStr(day, 1)) {
     chartData.push({
-      day: key,
-      clicks: clicksByDay.get(key) ?? 0,
-      visits: visitsByDay.get(key) ?? 0,
+      day,
+      clicks: clicksByDay.get(day) ?? 0,
+      visits: visitsByDay.get(day) ?? 0,
     });
   }
 
@@ -128,15 +187,19 @@ export default async function InsightsPage({
             How your links perform on the public page.
           </p>
         </div>
-        <DateRangePicker initialFrom={dayKey(from)} initialTo={dayKey(to)} />
+        <DateRangePicker
+          key={`${fromDay}${toDay}${timeZone}`}
+          initialFrom={fromDay}
+          initialTo={toDay}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="bg-muted/30 flex flex-col gap-1 rounded-lg border p-4">
+        <div className="flex flex-col gap-1 rounded-lg border p-4">
           <span className="text-3xl font-semibold tabular-nums">{visits.length}</span>
           <span className="text-muted-foreground text-sm">Profile visits</span>
         </div>
-        <div className="bg-muted/30 flex flex-col gap-1 rounded-lg border p-4">
+        <div className="flex flex-col gap-1 rounded-lg border p-4">
           <span className="text-3xl font-semibold tabular-nums">{clicks.length}</span>
           <span className="text-muted-foreground text-sm">Clicks</span>
         </div>
@@ -151,7 +214,17 @@ export default async function InsightsPage({
       </div>
 
       {chartData.some((point) => point.visits > 0 || point.clicks > 0) ? (
-        <ActivityChart data={chartData} />
+        <ActivityChart
+          data={chartData}
+          from={fromDay}
+          to={toDay}
+          clickTimes={
+            singleDay ? clicks.map((click) => click.createdAt.toISOString()) : []
+          }
+          visitTimes={
+            singleDay ? visits.map((visit) => visit.createdAt.toISOString()) : []
+          }
+        />
       ) : (
         <p className="text-muted-foreground text-sm">No activity in this range yet.</p>
       )}

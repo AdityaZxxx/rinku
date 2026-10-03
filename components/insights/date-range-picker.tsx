@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { CalendarBlankIcon } from "@phosphor-icons/react";
@@ -17,8 +17,19 @@ const PRESETS = [
   { label: "90d", days: 90 },
 ] as const;
 
-function toIso(day: Date): string {
-  return day.toISOString().slice(0, 10);
+function localDayKey(day: Date): string {
+  const month = String(day.getMonth() + 1).padStart(2, "0");
+  const date = String(day.getDate()).padStart(2, "0");
+  return `${day.getFullYear()}-${month}-${date}`;
+}
+
+function parseLocalDay(value: string): Date {
+  const [year = 0, month = 1, day = 1] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 export function DateRangePicker({
@@ -31,17 +42,29 @@ export function DateRangePicker({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState<DateRange | undefined>(() => ({
-    from: initialFrom ? new Date(`${initialFrom}T00:00:00Z`) : undefined,
-    to: initialTo ? new Date(`${initialTo}T00:00:00Z`) : undefined,
+    from: initialFrom ? parseLocalDay(initialFrom) : undefined,
+    to: initialTo ? parseLocalDay(initialTo) : undefined,
   }));
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get("tz") && !params.get("from") && !params.get("to")) {
+      const today = localDayKey(new Date());
+      params.set("from", today);
+      params.set("to", today);
+      params.set("tz", browserTimeZone());
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [router]);
 
   function push(from: Date | undefined, to: Date | undefined) {
     if (!from || !to) {
       return;
     }
     const params = new URLSearchParams();
-    params.set("from", toIso(from));
-    params.set("to", toIso(to));
+    params.set("from", localDayKey(from));
+    params.set("to", localDayKey(to));
+    params.set("tz", browserTimeZone());
     router.replace(`?${params.toString()}`, { scroll: false });
   }
 

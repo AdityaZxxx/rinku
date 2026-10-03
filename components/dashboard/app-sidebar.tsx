@@ -219,9 +219,9 @@ export function AppSidebar({
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+                <DropdownMenuItem variant="destructive" onClick={() => void signOut()}>
                   <SignOutIcon />
-                  Sign out
+                  Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

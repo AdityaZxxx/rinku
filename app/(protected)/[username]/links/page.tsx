@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { LinksEditor } from "@/components/links/links-editor";
 import { EditorShell } from "@/components/profile/editor-shell";
+import { MobileDock } from "@/components/profile/mobile-dock";
 import { ProfilePreview } from "@/components/profile/profile-preview";
 import { getUserId } from "@/lib/auth";
 import { getLinksByProfile } from "@/lib/db/links";
@@ -27,6 +28,15 @@ export default async function LinksPage({ params }: PageProps<"/[username]/links
     <EditorShell
       preview={
         <ProfilePreview
+          username={username}
+          profileId={profile.id}
+          initialProfile={profile}
+          initialLinks={initialLinks}
+        />
+      }
+      username={username}
+      mobilePreview={
+        <MobileDock
           username={username}
           profileId={profile.id}
           initialProfile={profile}

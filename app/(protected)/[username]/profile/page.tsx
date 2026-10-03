@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { EditorShell } from "@/components/profile/editor-shell";
+import { MobileDock } from "@/components/profile/mobile-dock";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { ProfilePreview } from "@/components/profile/profile-preview";
 import { getUserId } from "@/lib/auth";
@@ -27,6 +28,15 @@ export default async function ProfilePage({ params }: PageProps<"/[username]/pro
     <EditorShell
       preview={
         <ProfilePreview
+          username={username}
+          profileId={profile.id}
+          initialProfile={profile}
+          initialLinks={initialLinks}
+        />
+      }
+      username={username}
+      mobilePreview={
+        <MobileDock
           username={username}
           profileId={profile.id}
           initialProfile={profile}

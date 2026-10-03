@@ -17,7 +17,7 @@ import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
 import { ThumbnailSection } from "@/components/links/thumbnail-section";
-import { isIconMedia, MediaIcon } from "@/components/media-icon";
+import { MediaIcon } from "@/components/media-icon";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import {
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { displayUrl, faviconUrl, linkInputSchema } from "@/lib/links";
+import { isIconMedia } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { useUpdateLink } from "./use-link-mutations";
 

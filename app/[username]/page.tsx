@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { ProfileHeaderVariant } from "@/components/profile/profile-header";
 import { sql } from "drizzle-orm";
 
 import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
@@ -54,6 +55,9 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
         bio={profile.bio}
         avatarPath={profile.avatarPath}
         bannerPath={profile.bannerPath}
+        // SAFETY: headerStyle is constrained to this union by the database
+        // CHECK and the zod schema, so the persisted value narrows safely.
+        headerStyle={profile.headerStyle as ProfileHeaderVariant}
         links={links}
         interactive
       />

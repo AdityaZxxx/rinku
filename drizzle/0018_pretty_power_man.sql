@@ -1,0 +1,2 @@
+ALTER TABLE "profiles" ADD COLUMN "header_style" text DEFAULT 'classic' NOT NULL;--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_header_style" CHECK ("profiles"."header_style" in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement'));

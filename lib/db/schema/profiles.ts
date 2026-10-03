@@ -35,6 +35,7 @@ export const profiles = pgTable(
     // does not mean rewriting rows.
     avatarPath: text("avatar_path"),
     bannerPath: text("banner_path"),
+    headerStyle: text("header_style").notNull().default("classic"),
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -55,6 +56,10 @@ export const profiles = pgTable(
       sql`${t.username} ~ '^[a-z0-9](?:[a-z0-9_-]{1,28}[a-z0-9])?$'`,
     ),
     check("profiles_username_length", sql`char_length(${t.username}) between 3 and 30`),
+    check(
+      "profiles_header_style",
+      sql`${t.headerStyle} in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement')`,
+    ),
     check(
       "profiles_display_name_length",
       sql`${t.displayName} is null or char_length(${t.displayName}) <= 80`,

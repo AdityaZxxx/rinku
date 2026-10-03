@@ -127,6 +127,13 @@
       "when": 1790999501798,
       "tag": "0017_link_images",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791017984488,
+      "tag": "0018_pretty_power_man",
+      "breakpoints": true
     }
   ]
 }

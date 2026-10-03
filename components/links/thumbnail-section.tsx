@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { uploadLinkImage } from "@/app/actions/links";
-import { isIconMedia, MediaIcon, MEDIA_ICON_IDS } from "@/components/media-icon";
+import { MediaIcon, MEDIA_ICON_IDS } from "@/components/media-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { isIconMedia } from "@/lib/media";
 import { useUpdateLink } from "./use-link-mutations";
 
 export function ThumbnailSection({ link }: { link: Link }) {

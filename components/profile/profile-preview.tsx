@@ -1,5 +1,6 @@
 "use client";
 
+import type { ProfileHeaderVariant } from "./profile-header";
 import type { Link as LinkData, Profile } from "@/lib/db/schema";
 import { useQuery } from "@tanstack/react-query";
 
@@ -55,6 +56,9 @@ export function ProfilePreview({
       bio={profile.bio}
       avatarPath={profile.avatarPath}
       bannerPath={profile.bannerPath}
+      // SAFETY: headerStyle is constrained to this union by the database
+      // CHECK and the zod schema, so the persisted value narrows safely.
+      headerStyle={profile.headerStyle as ProfileHeaderVariant}
       links={links}
       interactive={false}
     />

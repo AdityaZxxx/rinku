@@ -85,6 +85,14 @@ export async function updateProfile(input: {
   username: string;
   displayName: string;
   bio: string;
+  headerStyle:
+    | "classic"
+    | "hero"
+    | "banner"
+    | "cutout"
+    | "minimal"
+    | "left"
+    | "statement";
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -105,6 +113,7 @@ export async function updateProfile(input: {
       .set({
         displayName: parsed.data.displayName.trim() || null,
         bio: parsed.data.bio.trim() || null,
+        headerStyle: parsed.data.headerStyle,
         updatedAt: new Date(),
       })
       .where(eq(profiles.username, parsed.data.username))

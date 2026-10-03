@@ -2,17 +2,11 @@
 
 import * as Ph from "@phosphor-icons/react";
 
+import { iconMediaId, isIconMedia } from "@/lib/media";
+
 export const MEDIA_ICON_IDS = Object.keys(Ph)
   .filter((name) => name.endsWith("Icon"))
   .map((name) => name.slice(0, -"Icon".length));
-
-export function isIconMedia(imageUrl: string | null | undefined): boolean {
-  return imageUrl != null && imageUrl.startsWith("icon:");
-}
-
-export function iconMediaId(imageUrl: string): string {
-  return imageUrl.slice("icon:".length);
-}
 
 export function MediaIcon({
   imageUrl,

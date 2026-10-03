@@ -12,11 +12,13 @@ import { getProfile } from "@/app/actions/profiles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles";
 import { avatarUrl, bannerUrl } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 import { useUpdateProfile, useUploadProfileImage } from "./use-profile-mutations";
 
 export function ProfileEditor({
@@ -48,6 +50,17 @@ export function ProfileEditor({
     defaultValues: {
       displayName: profile.displayName ?? "",
       bio: profile.bio ?? "",
+      // SAFETY: headerStyle is constrained to this union by the database
+      // CHECK and the zod schema, so the persisted value narrows safely.
+      headerStyle:
+        (profile.headerStyle as
+          | "classic"
+          | "hero"
+          | "banner"
+          | "cutout"
+          | "minimal"
+          | "left"
+          | "statement") ?? "classic",
     },
     validators: { onChange: profileBasicsSchema },
     listeners: {
@@ -185,6 +198,56 @@ export function ProfileEditor({
           </div>
         </div>
 
+        <form.Field name="headerStyle">
+          {(field) => (
+            <Field>
+              <FieldLabel id="header-style-label">Header style</FieldLabel>
+              <ScrollArea className="[mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)] px-2">
+                <div className="mb-4 flex w-max snap-x gap-2 p-0.5">
+                  {(
+                    [
+                      "classic",
+                      "hero",
+                      "banner",
+                      "cutout",
+                      "minimal",
+                      "left",
+                      "statement",
+                    ] as const
+                  ).map((value) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        "relative flex w-32 shrink-0 snap-start flex-col items-stretch gap-2 rounded-xl border p-2 pb-6 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                        field.state.value === value
+                          ? "border-ring ring-ring/30 ring-3"
+                          : "border-input",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="header-style"
+                        value={value}
+                        checked={field.state.value === value}
+                        onChange={() => field.handleChange(value)}
+                        className="sr-only"
+                      />
+                      <HeaderStyleMock value={value} />
+                      <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs capitalize">
+                        {value}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <ScrollBar
+                  orientation="horizontal"
+                  className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-[hovering]:opacity-100 data-[scrolling]:opacity-100"
+                />
+              </ScrollArea>
+            </Field>
+          )}
+        </form.Field>
+
         <form.Field name="displayName">
           {(field) => {
             const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
@@ -238,5 +301,66 @@ export function ProfileEditor({
         </form.Field>
       </div>
     </div>
+  );
+}
+
+function HeaderStyleMock({ value }: { value: string }) {
+  if (value === "statement") {
+    return (
+      <span className="flex h-14 w-full flex-col justify-center gap-1.5 rounded-md border p-2">
+        <span className="bg-muted-foreground/30 h-2 w-full rounded-full" />
+        <span className="bg-muted-foreground/30 h-2 w-4/5 rounded-full" />
+        <span className="bg-muted-foreground/20 h-1 w-1/2 rounded-full" />
+      </span>
+    );
+  }
+  if (value === "minimal") {
+    return (
+      <span className="flex h-14 w-full flex-col items-center justify-center gap-1.5 rounded-md border p-2">
+        <span className="bg-muted-foreground/30 h-1.5 w-1/2 rounded-full" />
+        <span className="bg-muted-foreground/20 h-1 w-2/3 rounded-full" />
+      </span>
+    );
+  }
+  if (value === "left") {
+    return (
+      <span className="flex h-14 w-full flex-col justify-center gap-1.5 rounded-md border p-2">
+        <span className="bg-muted-foreground/30 h-1.5 w-1/2 rounded-full" />
+        <span className="bg-muted-foreground/20 h-1 w-3/4 rounded-full" />
+        <span className="bg-muted-foreground/20 h-1 w-1/3 rounded-full" />
+      </span>
+    );
+  }
+  if (value === "cutout") {
+    return (
+      <span className="flex h-14 w-full flex-col items-center gap-1.5 rounded-md border p-2">
+        <span className="bg-muted h-8 w-3/4 rounded-xl" />
+        <span className="bg-muted-foreground/20 h-1 w-1/2 rounded-full" />
+      </span>
+    );
+  }
+  if (value === "hero") {
+    return (
+      <span className="flex h-14 w-full flex-col gap-1.5 rounded-md border p-2">
+        <span className="bg-muted h-9 w-full rounded-md" />
+        <span className="bg-muted-foreground/20 h-1 w-1/2 self-center rounded-full" />
+      </span>
+    );
+  }
+  if (value === "banner") {
+    return (
+      <span className="flex h-14 w-full flex-col items-center gap-1.5 rounded-md border p-2">
+        <span className="bg-muted h-4 w-full rounded-md" />
+        <span className="bg-muted-foreground/30 border-background -mt-1 size-4 rounded-full border-2" />
+        <span className="bg-muted-foreground/20 h-1 w-1/2 rounded-full" />
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-14 w-full flex-col items-center gap-1.5 rounded-md border p-2">
+      <span className="bg-muted-foreground/30 size-4 rounded-full" />
+      <span className="bg-muted-foreground/20 h-1 w-1/2 rounded-full" />
+      <span className="bg-muted-foreground/20 h-1 w-1/3 rounded-full" />
+    </span>
   );
 }

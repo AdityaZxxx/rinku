@@ -1,11 +1,12 @@
 import Image from "next/image";
 
-import { MediaIcon, isIconMedia } from "@/components/media-icon";
-import { SocialIcon } from "@/components/social-icon";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MediaIcon } from "@/components/media-icon";
+import {
+  ProfileHeader,
+  type ProfileHeaderVariant,
+} from "@/components/profile/profile-header";
 import { faviconUrl } from "@/lib/links";
-import { platformById } from "@/lib/platforms";
-import { avatarUrl, bannerUrl } from "@/lib/storage";
+import { isIconMedia } from "@/lib/media";
 
 export interface PreviewLink {
   id: string;
@@ -79,6 +80,7 @@ export function ProfilePreviewContent({
   bannerPath,
   links,
   interactive = true,
+  headerStyle = "classic",
 }: {
   displayName: string | null;
   username: string;
@@ -87,6 +89,7 @@ export function ProfilePreviewContent({
   bannerPath: string | null;
   links: PreviewLink[];
   interactive?: boolean;
+  headerStyle?: ProfileHeaderVariant;
 }) {
   const visibleLinks = links.filter((link) => link.isActive && link.archivedAt === null);
   const socialLinks = visibleLinks.filter((link) => link.kind === "social");
@@ -94,71 +97,17 @@ export function ProfilePreviewContent({
 
   return (
     <div className="bg-background flex w-full flex-col">
-      <div className="bg-muted relative h-28 w-full">
-        {bannerPath ? (
-          <Image
-            src={bannerUrl(bannerPath)}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 448px) 100vw, 448px"
-          />
-        ) : null}
-      </div>
-
-      <div className="flex flex-col items-center gap-3 px-6 pb-8">
-        <Avatar className="border-background -mt-9 size-18 border-4">
-          <AvatarImage src={avatarPath ? avatarUrl(avatarPath) : undefined} />
-          <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-
-        <div className="flex flex-col items-center gap-1 text-center">
-          <p className="text-lg leading-tight font-semibold">
-            {displayName?.trim() ? displayName : username}
-          </p>
-          <p className="text-muted-foreground text-sm">@{username}</p>
-          {bio?.trim() ? (
-            <p className="text-muted-foreground max-w-prose text-sm">{bio}</p>
-          ) : null}
-        </div>
-
-        {socialLinks.length > 0 ? (
-          <div className="flex items-center justify-center gap-2.5">
-            {socialLinks.map((link) => {
-              const Platform = platformById(link.platform);
-              return interactive ? (
-                <a
-                  key={link.id}
-                  href={`/go/${link.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={Platform?.label ?? link.title}
-                  title={Platform?.label ?? link.title}
-                  className="border-input bg-card hover:bg-accent text-foreground inline-flex size-10 items-center justify-center rounded-full border shadow-sm transition"
-                >
-                  {link.platform ? (
-                    <SocialIcon id={link.platform} className="size-5" />
-                  ) : (
-                    link.title
-                  )}
-                </a>
-              ) : (
-                <div
-                  key={link.id}
-                  aria-label={Platform?.label ?? link.title}
-                  className="border-input bg-card text-foreground inline-flex size-10 items-center justify-center rounded-full border shadow-sm"
-                >
-                  {link.platform ? (
-                    <SocialIcon id={link.platform} className="size-5" />
-                  ) : (
-                    link.title
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
+      <ProfileHeader
+        variant={headerStyle}
+        displayName={displayName}
+        username={username}
+        bio={bio}
+        avatarPath={avatarPath}
+        bannerPath={bannerPath}
+        socialLinks={socialLinks}
+        interactive={interactive}
+      />
+      <div className="flex w-full flex-col px-6 pb-8">
         <div className="mt-2 flex w-full flex-col gap-2">
           {customLinks.length === 0 ? (
             <p className="text-muted-foreground text-center text-sm">

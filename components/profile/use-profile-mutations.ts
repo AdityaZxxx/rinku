@@ -15,7 +15,18 @@ export function useUpdateProfile(username: string) {
   const key = profileKey(username);
 
   return useMutation({
-    mutationFn: async (input: { displayName: string; bio: string }) => {
+    mutationFn: async (input: {
+      displayName: string;
+      bio: string;
+      headerStyle:
+        | "classic"
+        | "hero"
+        | "banner"
+        | "cutout"
+        | "minimal"
+        | "left"
+        | "statement";
+    }) => {
       const result = await updateProfile({ username, ...input });
       if ("error" in result) {
         throw new Error(result.error);
@@ -31,6 +42,7 @@ export function useUpdateProfile(username: string) {
               ...old,
               displayName: input.displayName.trim() || null,
               bio: input.bio.trim() || null,
+              headerStyle: input.headerStyle,
               updatedAt: new Date(),
             }
           : old,

@@ -5,6 +5,15 @@ import * as z from "zod";
 export const profileBasicsSchema = z.object({
   displayName: z.string().max(80, "Use 80 characters or fewer."),
   bio: z.string().max(200, "Use 200 characters or fewer."),
+  headerStyle: z.enum([
+    "classic",
+    "hero",
+    "banner",
+    "cutout",
+    "minimal",
+    "left",
+    "statement",
+  ]),
 });
 
 // The same format and length the handle trigger checks in the database.

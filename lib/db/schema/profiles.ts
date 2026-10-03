@@ -140,6 +140,7 @@ export const profileVisits = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom().notNull(),
     profileId: uuid("profile_id").notNull(),
+    visitorHash: text("visitor_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

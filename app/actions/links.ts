@@ -1,10 +1,10 @@
 "use server";
 
-import { and, eq, isNotNull, max, sql } from "drizzle-orm";
+import { and, eq, max, sql } from "drizzle-orm";
 import * as z from "zod";
 
 import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
-import { links, type Link } from "@/lib/db/schema";
+import { links, profiles, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import {
   httpUrlSchema,
@@ -16,6 +16,8 @@ import {
   positionAfter,
 } from "@/lib/links";
 import { log } from "@/lib/log";
+import { imageExtension, imageMaxBytes } from "@/lib/profiles";
+import { linkImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPageMetadata } from "@/lib/url-metadata";
 
@@ -29,6 +31,7 @@ const createLinkSchema = z.object({
   url: linkUrlSchema,
   variant: linkVariantSchema,
   imageUrl: httpUrlSchema.nullable().optional(),
+  platform: z.string().min(1).max(50).nullable().optional(),
 });
 
 const linkIdSchema = z.object({ id: z.uuid() });
@@ -96,6 +99,7 @@ export async function createLink(input: {
   url: string;
   variant: "classic" | "featured";
   imageUrl?: string | null;
+  platform?: string | null;
 }): Promise<Link | { error: string }> {
   const supabase = await createClient();
   const {
@@ -125,6 +129,8 @@ export async function createLink(input: {
           url: parsed.data.url,
           imageUrl: parsed.data.imageUrl ?? null,
           variant: parsed.data.variant,
+          kind: parsed.data.platform ? "social" : "custom",
+          platform: parsed.data.platform ?? null,
           position: positionAfter(aggregate?.maxPosition),
         })
         .returning();
@@ -147,12 +153,78 @@ export async function createLink(input: {
   return created;
 }
 
+export async function uploadLinkImage(
+  formData: FormData,
+): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({ linkId: z.uuid(), file: z.instanceof(File) })
+    .safeParse({ linkId: formData.get("linkId"), file: formData.get("file") });
+  if (!parsed.success) {
+    return { error: "Image upload failed. Try again." };
+  }
+  const { linkId, file } = parsed.data;
+
+  const extension = imageExtension(file.type);
+  const maxBytes = imageMaxBytes.link;
+  if (file.size === 0) {
+    return { error: "That file is empty." };
+  }
+  if (extension === null || file.size > maxBytes) {
+    return {
+      error: `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
+    };
+  }
+
+  const [owned] = await withUserDb(user.id, (tx) =>
+    tx
+      .select({ profileId: links.profileId })
+      .from(links)
+      .innerJoin(profiles, eq(profiles.id, links.profileId))
+      .where(and(eq(links.id, linkId), eq(profiles.userId, user.id)))
+      .limit(1),
+  );
+  if (!owned) {
+    return { error: "Link not found." };
+  }
+
+  const path = `${owned.profileId}/link-${linkId}-${Date.now()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from("link-images")
+    .upload(path, file, { contentType: file.type });
+  if (uploadError) {
+    log.error("links", "uploadLinkImage failed", uploadError.message);
+    return { error: "Image upload failed. Try again." };
+  }
+
+  const url = linkImageUrl(path);
+  const updated = await withUserDb(user.id, (tx) =>
+    tx
+      .update(links)
+      .set({ imageUrl: url, updatedAt: new Date() })
+      .where(eq(links.id, linkId))
+      .returning({ id: links.id }),
+  );
+  if (updated.length === 0) {
+    return { error: "Image upload failed. Try again." };
+  }
+  return { url };
+}
+
 export async function updateLink(input: {
   id: string;
   title: string;
   url: string;
   variant: "classic" | "featured";
   isActive: boolean;
+  imageUrl?: string | null;
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -175,6 +247,7 @@ export async function updateLink(input: {
         url: parsed.data.url,
         variant: parsed.data.variant,
         isActive: parsed.data.isActive,
+        imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(links.id, parsed.data.id))
@@ -264,10 +337,7 @@ export async function deleteLink(input: {
   }
 
   const deleted = await withUserDb(user.id, (tx) =>
-    tx
-      .delete(links)
-      .where(and(eq(links.id, input.id), isNotNull(links.archivedAt)))
-      .returning({ id: links.id }),
+    tx.delete(links).where(eq(links.id, input.id)).returning({ id: links.id }),
   );
   if (deleted.length === 0) {
     return { error: "This link could not be deleted." };

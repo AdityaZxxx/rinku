@@ -18,13 +18,14 @@ import { profiles } from "./profiles";
 
 export const linkVariant = pgEnum("link_variant", ["classic", "featured"]);
 
+export const linkKind = pgEnum("link_kind", ["custom", "social"]);
+
 /**
  * The ordered list of buttons on a public profile page.
  *
  * `variant` picks the display: `classic` renders a standard row, `featured` a
- * large card with its thumbnail. Vertical-specific embeds would still need a
- * `kind` discriminator, and adding one later is a single-column migration with
- * a default.
+ * large card with its thumbnail. `kind` splits custom links from social ones;
+ * social rows carry a `platform` and render as icons on the profile page.
  */
 export const links = pgTable(
   "links",
@@ -34,6 +35,10 @@ export const links = pgTable(
 
     title: text("title").notNull(),
     url: text("url").notNull(),
+
+    kind: linkKind("kind").notNull().default("custom"),
+    // Set for social rows; the platform fixes the icon and the URL shape.
+    platform: text("platform"),
 
     // Remote URL stored as-is: no storage, no download, so the origin keeps
     // serving the bytes and Rinku never mirrors them.
@@ -64,6 +69,10 @@ export const links = pgTable(
     index("links_profile_id_position_idx").on(t.profileId, t.position),
     check("links_title_length", sql`char_length(${t.title}) between 1 and 100`),
     check("links_url_length", sql`char_length(${t.url}) between 1 and 2048`),
+    check(
+      "links_social_platform",
+      sql`(${t.kind} = 'social' and ${t.platform} is not null) or (${t.kind} = 'custom' and ${t.platform} is null)`,
+    ),
 
     // Deactivated means draft; archived means off the list but kept for
     // restore. Both are withheld from visitors at the database rather than

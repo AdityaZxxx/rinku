@@ -35,6 +35,12 @@ export const linkInputSchema = z.object({
   url: linkUrlSchema,
   variant: linkVariantSchema,
   isActive: z.boolean(),
+  imageUrl: z.union([
+    httpUrlSchema,
+    z.literal(""),
+    z.null(),
+    z.string().regex(/^icon:[A-Za-z0-9]+$/, "Invalid icon."),
+  ]),
 });
 
 export function normalizeUrl(input: string): string {

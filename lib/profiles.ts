@@ -32,4 +32,8 @@ export function imageExtension(mimeType: string): string | null {
   }
 }
 
-export const imageMaxBytes = { avatar: 2 * 1024 * 1024, banner: 5 * 1024 * 1024 };
+export const imageMaxBytes = {
+  avatar: 2 * 1024 * 1024,
+  banner: 5 * 1024 * 1024,
+  link: 5 * 1024 * 1024,
+};

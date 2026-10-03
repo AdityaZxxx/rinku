@@ -55,6 +55,7 @@ export function useUpdateLink(profileId: string) {
       url: string;
       variant: LinkVariant;
       isActive: boolean;
+      imageUrl?: string | null;
     }) => {
       const result = await updateLink(input);
       if ("error" in result) {
@@ -96,6 +97,7 @@ export function useCreateLink(profileId: string) {
       url: string;
       variant: LinkVariant;
       imageUrl: string | null;
+      platform?: string | null;
     }) => {
       const result = await createLink({ profileId, ...input });
       if ("error" in result) {
@@ -103,7 +105,7 @@ export function useCreateLink(profileId: string) {
       }
       return result;
     },
-    onMutate: async () => {
+    onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Link[]>(key);
       const tempId = crypto.randomUUID();
@@ -117,6 +119,8 @@ export function useCreateLink(profileId: string) {
         clickCount: 0,
         isActive: true,
         archivedAt: null,
+        kind: input.platform ? "social" : "custom",
+        platform: input.platform ?? null,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

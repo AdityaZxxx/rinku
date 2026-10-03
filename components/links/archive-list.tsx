@@ -148,10 +148,10 @@ function ArchivedRow({ link, profileId }: { link: ArchivedLink; profileId: strin
           alt=""
           width={40}
           height={40}
-          className="bg-muted size-10 shrink-0 rounded-xl object-contain p-1.5"
+          className="bg-muted size-10 shrink-0 rounded-full object-contain p-1.5"
         />
       ) : (
-        <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl">
+        <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
           <GlobeSimpleIcon className="text-muted-foreground size-5" />
         </span>
       )}

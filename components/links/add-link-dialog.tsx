@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { LinkSimpleIcon, PlusIcon } from "@phosphor-icons/react";
+import { LinkSimpleIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
 import { fetchUrlMetadata } from "@/app/actions/links";
+import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,8 +22,17 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
 import { linkUrlSchema, normalizeUrl } from "@/lib/links";
 import { useCreateLink } from "./use-link-mutations";
+
+type Category = (typeof CATEGORIES)[number]["id"];
+
+interface LinkMeta {
+  title: string;
+  imageUrl: string | null;
+  url: string;
+}
 
 export function AddLinkDialog({
   profileId,
@@ -33,41 +43,74 @@ export function AddLinkDialog({
 }) {
   const create = useCreateLink(profileId);
   const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState("");
+  const [category, setCategory] = useState<Category>("socials");
+  const [selected, setSelected] = useState<CatalogItem | null>(null);
+  const [handle, setHandle] = useState("");
+  const [meta, setMeta] = useState<LinkMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function onAdd() {
-    const normalized = normalizeUrl(url);
-    const parsed = linkUrlSchema.safeParse(normalized);
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Enter a valid URL.");
+  function reset() {
+    setCategory("socials");
+    setSelected(null);
+    setHandle("");
+    setMeta(null);
+    setError(null);
+    form.reset();
+  }
+
+  const form = useForm({
+    defaultValues: { query: "" },
+    onSubmit: async ({ value }) => {
+      if (!isLinkLike(value.query)) return;
+      const normalized = normalizeUrl(value.query);
+      startTransition(async () => {
+        try {
+          const created = await create.mutateAsync({
+            title: meta?.title ?? hostnameOf(normalized),
+            url: normalized,
+            variant: "classic",
+            imageUrl: meta?.imageUrl ?? null,
+          });
+          setOpen(false);
+          reset();
+          onCreated(created.id);
+        } catch (mutationError) {
+          setError(
+            mutationError instanceof Error
+              ? mutationError.message
+              : "Adding this link failed. Try again.",
+          );
+        }
+      });
+    },
+  });
+
+  function addItem() {
+    if (!selected) return;
+    const url = selected.buildUrl(handle);
+    if (!url) {
+      setError(`Enter a valid ${selected.label.toLowerCase()} ${selected.placeholder}.`);
       return;
     }
     setError(null);
     startTransition(async () => {
-      const metadata = await fetchUrlMetadata({ url: normalized });
-      const title = "error" in metadata ? hostnameOf(normalized) : metadata.title;
-      const imageUrl = "error" in metadata ? null : metadata.imageUrl;
-      if ("error" in metadata) {
-        toast.info("Couldn't fetch details for that URL — edit them below.");
-      }
-
       try {
         const created = await create.mutateAsync({
-          title,
-          url: normalized,
+          title: selected.label,
+          url,
           variant: "classic",
-          imageUrl,
+          imageUrl: null,
+          platform: selected.platform,
         });
         setOpen(false);
-        setUrl("");
+        reset();
         onCreated(created.id);
       } catch (mutationError) {
-        setError(
+        toast.error(
           mutationError instanceof Error
             ? mutationError.message
-            : "Adding this link failed. Try again.",
+            : "Adding this failed. Try again.",
         );
       }
     });
@@ -78,65 +121,224 @@ export function AddLinkDialog({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) {
-          setUrl("");
-          setError(null);
-        }
+        if (!nextOpen) reset();
       }}
     >
       <DialogTrigger render={<Button size="sm" />}>
         <PlusIcon />
         Add link
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-2xl sm:min-w-[36rem]">
         <DialogHeader>
           <DialogTitle>Add a link</DialogTitle>
-          <DialogDescription>
-            Paste a URL and Rinku fills in the rest. Everything stays editable.
-          </DialogDescription>
         </DialogHeader>
 
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            onAdd();
+        <form.Field
+          name="query"
+          validators={{
+            onChangeAsyncDebounceMs: 400,
+            onChangeAsync: async ({ value }) => {
+              const trimmed = value.trim();
+              if (!isLinkLike(trimmed)) {
+                setMeta(null);
+                return undefined;
+              }
+              const normalized = normalizeUrl(trimmed);
+              if (!linkUrlSchema.safeParse(normalized).success) {
+                setMeta(null);
+                return undefined;
+              }
+              const metadata = await fetchUrlMetadata({ url: normalized });
+              setMeta(
+                "error" in metadata
+                  ? null
+                  : {
+                      title: metadata.title,
+                      imageUrl: metadata.imageUrl,
+                      url: normalized,
+                    },
+              );
+              return undefined;
+            },
           }}
         >
-          <InputGroup>
-            <InputGroupAddon align="inline-start">
-              <LinkSimpleIcon />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="example.com"
-              aria-label="URL"
-              aria-invalid={Boolean(error)}
-            />
-          </InputGroup>
-          {error && <p className="text-destructive mt-2 text-sm">{error}</p>}
+          {(field) => {
+            const query = field.state.value.trim();
+            const isUrl = isLinkLike(query);
+            const results = query
+              ? CATALOG.filter((item) =>
+                  item.label.toLowerCase().includes(query.toLowerCase()),
+                )
+              : CATALOG.filter((item) => item.category === category);
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={pending}
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending && <Spinner />}
-              Add link
-            </Button>
-          </DialogFooter>
-        </form>
+            return (
+              <div className="flex flex-col gap-3">
+                <form
+                  noValidate
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (isUrl) form.handleSubmit();
+                  }}
+                >
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      <MagnifyingGlassIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      value={field.state.value}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder="Paste a link or search types…"
+                      aria-label="Link URL or search"
+                    />
+                    {field.state.meta.isValidating && (
+                      <InputGroupAddon align="inline-end">
+                        <Spinner />
+                      </InputGroupAddon>
+                    )}
+                  </InputGroup>
+                </form>
+
+                {isUrl && (
+                  <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
+                    {meta?.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={meta.imageUrl}
+                        alt=""
+                        className="size-10 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
+                      />
+                    ) : (
+                      <LinkSimpleIcon className="text-muted-foreground size-5" />
+                    )}
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm font-medium">
+                        {meta?.title ?? query}
+                      </span>
+                      {meta ? (
+                        <span className="text-muted-foreground truncate text-xs">
+                          {query}
+                        </span>
+                      ) : null}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => form.handleSubmit()}
+                      disabled={pending}
+                    >
+                      Add link
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  {!query ? (
+                    <nav className="flex flex-row gap-2 sm:w-20 sm:shrink-0 sm:flex-col">
+                      {CATEGORIES.map((entry) => (
+                        <button
+                          key={entry.id}
+                          type="button"
+                          onClick={() => setCategory(entry.id)}
+                          className={
+                            category === entry.id
+                              ? "bg-accent text-accent-foreground rounded-lg px-2 py-1.5 text-left text-sm font-medium"
+                              : "text-muted-foreground hover:bg-accent focus-visible:ring-ring/30 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus-visible:ring-3 focus-visible:outline-none"
+                          }
+                        >
+                          {entry.label}
+                        </button>
+                      ))}
+                    </nav>
+                  ) : null}
+
+                  <div className="flex min-h-48 flex-1 flex-col gap-3">
+                    {selected ? (
+                      <div className="flex flex-col gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelected(null);
+                            setHandle("");
+                            setError(null);
+                          }}
+                          className="text-muted-foreground self-start text-sm underline underline-offset-4"
+                        >
+                          ← Back
+                        </button>
+                        <InputGroup>
+                          <InputGroupAddon align="inline-start">
+                            {selected.platform ? (
+                              <SocialIcon id={selected.platform} />
+                            ) : null}
+                          </InputGroupAddon>
+                          <InputGroupInput
+                            value={handle}
+                            onChange={(event) => setHandle(event.target.value)}
+                            placeholder={selected.placeholder}
+                            aria-label={selected.label}
+                          />
+                        </InputGroup>
+                        {error ? (
+                          <p className="text-destructive text-sm">{error}</p>
+                        ) : null}
+                        <DialogFooter>
+                          <Button type="button" onClick={addItem} disabled={pending}>
+                            {pending && <Spinner />}
+                            Add {selected.label}
+                          </Button>
+                        </DialogFooter>
+                      </div>
+                    ) : (
+                      results.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setSelected(item)}
+                          className="hover:bg-accent focus-visible:ring-ring/30 flex items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition-colors focus-visible:ring-3 focus-visible:outline-none"
+                        >
+                          <span className="border-input inline-flex size-9 items-center justify-center rounded-full border">
+                            {item.platform ? (
+                              <SocialIcon id={item.platform} className="size-4" />
+                            ) : (
+                              <LinkSimpleIcon className="size-4" />
+                            )}
+                          </span>
+                          <span className="flex flex-col">
+                            <span className="font-medium">{item.label}</span>
+                            <span className="text-muted-foreground text-xs capitalize">
+                              {item.tagline}
+                            </span>
+                          </span>
+                        </button>
+                      ))
+                    )}
+                    {!selected && results.length === 0 && query ? (
+                      <p className="text-muted-foreground px-2 py-4 text-sm">
+                        No types match “{query}”. Paste a full URL instead.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            );
+          }}
+        </form.Field>
       </DialogContent>
     </Dialog>
   );
+}
+
+function isLinkLike(input: string): boolean {
+  const normalized = normalizeUrl(input.trim());
+  if (!linkUrlSchema.safeParse(normalized).success) return false;
+  try {
+    const url = new URL(normalized);
+    if (url.protocol === "mailto:" || url.protocol === "tel:") return true;
+    return url.hostname.includes(".");
+  } catch {
+    return false;
+  }
 }
 
 function hostnameOf(url: string): string {

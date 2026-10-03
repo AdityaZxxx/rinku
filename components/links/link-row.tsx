@@ -16,6 +16,8 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
+import { ThumbnailSection } from "@/components/links/thumbnail-section";
+import { isIconMedia, MediaIcon } from "@/components/media-icon";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,6 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Toggle } from "@/components/ui/toggle";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { displayUrl, faviconUrl, linkInputSchema } from "@/lib/links";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
       url: link.url,
       variant: link.variant,
       isActive: link.isActive,
+      imageUrl: link.imageUrl,
     },
     validators: { onChange: linkInputSchema },
     listeners: {
@@ -74,7 +76,6 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
   });
 
   const icon = faviconUrl(link.url);
-  const thumbnail = link.variant === "featured" && link.imageUrl ? link.imageUrl : null;
   const hidden = !link.isActive;
 
   return (
@@ -105,19 +106,23 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           <DotsSixVerticalIcon className="size-4" />
         </button>
 
-        {thumbnail ? (
+        {link.imageUrl && isIconMedia(link.imageUrl) ? (
+          <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
+            <MediaIcon imageUrl={link.imageUrl} className="size-5" />
+          </span>
+        ) : link.imageUrl && link.imageUrl !== "" ? (
           <Image
             unoptimized
-            src={thumbnail}
+            src={link.imageUrl}
             alt=""
             width={40}
             height={40}
             className={cn(
-              "outline-foreground/10 size-10 shrink-0 rounded-xl object-cover outline-1",
+              "size-10 shrink-0 rounded-full object-cover",
               hidden && "opacity-60 grayscale",
             )}
           />
-        ) : icon ? (
+        ) : link.imageUrl === null && icon ? (
           <Image
             unoptimized
             src={icon}
@@ -125,14 +130,14 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             width={40}
             height={40}
             className={cn(
-              "bg-muted size-10 shrink-0 rounded-xl object-contain p-1.5",
+              "bg-muted size-10 shrink-0 rounded-full object-contain p-1.5",
               hidden && "opacity-60 grayscale",
             )}
           />
         ) : (
           <span
             className={cn(
-              "bg-muted flex size-10 shrink-0 items-center justify-center rounded-xl",
+              "bg-muted flex size-10 shrink-0 items-center justify-center rounded-full",
               hidden && "opacity-60",
             )}
           >
@@ -239,23 +244,50 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
               return (
                 <Field>
                   <FieldLabel id="link-style-label">Style</FieldLabel>
-                  <ToggleGroup
-                    value={[field.state.value]}
-                    aria-labelledby="link-style-label"
-                    onValueChange={(groupValue) => {
-                      const next = groupValue[0];
-                      if (next === "classic" || next === "featured") {
-                        field.handleChange(next);
-                      }
-                    }}
-                  >
-                    <ToggleGroupItem value="classic">Classic</ToggleGroupItem>
-                    <ToggleGroupItem value="featured">Featured</ToggleGroupItem>
-                  </ToggleGroup>
+                  <div className="grid grid-cols-2 gap-2 sm:max-w-xs">
+                    {(["classic", "featured"] as const).map((value) => (
+                      <label
+                        key={value}
+                        className={cn(
+                          "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                          field.state.value === value
+                            ? "border-ring ring-ring/30 ring-3"
+                            : "border-input",
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="link-style"
+                          value={value}
+                          checked={field.state.value === value}
+                          onChange={() => field.handleChange(value)}
+                          className="sr-only"
+                        />
+                        {value === "classic" ? (
+                          <span className="flex items-center gap-1.5 rounded-full border px-2 py-1">
+                            <span className="bg-muted-foreground/30 size-3 rounded-full" />
+                            <span className="bg-muted-foreground/20 h-1.5 flex-1 rounded-full" />
+                          </span>
+                        ) : (
+                          <span className="flex flex-col overflow-hidden rounded-md border">
+                            <span className="bg-muted-foreground/20 h-8 w-full" />
+                            <span className="px-1.5 py-1">
+                              <span className="bg-muted-foreground/20 block h-1.5 w-2/3 rounded-full" />
+                            </span>
+                          </span>
+                        )}
+                        <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs">
+                          {value === "classic" ? "Classic" : "Featured"}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </Field>
               );
             }}
           </form.Field>
+
+          <ThumbnailSection link={link} />
 
           <div className="flex items-center justify-between">
             <form.Field name="isActive">

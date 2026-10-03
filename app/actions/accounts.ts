@@ -5,6 +5,50 @@ import { getProfiles } from "@/lib/db/profile";
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 72;
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+  if (!user.email) {
+    return { error: "Changing your password failed. Try again." };
+  }
+
+  const { currentPassword, newPassword } = input;
+  if (currentPassword === newPassword) {
+    return { error: "Choose a password different from your current one." };
+  }
+  if (newPassword.length < PASSWORD_MIN || newPassword.length > PASSWORD_MAX) {
+    return { error: `Use between ${PASSWORD_MIN} and ${PASSWORD_MAX} characters.` };
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (signInError) {
+    log.warn("accounts", "changePassword reauth failed", signInError.message);
+    return { error: "That current password is not right." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) {
+    log.error("accounts", "changePassword failed", error.message);
+    return { error: "Changing your password failed. Try again." };
+  }
+
+  return { ok: true };
+}
+
 export async function deleteAccount(): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {

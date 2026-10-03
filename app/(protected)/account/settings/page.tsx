@@ -1,3 +1,4 @@
+import { ChangePasswordSection } from "@/components/settings/change-password-section";
 import { DeleteAccountSection } from "@/components/settings/delete-account-section";
 import { getClaims } from "@/lib/auth";
 
@@ -11,9 +12,10 @@ export default async function AccountSettingsPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-lg font-medium">Account settings</h1>
         <p className="text-muted-foreground text-sm">
-          More account settings are on the way.
+          Change your password or delete your account.
         </p>
       </div>
+      <ChangePasswordSection />
       <DeleteAccountSection email={claims?.email ?? ""} />
     </div>
   );

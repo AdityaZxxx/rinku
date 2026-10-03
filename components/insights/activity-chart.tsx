@@ -13,7 +13,7 @@ export function ActivityChart({
     <ChartContainer
       config={{
         visits: { label: "Visits", color: "var(--chart-2)" },
-        clicks: { label: "Clicks", color: "var(--chart-1)" },
+        clicks: { label: "Clicks", color: "var(--chart-3)" },
       }}
       className="aspect-[2/1] w-full"
     >

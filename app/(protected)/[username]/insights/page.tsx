@@ -132,20 +132,20 @@ export default async function InsightsPage({
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="flex flex-col gap-1 rounded-lg border p-4">
-          <span className="text-2xl font-semibold tabular-nums">{visits.length}</span>
+        <div className="bg-muted/30 flex flex-col gap-1 rounded-lg border p-4">
+          <span className="text-3xl font-semibold tabular-nums">{visits.length}</span>
           <span className="text-muted-foreground text-sm">Profile visits</span>
         </div>
-        <div className="flex flex-col gap-1 rounded-lg border p-4">
-          <span className="text-2xl font-semibold tabular-nums">{clicks.length}</span>
+        <div className="bg-muted/30 flex flex-col gap-1 rounded-lg border p-4">
+          <span className="text-3xl font-semibold tabular-nums">{clicks.length}</span>
           <span className="text-muted-foreground text-sm">Clicks</span>
         </div>
         <div className="flex flex-col gap-1 rounded-lg border p-4">
-          <span className="text-2xl font-semibold tabular-nums">{totalsByLink.size}</span>
+          <span className="text-xl font-semibold tabular-nums">{totalsByLink.size}</span>
           <span className="text-muted-foreground text-sm">Unique links</span>
         </div>
-        <div className="flex flex-col gap-1 rounded-lg border p-4">
-          <span className="text-2xl font-semibold tabular-nums">{clickRate}%</span>
+        <div className="col-span-2 flex flex-col gap-1 rounded-lg border p-4 sm:col-span-1">
+          <span className="text-xl font-semibold tabular-nums">{clickRate}%</span>
           <span className="text-muted-foreground text-sm">Click rate</span>
         </div>
       </div>
@@ -160,14 +160,25 @@ export default async function InsightsPage({
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-medium">Most clicked links</h2>
           <ul className="flex flex-col divide-y rounded-lg border">
-            {ranked.map((row) => (
-              <li key={row.title} className="flex items-center justify-between gap-4 p-3">
-                <span className="truncate text-sm">{row.title}</span>
-                <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                  {row.count} click{row.count === 1 ? "" : "s"}
-                </span>
-              </li>
-            ))}
+            {ranked.map((row) => {
+              const max = ranked[0]?.count ?? 1;
+              return (
+                <li key={row.title} className="flex flex-col gap-2 p-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="truncate text-sm">{row.title}</span>
+                    <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+                      {row.count} click{row.count === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="bg-muted h-1.5 w-full rounded-full">
+                    <div
+                      className="bg-foreground h-1.5 rounded-full transition-all"
+                      style={{ width: `${(row.count / max) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

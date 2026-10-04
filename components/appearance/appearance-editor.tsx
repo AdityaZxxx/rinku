@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getProfile } from "@/app/actions/profiles";
+import { AllFontsStylesheet } from "@/components/appearance/font-stylesheet";
 import { patternBackground } from "@/components/appearance/wallpaper-layer";
 import {
   Attachment,
@@ -984,6 +985,7 @@ export function AppearanceEditor({
       <div className="bg-card flex flex-col gap-6 rounded-2xl border p-4 sm:p-5">
         <Field>
           <FieldLabel id="font-label">Font</FieldLabel>
+          <AllFontsStylesheet />
           <Dialog open={fontOpen} onOpenChange={setFontOpen}>
             <DialogTrigger
               render={

@@ -241,38 +241,78 @@ export function toFontId(value: string | null | undefined): FontId {
 export function fontStack(font: FontId): string {
   switch (font) {
     case "noto-sans":
-      return "var(--font-noto-sans), system-ui, sans-serif";
+      return '"Noto Sans", system-ui, sans-serif';
     case "plus-jakarta-sans":
-      return "var(--font-plus-jakarta-sans), system-ui, sans-serif";
+      return '"Plus Jakarta Sans", system-ui, sans-serif';
     case "work-sans":
-      return "var(--font-work-sans), system-ui, sans-serif";
+      return '"Work Sans", system-ui, sans-serif';
     case "dm-sans":
-      return "var(--font-dm-sans), system-ui, sans-serif";
+      return '"DM Sans", system-ui, sans-serif';
     case "karla":
-      return "var(--font-karla), system-ui, sans-serif";
+      return '"Karla", system-ui, sans-serif';
     case "nunito":
-      return "var(--font-nunito), ui-rounded, system-ui, sans-serif";
+      return '"Nunito", ui-rounded, system-ui, sans-serif';
     case "figtree":
-      return "var(--font-figtree), system-ui, sans-serif";
+      return '"Figtree", system-ui, sans-serif';
     case "merriweather":
-      return "var(--font-merriweather), Georgia, serif";
+      return '"Merriweather", Georgia, serif';
     case "playfair-display":
-      return "var(--font-playfair-display), Georgia, serif";
+      return '"Playfair Display", Georgia, serif';
     case "lora":
-      return "var(--font-lora), Georgia, serif";
+      return '"Lora", Georgia, serif';
     case "cormorant-garamond":
-      return "var(--font-cormorant-garamond), Georgia, serif";
+      return '"Cormorant Garamond", Georgia, serif';
     case "source-serif-4":
-      return "var(--font-source-serif-4), Georgia, serif";
+      return '"Source Serif 4", Georgia, serif';
     case "ibm-plex-mono":
-      return "var(--font-ibm-plex-mono), ui-monospace, monospace";
+      return '"IBM Plex Mono", ui-monospace, monospace';
     case "space-grotesk":
-      return "var(--font-space-grotesk), system-ui, sans-serif";
+      return '"Space Grotesk", system-ui, sans-serif';
     case "fraunces":
-      return "var(--font-fraunces), Georgia, serif";
+      return '"Fraunces", Georgia, serif';
     default:
       return "var(--font-inter), system-ui, sans-serif";
   }
+}
+
+/** Families injected by the Google Fonts stylesheet for a given FontId. */
+const googleFamily: Record<Exclude<FontId, "inter">, string> = {
+  "noto-sans": "Noto+Sans:wght@400;500;600;700",
+  "plus-jakarta-sans": "Plus+Jakarta+Sans:wght@400;500;600;700",
+  "work-sans": "Work+Sans:wght@400;500;600;700",
+  "dm-sans": "DM+Sans:wght@400;500;600;700",
+  karla: "Karla:wght@400;500;600;700",
+  nunito: "Nunito:wght@400;600;700;800",
+  figtree: "Figtree:wght@400;500;600;700",
+  merriweather: "Merriweather:wght@400;700",
+  "playfair-display": "Playfair+Display:wght@400;600;700",
+  lora: "Lora:wght@400;500;600;700",
+  "cormorant-garamond": "Cormorant+Garamond:wght@400;500;600;700",
+  "source-serif-4": "Source+Serif+4:wght@400;600;700",
+  "ibm-plex-mono": "IBM+Plex+Mono:wght@400;500;600;700",
+  "space-grotesk": "Space+Grotesk:wght@400;500;600;700",
+  fraunces: "Fraunces:opsz,wght@9..144,400..700",
+};
+
+/**
+ * Stylesheet URL for one appearance font, or null for fonts the app already
+ * loads (Inter via next/font). Loading one `<link>` per visible font, instead
+ * of 16 next/font variables on every page, keeps the public page from paying
+ * for fonts nobody sees.
+ */
+export function fontStylesheetUrl(font: FontId): string | null {
+  if (font === "inter") {
+    return null;
+  }
+  return `https://fonts.googleapis.com/css2?family=${googleFamily[font]}&display=swap`;
+}
+
+/** One combined stylesheet for every appearance font (editor previews). */
+export function allFontsStylesheetUrl(): string {
+  const families = Object.values(googleFamily)
+    .map((family) => `family=${family}`)
+    .join("&");
+  return `https://fonts.googleapis.com/css2?${families}&display=swap`;
 }
 
 export const wallpaperKindIds = [

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Profile } from "@/lib/db/schema";
 
+import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { MediaIcon } from "@/components/media-icon";
 import {
@@ -121,6 +122,7 @@ export function ProfilePreviewContent({
       className="relative flex min-h-full w-full flex-1 flex-col"
       style={{ fontFamily }}
     >
+      <FontStylesheet font={look.font} />
       {bare ? null : (
         <WallpaperLayer
           kind={look.wallpaper}

@@ -202,7 +202,7 @@ export function ProfileEditor({
           {(field) => (
             <Field>
               <FieldLabel id="header-style-label">Header style</FieldLabel>
-              <ScrollArea className="[mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)] px-2">
+              <ScrollArea className="scroll-fade-10 **:data-[slot=scroll-area-viewport]:scroll-fade-x px-2">
                 <div className="mb-4 flex w-max snap-x gap-2 p-0.5">
                   {(
                     [

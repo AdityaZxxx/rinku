@@ -1,9 +1,11 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
 import { appearanceSchema } from "@/lib/appearance";
+import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import { profiles, type Profile } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -60,6 +62,7 @@ export async function renameProfile(input: {
   if (renamed.length === 0) {
     return { error: "Profile not found." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -124,6 +127,7 @@ export async function updateProfile(input: {
   if (updated.length === 0) {
     return { error: "This profile could not be saved." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -185,6 +189,7 @@ export async function updateAppearance(input: {
   if (updated.length === 0) {
     return { error: "This profile could not be saved." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -309,6 +314,7 @@ export async function uploadProfileImage(
     }
   }
 
+  updateTag(PUBLIC_PROFILE_TAG);
   return { path, target };
 }
 
@@ -403,6 +409,7 @@ export async function uploadWallpaper(
     }
   }
 
+  updateTag(PUBLIC_PROFILE_TAG);
   return { path, target };
 }
 
@@ -458,6 +465,7 @@ export async function removeWallpaperMedia(input: {
       .set({ [column]: null, updatedAt: new Date() })
       .where(eq(profiles.id, parsed.data.profileId)),
   );
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -484,6 +492,7 @@ export async function createProfile(input: {
     return { error: error.message };
   }
 
+  updateTag(PUBLIC_PROFILE_TAG);
   return { username: input.username };
 }
 
@@ -539,5 +548,6 @@ export async function deleteProfile(input: {
     return { error: "Profile not found." };
   }
 
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }

@@ -1,9 +1,11 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { and, eq, max, sql } from "drizzle-orm";
 import * as z from "zod";
 
 import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
+import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import { links, profiles, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import {
@@ -150,6 +152,7 @@ export async function createLink(input: {
   if (!created) {
     return { error: "Adding this link failed. Try again." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return created;
 }
 
@@ -215,6 +218,7 @@ export async function uploadLinkImage(
   if (updated.length === 0) {
     return { error: "Image upload failed. Try again." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { url };
 }
 
@@ -256,6 +260,7 @@ export async function updateLink(input: {
   if (updated.length === 0) {
     return { error: "This link could not be saved." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -284,6 +289,7 @@ export async function archiveLink(input: {
   if (archived.length === 0) {
     return { error: "This link could not be archived." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -316,6 +322,7 @@ export async function restoreLink(input: {
   if (restored.length === 0) {
     return { error: "This link could not be restored." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -342,6 +349,7 @@ export async function deleteLink(input: {
   if (deleted.length === 0) {
     return { error: "This link could not be deleted." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
 
@@ -388,5 +396,6 @@ export async function reorderLinks(input: {
     );
     return { error: "Reordering failed. Try again." };
   }
+  updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }

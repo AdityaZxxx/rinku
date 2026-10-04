@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { LinkSimpleIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  CaretLeftIcon,
+  LinkSimpleIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+} from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
@@ -49,6 +54,13 @@ export function AddLinkDialog({
   const [meta, setMeta] = useState<LinkMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const handleRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    (selected ? handleRef : searchRef).current?.focus();
+  }, [open, selected]);
 
   function reset() {
     setCategory("socials");
@@ -173,73 +185,88 @@ export function AddLinkDialog({
 
             return (
               <div className="flex flex-col gap-3">
-                <form
-                  noValidate
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (isUrl) form.handleSubmit();
-                  }}
-                >
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <MagnifyingGlassIcon />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder="Paste a link or search types…"
-                      aria-label="Link URL or search"
-                    />
-                    {field.state.meta.isValidating && (
-                      <InputGroupAddon align="inline-end">
-                        <Spinner />
+                {!selected && (
+                  <form
+                    noValidate
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (isUrl) form.handleSubmit();
+                    }}
+                  >
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <MagnifyingGlassIcon />
                       </InputGroupAddon>
-                    )}
-                  </InputGroup>
-                </form>
-
-                {isUrl && (
-                  <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
-                    {meta?.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={meta.imageUrl}
-                        alt=""
-                        className="size-10 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
+                      <InputGroupInput
+                        ref={searchRef}
+                        value={field.state.value}
+                        onChange={(event) => field.handleChange(event.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        placeholder="Paste a link or search..."
+                        aria-label="Link URL or search"
                       />
-                    ) : (
-                      <LinkSimpleIcon className="text-muted-foreground size-5" />
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-sm font-medium">
-                        {meta?.title ?? query}
-                      </span>
-                      {meta ? (
-                        <span className="text-muted-foreground truncate text-xs">
-                          {query}
-                        </span>
-                      ) : null}
+                      {field.state.meta.isValidating && (
+                        <InputGroupAddon align="inline-end">
+                          <Spinner />
+                        </InputGroupAddon>
+                      )}
+                    </InputGroup>
+                  </form>
+                )}
+
+                {!selected && isUrl && (
+                  <div className="flex flex-col gap-2">
+                    <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
+                      {meta?.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={meta.imageUrl}
+                          alt=""
+                          className="size-10 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
+                        />
+                      ) : (
+                        <LinkSimpleIcon className="text-muted-foreground size-5" />
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        {field.state.meta.isValidating && !meta ? (
+                          <span className="text-muted-foreground text-sm">
+                            Loading preview…
+                          </span>
+                        ) : (
+                          <span className="truncate text-sm font-medium">
+                            {meta?.title ?? query}
+                          </span>
+                        )}
+                        {meta ? (
+                          <span className="text-muted-foreground truncate text-xs">
+                            {query}
+                          </span>
+                        ) : null}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => form.handleSubmit()}
+                        disabled={pending}
+                      >
+                        Add link
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => form.handleSubmit()}
-                      disabled={pending}
-                    >
-                      Add link
-                    </Button>
+                    {error ? (
+                      <p className="text-destructive px-1 text-sm">{error}</p>
+                    ) : null}
                   </div>
                 )}
 
                 <div className="flex flex-col gap-4 sm:flex-row">
-                  {!query ? (
+                  {!query && !selected ? (
                     <nav className="flex flex-row gap-2 sm:w-20 sm:shrink-0 sm:flex-col">
                       {CATEGORIES.map((entry) => (
                         <button
                           key={entry.id}
                           type="button"
                           onClick={() => setCategory(entry.id)}
+                          aria-current={category === entry.id || undefined}
                           className={
                             category === entry.id
                               ? "bg-accent text-accent-foreground rounded-lg px-2 py-1.5 text-left text-sm font-medium"
@@ -252,20 +279,30 @@ export function AddLinkDialog({
                     </nav>
                   ) : null}
 
-                  <div className="flex min-h-48 flex-1 flex-col gap-3">
+                  <div className="flex flex-1 flex-col gap-3">
                     {selected ? (
-                      <div className="flex flex-col gap-3">
-                        <button
+                      <form
+                        noValidate
+                        className="flex flex-col gap-3"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          addItem();
+                        }}
+                      >
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => {
                             setSelected(null);
                             setHandle("");
                             setError(null);
                           }}
-                          className="text-muted-foreground self-start text-sm underline underline-offset-4"
+                          className="self-start"
                         >
-                          ← Back
-                        </button>
+                          <CaretLeftIcon />
+                          Back
+                        </Button>
                         <InputGroup>
                           <InputGroupAddon align="inline-start">
                             {selected.platform ? (
@@ -273,6 +310,7 @@ export function AddLinkDialog({
                             ) : null}
                           </InputGroupAddon>
                           <InputGroupInput
+                            ref={handleRef}
                             value={handle}
                             onChange={(event) => setHandle(event.target.value)}
                             placeholder={selected.placeholder}
@@ -283,18 +321,21 @@ export function AddLinkDialog({
                           <p className="text-destructive text-sm">{error}</p>
                         ) : null}
                         <DialogFooter>
-                          <Button type="button" onClick={addItem} disabled={pending}>
+                          <Button type="submit" disabled={pending}>
                             {pending && <Spinner />}
                             Add {selected.label}
                           </Button>
                         </DialogFooter>
-                      </div>
+                      </form>
                     ) : (
                       results.map((item) => (
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => setSelected(item)}
+                          onClick={() => {
+                            setSelected(item);
+                            setError(null);
+                          }}
                           className="hover:bg-accent focus-visible:ring-ring/30 flex items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition-colors focus-visible:ring-3 focus-visible:outline-none"
                         >
                           <span className="border-input inline-flex size-9 items-center justify-center rounded-full border">
@@ -313,7 +354,7 @@ export function AddLinkDialog({
                         </button>
                       ))
                     )}
-                    {!selected && results.length === 0 && query ? (
+                    {!selected && !isUrl && results.length === 0 && query ? (
                       <p className="text-muted-foreground px-2 py-4 text-sm">
                         No types match “{query}”. Paste a full URL instead.
                       </p>

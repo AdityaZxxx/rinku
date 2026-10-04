@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { CalendarBlankIcon } from "@phosphor-icons/react";
 import { format } from "date-fns";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,6 +33,44 @@ function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+const STORAGE_KEY = "rinku:insights:range";
+
+const storedSchema = z.discriminatedUnion("kind", [
+  // A rolling preset ("last 7 days") re-anchors to today on each visit.
+  z.object({ kind: z.literal("preset"), days: z.number().int().positive() }),
+  z.object({ kind: z.literal("range"), from: z.string(), to: z.string() }),
+]);
+
+type StoredRange = z.infer<typeof storedSchema>;
+
+function readStoredRange(): StoredRange | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = storedSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRange(stored: StoredRange) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+  } catch {
+    // Storage can be unavailable (private mode); persistence is best-effort.
+  }
+}
+
+function presetRange(days: number) {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - (days - 1));
+  return { from: localDayKey(from), to: localDayKey(to) };
+}
+
 export function DateRangePicker({
   initialFrom,
   initialTo,
@@ -49,9 +88,16 @@ export function DateRangePicker({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (!params.get("tz") && !params.get("from") && !params.get("to")) {
+      const stored = readStoredRange();
       const today = localDayKey(new Date());
-      params.set("from", today);
-      params.set("to", today);
+      const restored =
+        stored?.kind === "preset"
+          ? presetRange(stored.days)
+          : stored?.kind === "range"
+            ? { from: stored.from, to: stored.to }
+            : { from: today, to: today };
+      params.set("from", restored.from);
+      params.set("to", restored.to);
       params.set("tz", browserTimeZone());
       router.replace(`?${params.toString()}`, { scroll: false });
     }
@@ -81,6 +127,7 @@ export function DateRangePicker({
             from.setDate(from.getDate() - (preset.days - 1));
             setRange({ from, to });
             push(from, to);
+            rememberRange({ kind: "preset", days: preset.days });
           }}
         >
           {preset.label}
@@ -107,6 +154,11 @@ export function DateRangePicker({
               if (next?.from && next?.to) {
                 push(next.from, next.to);
                 setOpen(false);
+                rememberRange({
+                  kind: "range",
+                  from: localDayKey(next.from),
+                  to: localDayKey(next.to),
+                });
               }
             }}
             numberOfMonths={2}

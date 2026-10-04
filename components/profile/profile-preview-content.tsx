@@ -1,12 +1,23 @@
 import Image from "next/image";
+import type { Profile } from "@/lib/db/schema";
 
+import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { MediaIcon } from "@/components/media-icon";
 import {
   ProfileHeader,
   type ProfileHeaderVariant,
 } from "@/components/profile/profile-header";
+import {
+  buttonBodyStyle,
+  buttonContourClass,
+  featuredContourClass,
+  fontStack,
+  mutedFor,
+  resolveAppearance,
+} from "@/lib/appearance";
 import { faviconUrl } from "@/lib/links";
 import { isIconMedia } from "@/lib/media";
+import { cn } from "@/lib/utils";
 
 export interface PreviewLink {
   id: string;
@@ -25,7 +36,7 @@ function LinkContent({ link }: { link: PreviewLink }) {
   return (
     <>
       {isIconMedia(link.imageUrl) ? (
-        <span className="bg-muted inline-flex size-10 items-center justify-center rounded-full">
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full">
           <MediaIcon imageUrl={link.imageUrl} className="size-5" />
         </span>
       ) : link.imageUrl && link.imageUrl !== "" ? (
@@ -34,7 +45,7 @@ function LinkContent({ link }: { link: PreviewLink }) {
           alt=""
           width={40}
           height={40}
-          className="size-10 rounded-full object-cover"
+          className="size-10 shrink-0 rounded-full object-cover"
           unoptimized
         />
       ) : link.imageUrl === null && favicon ? (
@@ -42,20 +53,22 @@ function LinkContent({ link }: { link: PreviewLink }) {
         // user's list changes hosts often enough that the optimizer cache
         // never earns its keep.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={favicon} alt="" className="size-5 rounded-full" />
+        <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
       ) : null}
       <span className="truncate">{link.title}</span>
     </>
   );
 }
 
-function FeaturedCardImage({ link }: { link: PreviewLink }) {
+function FeaturedCardImage({ link, muted }: { link: PreviewLink; muted: string }) {
   if (!link.imageUrl) {
-    return <div className="bg-muted aspect-[1200/630] w-full" />;
+    return (
+      <div className="aspect-[1200/630] w-full" style={{ backgroundColor: muted }} />
+    );
   }
   if (isIconMedia(link.imageUrl)) {
     return (
-      <div className="bg-muted grid aspect-[1200/630] w-full place-items-center">
+      <div className="grid aspect-[1200/630] w-full place-items-center">
         <MediaIcon imageUrl={link.imageUrl} className="size-16" />
       </div>
     );
@@ -73,90 +86,115 @@ function FeaturedCardImage({ link }: { link: PreviewLink }) {
 }
 
 export function ProfilePreviewContent({
-  displayName,
-  username,
-  bio,
-  avatarPath,
-  bannerPath,
+  profile,
   links,
   interactive = true,
-  headerStyle = "classic",
+  bare = false,
 }: {
-  displayName: string | null;
-  username: string;
-  bio: string | null;
-  avatarPath: string | null;
-  bannerPath: string | null;
+  profile: Profile;
   links: PreviewLink[];
   interactive?: boolean;
-  headerStyle?: ProfileHeaderVariant;
+  bare?: boolean;
 }) {
   const visibleLinks = links.filter((link) => link.isActive && link.archivedAt === null);
   const socialLinks = visibleLinks.filter((link) => link.kind === "social");
   const customLinks = visibleLinks.filter((link) => link.kind !== "social");
+  const look = resolveAppearance(profile);
+  const contour = buttonContourClass(look.contour);
+  const featuredContour = featuredContourClass(look.contour);
+  const bodyStyle = buttonBodyStyle({
+    color: look.buttonColor,
+    textColor: look.buttonTextColor,
+    variant: look.variant,
+    umbra: look.umbra,
+    edge: look.titleColor,
+  });
+  const muted = mutedFor(look.bodyColor);
+  const fontFamily = fontStack(look.font);
+
+  // SAFETY: headerStyle is constrained to this union by the database
+  // CHECK and the zod schema, so the persisted value narrows safely.
+  const headerVariant = profile.headerStyle as ProfileHeaderVariant;
 
   return (
-    <div className="bg-background flex w-full flex-col">
-      <ProfileHeader
-        variant={headerStyle}
-        displayName={displayName}
-        username={username}
-        bio={bio}
-        avatarPath={avatarPath}
-        bannerPath={bannerPath}
-        socialLinks={socialLinks}
-        interactive={interactive}
-      />
-      <div className="flex w-full flex-col px-6 pb-8">
-        <div className="mt-2 flex w-full flex-col gap-2">
-          {customLinks.length === 0 ? (
-            <p className="text-muted-foreground text-center text-sm">
-              {socialLinks.length === 0 ? "No links yet." : null}
-            </p>
-          ) : (
-            customLinks.map((link) =>
-              interactive ? (
-                <a
-                  key={link.id}
-                  href={`/go/${link.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={
-                    link.variant === "featured"
-                      ? "border-input bg-card hover:bg-accent flex w-full flex-col overflow-hidden rounded-xl border text-left text-sm shadow-sm transition"
-                      : "border-input bg-card hover:bg-accent flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm shadow-sm transition"
-                  }
-                >
-                  {link.variant === "featured" ? (
+    <div
+      className="relative flex min-h-full w-full flex-1 flex-col"
+      style={{ fontFamily }}
+    >
+      {bare ? null : (
+        <WallpaperLayer
+          kind={look.wallpaper}
+          color={look.wallpaperColor}
+          colorB={look.wallpaperColorB}
+          pattern={look.pattern}
+          imagePath={look.wallpaperImagePath}
+          videoPath={look.wallpaperVideoPath}
+          titleColor={look.titleColor}
+        />
+      )}
+      <div
+        className="relative mx-auto flex w-full max-w-md flex-1 flex-col"
+        style={{ color: look.bodyColor }}
+      >
+        <ProfileHeader
+          variant={headerVariant}
+          displayName={profile.displayName}
+          username={profile.username}
+          bio={profile.bio}
+          avatarPath={profile.avatarPath}
+          bannerPath={profile.bannerPath}
+          socialLinks={socialLinks}
+          interactive={interactive}
+          look={look}
+        />
+        <div className="flex w-full flex-col px-6 pb-8">
+          <div className="mt-2 flex w-full flex-col gap-3">
+            {customLinks.length === 0 ? (
+              <p className="text-center text-sm" style={{ color: muted }}>
+                {socialLinks.length === 0 ? "No links yet." : null}
+              </p>
+            ) : (
+              customLinks.map((link) => {
+                const classicClass = cn(
+                  "flex w-full items-center justify-center gap-2 border px-4 py-2.5 text-sm font-medium transition hover:brightness-95",
+                  contour,
+                );
+                const featuredClass = cn(
+                  "flex w-full flex-col overflow-hidden border text-left text-sm transition hover:brightness-95",
+                  featuredContour,
+                );
+                const body =
+                  link.variant === "featured" ? (
                     <>
-                      <FeaturedCardImage link={link} />
+                      <FeaturedCardImage link={link} muted={muted} />
                       <span className="px-3 py-2.5 font-medium">{link.title}</span>
                     </>
                   ) : (
                     <LinkContent link={link} />
-                  )}
-                </a>
-              ) : (
-                <div
-                  key={link.id}
-                  className={
-                    link.variant === "featured"
-                      ? "border-input bg-card flex w-full flex-col overflow-hidden rounded-xl border text-left text-sm shadow-sm"
-                      : "border-input bg-card flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm shadow-sm"
-                  }
-                >
-                  {link.variant === "featured" ? (
-                    <>
-                      <FeaturedCardImage link={link} />
-                      <span className="px-3 py-2.5 font-medium">{link.title}</span>
-                    </>
-                  ) : (
-                    <LinkContent link={link} />
-                  )}
-                </div>
-              ),
-            )
-          )}
+                  );
+                return interactive ? (
+                  <a
+                    key={link.id}
+                    href={`/go/${link.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={link.variant === "featured" ? featuredClass : classicClass}
+                    style={bodyStyle}
+                  >
+                    {body}
+                  </a>
+                ) : (
+                  <div
+                    key={link.id}
+                    className={link.variant === "featured" ? featuredClass : classicClass}
+                    style={bodyStyle}
+                  >
+                    {body}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>

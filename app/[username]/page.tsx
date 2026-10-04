@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import type { ProfileHeaderVariant } from "@/components/profile/profile-header";
 import { createHash } from "node:crypto";
 import { sql } from "drizzle-orm";
 
+import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
+import { resolveAppearance } from "@/lib/appearance";
 import { getUserId } from "@/lib/auth";
 import { getPublicLinksByProfile } from "@/lib/db/links";
 import { getPublicProfileByUsername } from "@/lib/db/profile";
@@ -48,6 +49,7 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
   }
 
   const links = await getPublicLinksByProfile(profile.id);
+  const look = resolveAppearance(profile);
 
   let viewerId: string | null = null;
   try {
@@ -69,19 +71,17 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
-      <ProfilePreviewContent
-        displayName={profile.displayName}
-        username={profile.username}
-        bio={profile.bio}
-        avatarPath={profile.avatarPath}
-        bannerPath={profile.bannerPath}
-        // SAFETY: headerStyle is constrained to this union by the database
-        // CHECK and the zod schema, so the persisted value narrows safely.
-        headerStyle={profile.headerStyle as ProfileHeaderVariant}
-        links={links}
-        interactive
+    <main className="relative flex min-h-dvh w-full flex-1 flex-col">
+      <WallpaperLayer
+        kind={look.wallpaper}
+        color={look.wallpaperColor}
+        colorB={look.wallpaperColorB}
+        pattern={look.pattern}
+        imagePath={look.wallpaperImagePath}
+        videoPath={look.wallpaperVideoPath}
+        titleColor={look.titleColor}
       />
+      <ProfilePreviewContent profile={profile} links={links} interactive bare />
     </main>
   );
 }

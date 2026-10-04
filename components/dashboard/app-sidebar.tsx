@@ -13,6 +13,7 @@ import {
   LinkIcon,
   MonitorIcon,
   MoonIcon,
+  PaletteIcon,
   RabbitIcon,
   SignOutIcon,
   SquaresFourIcon,
@@ -141,6 +142,18 @@ export function AppSidebar({
                   >
                     <UserCircleIcon />
                     Profile
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/appearance`}
+                    tooltip="Appearance"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("appearance")} />}
+                  >
+                    <PaletteIcon />
+                    Appearance
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 

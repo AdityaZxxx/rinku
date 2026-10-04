@@ -3,6 +3,7 @@
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
+import { appearanceSchema } from "@/lib/appearance";
 import { profiles, type Profile } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -11,6 +12,7 @@ import {
   imageMaxBytes,
   profileBasicsSchema,
   usernameSchema,
+  videoExtension,
 } from "@/lib/profiles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -114,6 +116,67 @@ export async function updateProfile(input: {
         displayName: parsed.data.displayName.trim() || null,
         bio: parsed.data.bio.trim() || null,
         headerStyle: parsed.data.headerStyle,
+        updatedAt: new Date(),
+      })
+      .where(eq(profiles.username, parsed.data.username))
+      .returning({ id: profiles.id }),
+  );
+  if (updated.length === 0) {
+    return { error: "This profile could not be saved." };
+  }
+  return { ok: true };
+}
+
+export async function updateAppearance(input: {
+  username: string;
+  themeId: string;
+  buttonContour: string;
+  buttonVariant: string;
+  buttonUmbra: string;
+  buttonColor: string;
+  buttonTextColor: string;
+  fontId: string;
+  titleColor: string;
+  bodyColor: string;
+  wallpaperKind: string;
+  wallpaperColor: string;
+  wallpaperColorB: string;
+  wallpaperPattern: string;
+  wallpaperImagePath: string | null;
+  wallpaperVideoPath: string | null;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = appearanceSchema.extend({ username: z.string() }).safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "That input was not valid." };
+  }
+
+  const updated = await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({
+        themeId: parsed.data.themeId,
+        buttonContour: parsed.data.buttonContour,
+        buttonVariant: parsed.data.buttonVariant,
+        buttonUmbra: parsed.data.buttonUmbra,
+        buttonColor: parsed.data.buttonColor,
+        buttonTextColor: parsed.data.buttonTextColor,
+        fontId: parsed.data.fontId,
+        titleColor: parsed.data.titleColor,
+        bodyColor: parsed.data.bodyColor,
+        wallpaperKind: parsed.data.wallpaperKind,
+        wallpaperColor: parsed.data.wallpaperColor,
+        wallpaperColorB: parsed.data.wallpaperColorB,
+        wallpaperPattern: parsed.data.wallpaperPattern,
+        wallpaperImagePath: parsed.data.wallpaperImagePath,
+        wallpaperVideoPath: parsed.data.wallpaperVideoPath,
         updatedAt: new Date(),
       })
       .where(eq(profiles.username, parsed.data.username))
@@ -249,6 +312,155 @@ export async function uploadProfileImage(
   return { path, target };
 }
 
+export async function uploadWallpaper(
+  formData: FormData,
+): Promise<
+  { path: string; target: "wallpaper-image" | "wallpaper-video" } | { error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({
+      profileId: z.uuid(),
+      file: z.instanceof(File),
+      target: z.enum(["wallpaper-image", "wallpaper-video"]),
+    })
+    .safeParse({
+      profileId: formData.get("profileId"),
+      file: formData.get("file"),
+      target: formData.get("target"),
+    });
+  if (!parsed.success) {
+    return { error: "Upload failed. Try again." };
+  }
+  const { profileId, file, target } = parsed.data;
+  const isVideo = target === "wallpaper-video";
+
+  const extension = isVideo ? videoExtension(file.type) : imageExtension(file.type);
+  const maxBytes = isVideo ? imageMaxBytes.wallpaperVideo : imageMaxBytes.wallpaperImage;
+  if (file.size === 0) {
+    return { error: "That file is empty." };
+  }
+  if (extension === null || file.size > maxBytes) {
+    return {
+      error: isVideo
+        ? `Upload an MP4 or WebM video up to ${maxBytes / (1024 * 1024)} MB.`
+        : `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
+    };
+  }
+
+  const [profile] = await withUserDb(user.id, (tx) =>
+    tx
+      .select({
+        id: profiles.id,
+        wallpaperImagePath: profiles.wallpaperImagePath,
+        wallpaperVideoPath: profiles.wallpaperVideoPath,
+      })
+      .from(profiles)
+      .where(and(eq(profiles.id, profileId), eq(profiles.userId, user.id)))
+      .limit(1),
+  );
+  if (!profile) {
+    return { error: "Profile not found." };
+  }
+
+  const path = `${profileId}/${target}-${Date.now()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from("wallpapers")
+    .upload(path, file, { contentType: file.type });
+  if (uploadError) {
+    log.error("profiles", `uploadWallpaper ${target} failed`, uploadError.message);
+    return { error: "Upload failed. Try again." };
+  }
+
+  const column = isVideo ? "wallpaperVideoPath" : "wallpaperImagePath";
+  const updated = await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({ [column]: path, updatedAt: new Date() })
+      .where(eq(profiles.id, profileId))
+      .returning({ id: profiles.id }),
+  );
+  if (updated.length === 0) {
+    return { error: "Upload failed. Try again." };
+  }
+
+  const oldPath = isVideo ? profile.wallpaperVideoPath : profile.wallpaperImagePath;
+  if (oldPath) {
+    const { error } = await supabase.storage.from("wallpapers").remove([oldPath]);
+    if (error) {
+      log.error(
+        "profiles",
+        `uploadWallpaper old ${target} cleanup failed`,
+        error.message,
+      );
+    }
+  }
+
+  return { path, target };
+}
+
+export async function removeWallpaperMedia(input: {
+  profileId: string;
+  target: "wallpaper-image" | "wallpaper-video";
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({
+      profileId: z.uuid(),
+      target: z.enum(["wallpaper-image", "wallpaper-video"]),
+    })
+    .safeParse(input);
+  if (!parsed.success) {
+    return { error: "Removing failed. Try again." };
+  }
+
+  const [profile] = await withUserDb(user.id, (tx) =>
+    tx
+      .select({
+        id: profiles.id,
+        wallpaperImagePath: profiles.wallpaperImagePath,
+        wallpaperVideoPath: profiles.wallpaperVideoPath,
+      })
+      .from(profiles)
+      .where(and(eq(profiles.id, parsed.data.profileId), eq(profiles.userId, user.id)))
+      .limit(1),
+  );
+  if (!profile) {
+    return { error: "Profile not found." };
+  }
+
+  const isVideo = parsed.data.target === "wallpaper-video";
+  const oldPath = isVideo ? profile.wallpaperVideoPath : profile.wallpaperImagePath;
+  if (oldPath) {
+    const { error } = await supabase.storage.from("wallpapers").remove([oldPath]);
+    if (error) {
+      log.error("profiles", "removeWallpaperMedia cleanup failed", error.message);
+    }
+  }
+  const column = isVideo ? "wallpaperVideoPath" : "wallpaperImagePath";
+  await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({ [column]: null, updatedAt: new Date() })
+      .where(eq(profiles.id, parsed.data.profileId)),
+  );
+  return { ok: true };
+}
+
 export async function createProfile(input: {
   username: string;
   displayName?: string;
@@ -298,7 +510,7 @@ export async function deleteProfile(input: {
   }
 
   const failures = await Promise.all(
-    (["avatars", "banners"] as const).map(async (bucket) => {
+    (["avatars", "banners", "wallpapers"] as const).map(async (bucket) => {
       const { data: objects, error: listError } = await supabase.storage
         .from(bucket)
         .list(profile.id);

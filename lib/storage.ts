@@ -9,3 +9,7 @@ export function bannerUrl(path: string): string {
 export function linkImageUrl(path: string): string {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/link-images/${path}`;
 }
+
+export function wallpaperUrl(path: string): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/wallpapers/${path}`;
+}

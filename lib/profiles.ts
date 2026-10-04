@@ -41,8 +41,21 @@ export function imageExtension(mimeType: string): string | null {
   }
 }
 
+export function videoExtension(mimeType: string): string | null {
+  switch (mimeType) {
+    case "video/mp4":
+      return "mp4";
+    case "video/webm":
+      return "webm";
+    default:
+      return null;
+  }
+}
+
 export const imageMaxBytes = {
   avatar: 2 * 1024 * 1024,
   banner: 5 * 1024 * 1024,
   link: 5 * 1024 * 1024,
+  wallpaperImage: 5 * 1024 * 1024,
+  wallpaperVideo: 25 * 1024 * 1024,
 };

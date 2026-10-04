@@ -9,6 +9,7 @@ import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -196,6 +197,18 @@ export function ChangePasswordSection() {
               >
                 {({ valid, submitting }) => (
                   <DialogFooter>
+                    <DialogClose
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={submitting}
+                        />
+                      }
+                    >
+                      Cancel
+                    </DialogClose>
                     <Button type="submit" size="sm" disabled={submitting || !valid}>
                       {submitting && <Spinner />}
                       Save

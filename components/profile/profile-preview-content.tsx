@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
@@ -8,6 +9,7 @@ import {
   ProfileHeader,
   type ProfileHeaderVariant,
 } from "@/components/profile/profile-header";
+import { ShareLinkMenu } from "@/components/profile/share-link-menu";
 import {
   buttonBodyStyle,
   buttonContourClass,
@@ -56,7 +58,7 @@ function LinkContent({ link }: { link: PreviewLink }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
       ) : null}
-      <span className="truncate">{link.title}</span>
+      <span className="line-clamp-2">{link.title}</span>
     </>
   );
 }
@@ -158,46 +160,90 @@ export function ProfilePreviewContent({
             ) : (
               customLinks.map((link) => {
                 const classicClass = cn(
-                  "flex w-full items-center justify-center gap-2 border px-4 py-2.5 text-sm font-medium transition hover:brightness-95",
+                  "flex w-full items-center border text-sm font-medium transition hover:brightness-95",
                   contour,
                 );
                 const featuredClass = cn(
                   "flex w-full flex-col overflow-hidden border text-left text-sm transition hover:brightness-95",
                   featuredContour,
                 );
-                const body =
-                  link.variant === "featured" ? (
-                    <>
-                      <FeaturedCardImage link={link} muted={muted} />
-                      <span className="px-3 py-2.5 font-medium">{link.title}</span>
-                    </>
-                  ) : (
-                    <LinkContent link={link} />
-                  );
                 return interactive ? (
-                  <a
+                  <div
                     key={link.id}
-                    href={`/go/${link.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className={link.variant === "featured" ? featuredClass : classicClass}
                     style={bodyStyle}
                   >
-                    {body}
-                  </a>
+                    {link.variant === "featured" ? (
+                      <>
+                        <a
+                          href={`/go/${link.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <FeaturedCardImage link={link} muted={muted} />
+                        </a>
+                        <div className="flex items-center gap-2 py-2.5 pr-1.5 pl-3">
+                          <a
+                            href={`/go/${link.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="line-clamp-2 min-w-0 flex-1 font-medium"
+                          >
+                            {link.title}
+                          </a>
+                          <ShareLinkMenu link={link} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          href={`/go/${link.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5"
+                        >
+                          <LinkContent link={link} />
+                        </a>
+                        <ShareLinkMenu link={link} className="mr-1.5" />
+                      </>
+                    )}
+                  </div>
                 ) : (
                   <div
                     key={link.id}
                     className={link.variant === "featured" ? featuredClass : classicClass}
                     style={bodyStyle}
                   >
-                    {body}
+                    {link.variant === "featured" ? (
+                      <>
+                        <FeaturedCardImage link={link} muted={muted} />
+                        <span className="line-clamp-2 px-3 py-2.5 font-medium">
+                          {link.title}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="flex flex-1 items-center justify-center gap-2 px-4 py-2.5">
+                        <LinkContent link={link} />
+                      </span>
+                    )}
                   </div>
                 );
               })
             )}
           </div>
         </div>
+        <footer
+          className="relative mt-auto flex justify-center gap-3 pt-8 pb-6 text-xs"
+          style={{ color: muted }}
+        >
+          <Link href="/terms" className="transition hover:opacity-70">
+            Terms
+          </Link>
+          <Link href="/privacy" className="transition hover:opacity-70">
+            Privacy
+          </Link>
+        </footer>
       </div>
     </div>
   );

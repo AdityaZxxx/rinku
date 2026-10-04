@@ -22,9 +22,15 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
+      <a
+        href="#main"
+        className="bg-background focus:ring-ring absolute top-2 left-2 z-50 -translate-y-[calc(100%+1rem)] rounded-xl border px-3 py-2 text-sm font-medium opacity-0 transition-transform focus:translate-y-0 focus:opacity-100"
+      >
+        Skip to content
+      </a>
       <AppSidebar profiles={profiles} email={claims?.email ?? null} />
-      <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4">
+      <SidebarInset id="main" tabIndex={-1}>
+        <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-sm">
           <SidebarTrigger />
           <ProfilePicker profiles={profiles} />
         </header>

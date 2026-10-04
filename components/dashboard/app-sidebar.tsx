@@ -69,10 +69,12 @@ export function AppSidebar({
     // route union is only knowable for literals.
     `/${editing}/${section}` as Route;
 
+  const closeMobile = () => setOpenMobile(false);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex h-12 items-center gap-2 overflow-hidden rounded-xl px-3 group-data-[collapsible=icon]:p-2">
+        <div className="flex h-12 items-center gap-2 overflow-hidden rounded-xl px-2.5 transition-[padding] duration-200 ease-linear group-data-[collapsible=icon]:px-1.5">
           <RabbitIcon className="size-5 shrink-0" />
           <span className="text-base font-semibold group-data-[collapsible=icon]:hidden">
             Rinku
@@ -90,85 +92,93 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent className="overflow-x-hidden">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === "/dashboard"}
-                  tooltip="Dashboard"
-                  render={<Link href="/dashboard" />}
-                >
-                  <HouseIcon />
-                  Dashboard
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+        <nav aria-label="Main" className="flex flex-col gap-2">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === "/dashboard"}
+                    tooltip="Dashboard"
+                    onClick={closeMobile}
+                    render={<Link href="/dashboard" />}
+                  >
+                    <HouseIcon />
+                    Dashboard
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/${editing}/overview`}
-                  tooltip="Overview"
-                  render={<Link href={editPath("overview")} />}
-                >
-                  <SquaresFourIcon />
-                  Overview
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/overview`}
+                    tooltip="Overview"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("overview")} />}
+                  >
+                    <SquaresFourIcon />
+                    Overview
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/${editing}/links`}
-                  tooltip="Links"
-                  render={<Link href={editPath("links")} />}
-                >
-                  <LinkIcon />
-                  Links
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/links`}
+                    tooltip="Links"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("links")} />}
+                  >
+                    <LinkIcon />
+                    Links
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/${editing}/profile`}
-                  tooltip="Profile"
-                  render={<Link href={editPath("profile")} />}
-                >
-                  <UserCircleIcon />
-                  Profile
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/profile`}
+                    tooltip="Profile"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("profile")} />}
+                  >
+                    <UserCircleIcon />
+                    Profile
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/${editing}/insights`}
-                  tooltip="Insights"
-                  render={<Link href={editPath("insights")} />}
-                >
-                  <ChartBarIcon />
-                  Insights
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/insights`}
+                    tooltip="Insights"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("insights")} />}
+                  >
+                    <ChartBarIcon />
+                    Insights
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-        <SidebarSeparator />
+          <SidebarSeparator />
 
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/${editing}/settings`}
-                  tooltip="Profile settings"
-                  render={<Link href={editPath("settings")} />}
-                >
-                  <GearIcon />
-                  settings
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/${editing}/settings`}
+                    tooltip="Profile settings"
+                    onClick={closeMobile}
+                    render={<Link href={editPath("settings")} />}
+                  >
+                    <GearIcon />
+                    Settings
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </nav>
       </SidebarContent>
 
       <SidebarFooter>
@@ -177,7 +187,9 @@ export function AppSidebar({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={<SidebarMenuButton />}
-                className="cursor-pointer"
+                className="cursor-pointer pl-2.5"
+                aria-label="Account"
+                title={email ?? undefined}
               >
                 <Avatar className="size-6 shrink-0 group-data-[collapsible=icon]:size-4">
                   <AvatarFallback className="text-xs font-medium">
@@ -192,9 +204,12 @@ export function AppSidebar({
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="end" className="w-48">
-                <DropdownMenuItem render={<Link href="/account/settings" />}>
+                <DropdownMenuItem
+                  render={<Link href="/account/settings" />}
+                  onClick={closeMobile}
+                >
                   <GearIcon />
-                  Settings
+                  Account settings
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

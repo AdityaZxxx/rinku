@@ -37,7 +37,13 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" className="max-w-56 gap-2 px-2 font-medium" />}
+        render={
+          <Button
+            variant="ghost"
+            className="max-w-56 gap-2 px-2 font-medium"
+            title={label ?? undefined}
+          />
+        }
       >
         <Avatar className="size-5 shrink-0">
           <AvatarFallback className="text-[10px] font-medium">

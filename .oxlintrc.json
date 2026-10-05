@@ -51,6 +51,7 @@
     "react/jsx-key": "error",
     "react/hook-use-state": "error",
     "react/self-closing-comp": "error",
+    "react/iframe-missing-sandbox": "off",
 
     "react-perf/jsx-no-new-function-as-prop": "off",
     "react-perf/jsx-no-jsx-as-prop": "off",

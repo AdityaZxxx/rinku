@@ -15,7 +15,7 @@ bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse data
 ```
 
-## Three lint rules are off on purpose
+## Four lint rules are off on purpose
 
 `react-perf/jsx-no-new-function-as-prop`, `react-perf/jsx-no-jsx-as-prop`, and
 `react/no-children-prop` are disabled in `.oxlintrc.json`.
@@ -27,6 +27,9 @@ bun run db:studio    # browse data
   a link or button.
 - The third fires on TanStack Form's `form.Field children={...}`, which is its
   documented render-prop API and has no alternative.
+- `react/iframe-missing-sandbox` is off: the embedded music players are
+  third-party iframes whose official snippets ship no sandbox, and a partial
+  sandbox (scripts allowed, same-origin blocked) is exactly what breaks them.
 
 ## Three directories are excluded from lint, format, or typecheck
 

@@ -12,6 +12,7 @@ import {
   restoreLink,
   updateLink,
 } from "@/app/actions/links";
+import { parseMusicUrl } from "@/lib/music";
 
 type LinkVariant = Link["variant"];
 type PositionUpdate = { id: string; position: number };
@@ -56,6 +57,7 @@ export function useUpdateLink(profileId: string) {
       variant: LinkVariant;
       isActive: boolean;
       imageUrl?: string | null;
+      metadata?: Link["metadata"];
     }) => {
       const result = await updateLink(input);
       if ("error" in result) {
@@ -78,6 +80,23 @@ export function useUpdateLink(profileId: string) {
       toast.error(
         error instanceof Error ? error.message : "This link could not be saved.",
       );
+    },
+    onSuccess: (result, _input) => {
+      // URL edits can reclassify the row (e.g. paste a Spotify URL): merge the
+      // server's kind/platform/metadata into the optimistic cache row.
+      if ("kind" in result) {
+        queryClient.setQueryData<Link[]>(key, (old) =>
+          (old ?? []).map((link) =>
+            link.id === _input.id
+              ? Object.assign({}, link, {
+                  kind: result.kind,
+                  platform: result.platform,
+                  metadata: result.metadata,
+                })
+              : link,
+          ),
+        );
+      }
     },
     // Stale without refetching: a refetch here would land between an older
     // save's response and the latest keystrokes and briefly clobber them.
@@ -109,6 +128,7 @@ export function useCreateLink(profileId: string) {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Link[]>(key);
       const tempId = crypto.randomUUID();
+      const music = input.platform ? null : parseMusicUrl(input.url);
       const optimistic: Link = {
         id: tempId,
         profileId,
@@ -119,8 +139,9 @@ export function useCreateLink(profileId: string) {
         clickCount: 0,
         isActive: true,
         archivedAt: null,
-        kind: input.platform ? "social" : "custom",
+        kind: input.platform ? "social" : music ? "music" : "custom",
         platform: input.platform ?? null,
+        metadata: music,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

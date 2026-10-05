@@ -162,6 +162,13 @@
       "when": 1791083373698,
       "tag": "0022_wallpapers",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791124107329,
+      "tag": "0023_nappy_nemesis",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
+import type { LinkMetadata } from "@/lib/music";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
+import { MusicEmbed } from "@/components/links/music-embed";
 import { MediaIcon } from "@/components/media-icon";
 import {
   ProfileHeader,
@@ -30,8 +32,9 @@ export interface PreviewLink {
   variant: "classic" | "featured";
   isActive: boolean;
   archivedAt: Date | null;
-  kind?: "custom" | "social";
+  kind?: "custom" | "social" | "music";
   platform?: string | null;
+  metadata?: LinkMetadata | null;
 }
 
 function LinkContent({ link }: { link: PreviewLink }) {
@@ -159,6 +162,20 @@ export function ProfilePreviewContent({
               </p>
             ) : (
               customLinks.map((link) => {
+                const style =
+                  link.kind === "music" && link.metadata
+                    ? (link.metadata.style ?? "embed")
+                    : null;
+                if (style === "embed" && link.metadata) {
+                  return (
+                    <div key={link.id} className="w-full">
+                      <MusicEmbed metadata={link.metadata} />
+                    </div>
+                  );
+                }
+                // Classic/featured music links render exactly like custom ones.
+                const variant: PreviewLink["variant"] =
+                  style !== null && style !== "embed" ? style : link.variant;
                 const classicClass = cn(
                   "flex w-full items-center border text-sm font-medium transition hover:brightness-95",
                   contour,
@@ -170,10 +187,10 @@ export function ProfilePreviewContent({
                 return interactive ? (
                   <div
                     key={link.id}
-                    className={link.variant === "featured" ? featuredClass : classicClass}
+                    className={variant === "featured" ? featuredClass : classicClass}
                     style={bodyStyle}
                   >
-                    {link.variant === "featured" ? (
+                    {variant === "featured" ? (
                       <>
                         <a
                           href={`/go/${link.id}`}
@@ -212,10 +229,10 @@ export function ProfilePreviewContent({
                 ) : (
                   <div
                     key={link.id}
-                    className={link.variant === "featured" ? featuredClass : classicClass}
+                    className={variant === "featured" ? featuredClass : classicClass}
                     style={bodyStyle}
                   >
-                    {link.variant === "featured" ? (
+                    {variant === "featured" ? (
                       <>
                         <FeaturedCardImage link={link} muted={muted} />
                         <span className="line-clamp-2 px-3 py-2.5 font-medium">

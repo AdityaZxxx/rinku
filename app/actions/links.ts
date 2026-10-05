@@ -18,6 +18,7 @@ import {
   positionAfter,
 } from "@/lib/links";
 import { log } from "@/lib/log";
+import { linkMetadataSchema, parseMusicUrl, type LinkMetadata } from "@/lib/music";
 import { imageExtension, imageMaxBytes } from "@/lib/profiles";
 import { linkImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -125,16 +126,26 @@ export async function createLink(input: {
         .where(eq(links.profileId, parsed.data.profileId));
       const [row] = await tx
         .insert(links)
-        .values({
-          profileId: parsed.data.profileId,
-          title: parsed.data.title,
-          url: parsed.data.url,
-          imageUrl: parsed.data.imageUrl ?? null,
-          variant: parsed.data.variant,
-          kind: parsed.data.platform ? "social" : "custom",
-          platform: parsed.data.platform ?? null,
-          position: positionAfter(aggregate?.maxPosition),
-        })
+        .values(
+          (() => {
+            const music = parsed.data.platform ? null : parseMusicUrl(parsed.data.url);
+            return {
+              profileId: parsed.data.profileId,
+              title: parsed.data.title,
+              url: parsed.data.url,
+              imageUrl: parsed.data.imageUrl ?? null,
+              variant: parsed.data.variant,
+              kind: parsed.data.platform
+                ? ("social" as const)
+                : music
+                  ? ("music" as const)
+                  : ("custom" as const),
+              platform: parsed.data.platform ?? null,
+              metadata: music,
+              position: positionAfter(aggregate?.maxPosition),
+            };
+          })(),
+        )
         .returning();
       return row;
     });
@@ -229,7 +240,16 @@ export async function updateLink(input: {
   variant: "classic" | "featured";
   isActive: boolean;
   imageUrl?: string | null;
-}): Promise<{ ok: true } | { error: string }> {
+  metadata?: LinkMetadata | null;
+}): Promise<
+  | {
+      ok: true;
+      kind: Link["kind"];
+      platform: string | null;
+      metadata: LinkMetadata | null;
+    }
+  | { error: string }
+> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -238,30 +258,59 @@ export async function updateLink(input: {
     return { error: "Your session expired. Sign in again to continue." };
   }
 
-  const parsed = linkInputSchema.extend({ id: z.uuid() }).safeParse(input);
+  const parsed = linkInputSchema
+    .extend({ id: z.uuid(), metadata: linkMetadataSchema.nullable().optional() })
+    .safeParse(input);
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
   }
 
-  const updated = await withUserDb(user.id, (tx) =>
-    tx
+  const updated = await withUserDb(user.id, async (tx) => {
+    const [existing] = await tx
+      .select({ platform: links.platform, metadata: links.metadata })
+      .from(links)
+      .where(eq(links.id, parsed.data.id));
+    if (!existing) {
+      return [];
+    }
+
+    // Reclassify on URL change: pasting a Spotify link into a plain row turns
+    // it into a music embed; a social row keeps its platform unless the new
+    // URL is a music one.
+    const music = parseMusicUrl(parsed.data.url);
+    const social = !music && existing.platform !== null;
+    // Embed style carries across saves: the editor sends it explicitly, a
+    // URL-only edit keeps what the row already had.
+    const style = parsed.data.metadata?.style ?? existing.metadata?.style;
+    const metadata = music && style ? { ...music, style } : music;
+
+    return tx
       .update(links)
       .set({
         title: parsed.data.title,
         url: parsed.data.url,
         variant: parsed.data.variant,
         isActive: parsed.data.isActive,
+        kind: music ? "music" : social ? "social" : "custom",
+        platform: social ? existing.platform : null,
+        metadata,
         imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(links.id, parsed.data.id))
-      .returning({ id: links.id }),
-  );
-  if (updated.length === 0) {
+      .returning({
+        id: links.id,
+        kind: links.kind,
+        platform: links.platform,
+        metadata: links.metadata,
+      });
+  });
+  const [row] = updated;
+  if (!row) {
     return { error: "This link could not be saved." };
   }
   updateTag(PUBLIC_PROFILE_TAG);
-  return { ok: true };
+  return { ok: true, kind: row.kind, platform: row.platform, metadata: row.metadata };
 }
 
 export async function archiveLink(input: {

@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import * as z from "zod";
 
 import { ThumbnailSection } from "@/components/links/thumbnail-section";
 import { MediaIcon } from "@/components/media-icon";
@@ -63,14 +64,29 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
       variant: link.variant,
       isActive: link.isActive,
       imageUrl: link.imageUrl,
+      style: link.metadata?.style ?? "embed",
     },
-    validators: { onChange: linkInputSchema },
+    validators: {
+      onChange: linkInputSchema.extend({
+        style: z.enum(["embed", "classic", "featured"]),
+      }),
+    },
     listeners: {
       onChange: ({ formApi }) => {
         if (!formApi.state.isValid) {
           return;
         }
-        update.mutate({ id: link.id, ...formApi.state.values });
+        const { style, ...fields } = formApi.state.values;
+        update.mutate({
+          id: link.id,
+          ...fields,
+          // Only music links carry embed style; stripping it elsewhere keeps
+          // styleless kinds out of edits.
+          metadata:
+            link.kind === "music" && link.metadata
+              ? { ...link.metadata, style }
+              : undefined,
+        });
       },
       onChangeDebounceMs: 800,
     },
@@ -240,13 +256,13 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             }}
           </form.Field>
 
-          <form.Field name="variant">
-            {(field) => {
-              return (
+          {link.kind === "music" ? (
+            <form.Field name="style">
+              {(field) => (
                 <Field>
-                  <FieldLabel id="link-style-label">Style</FieldLabel>
-                  <div className="grid grid-cols-2 gap-2 sm:max-w-xs">
-                    {(["classic", "featured"] as const).map((value) => (
+                  <FieldLabel id="music-style-label">Style</FieldLabel>
+                  <div className="grid grid-cols-3 gap-2 sm:max-w-sm">
+                    {(["embed", "classic", "featured"] as const).map((value) => (
                       <label
                         key={value}
                         className={cn(
@@ -258,13 +274,17 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                       >
                         <input
                           type="radio"
-                          name="link-style"
+                          name="music-style"
                           value={value}
                           checked={field.state.value === value}
                           onChange={() => field.handleChange(value)}
                           className="sr-only"
                         />
-                        {value === "classic" ? (
+                        {value === "embed" ? (
+                          <span className="flex h-8 items-center justify-center rounded-md border">
+                            <span className="bg-muted-foreground/30 size-2.5 rounded-full" />
+                          </span>
+                        ) : value === "classic" ? (
                           <span className="flex items-center gap-1.5 rounded-full border px-2 py-1">
                             <span className="bg-muted-foreground/30 size-3 rounded-full" />
                             <span className="bg-muted-foreground/20 h-1.5 flex-1 rounded-full" />
@@ -277,16 +297,64 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                             </span>
                           </span>
                         )}
-                        <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs">
-                          {value === "classic" ? "Classic" : "Featured"}
+                        <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs capitalize">
+                          {value}
                         </span>
                       </label>
                     ))}
                   </div>
                 </Field>
-              );
-            }}
-          </form.Field>
+              )}
+            </form.Field>
+          ) : (
+            <form.Field name="variant">
+              {(field) => {
+                return (
+                  <Field>
+                    <FieldLabel id="link-style-label">Style</FieldLabel>
+                    <div className="grid grid-cols-2 gap-2 sm:max-w-xs">
+                      {(["classic", "featured"] as const).map((value) => (
+                        <label
+                          key={value}
+                          className={cn(
+                            "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                            field.state.value === value
+                              ? "border-ring ring-ring/30 ring-3"
+                              : "border-input",
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="link-style"
+                            value={value}
+                            checked={field.state.value === value}
+                            onChange={() => field.handleChange(value)}
+                            className="sr-only"
+                          />
+                          {value === "classic" ? (
+                            <span className="flex items-center gap-1.5 rounded-full border px-2 py-1">
+                              <span className="bg-muted-foreground/30 size-3 rounded-full" />
+                              <span className="bg-muted-foreground/20 h-1.5 flex-1 rounded-full" />
+                            </span>
+                          ) : (
+                            <span className="flex flex-col overflow-hidden rounded-md border">
+                              <span className="bg-muted-foreground/20 h-8 w-full" />
+                              <span className="px-1.5 py-1">
+                                <span className="bg-muted-foreground/20 block h-1.5 w-2/3 rounded-full" />
+                              </span>
+                            </span>
+                          )}
+                          <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs">
+                            {value === "classic" ? "Classic" : "Featured"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </Field>
+                );
+              }}
+            </form.Field>
+          )}
 
           <ThumbnailSection link={link} />
 

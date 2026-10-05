@@ -28,6 +28,39 @@ export const linkTitleSchema = z
 
 export const linkVariantSchema = z.enum(["classic", "featured"]);
 
+// Optional visibility window: null means no bound. The refine mirrors the
+// links_visible_window check so the client rejects what the database would.
+export const linkScheduleSchema = z
+  .object({
+    visibleFrom: z.coerce.date().nullable().optional(),
+    visibleUntil: z.coerce.date().nullable().optional(),
+  })
+  .refine(
+    (value) =>
+      !value.visibleFrom ||
+      !value.visibleUntil ||
+      value.visibleFrom <= value.visibleUntil,
+    "The start must be before the end.",
+  );
+
+export type ScheduleStatus = "live" | "scheduled" | "expired";
+
+/** Where a row sits relative to now. Ignores isActive/archivedAt. */
+export function scheduleStatus(
+  link: { visibleFrom: Date | string | null; visibleUntil: Date | string | null },
+  now: Date = new Date(),
+): ScheduleStatus {
+  const from = link.visibleFrom ? new Date(link.visibleFrom) : null;
+  const until = link.visibleUntil ? new Date(link.visibleUntil) : null;
+  if (from && !Number.isNaN(from.getTime()) && from > now) {
+    return "scheduled";
+  }
+  if (until && !Number.isNaN(until.getTime()) && until <= now) {
+    return "expired";
+  }
+  return "live";
+}
+
 // The same shape and lengths the database checks, so the client rejects what
 // the server would only reject after a round trip.
 export const linkInputSchema = z.object({

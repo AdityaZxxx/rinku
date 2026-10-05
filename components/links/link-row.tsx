@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   ArchiveIcon,
+  CalendarBlankIcon,
   CaretDownIcon,
   DotsSixVerticalIcon,
   EyeClosedIcon,
@@ -29,9 +30,10 @@ import {
 } from "@/components/ui/input-group";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { displayUrl, faviconUrl, linkInputSchema } from "@/lib/links";
+import { displayUrl, faviconUrl, linkInputSchema, scheduleStatus } from "@/lib/links";
 import { isIconMedia } from "@/lib/media";
 import { cn } from "@/lib/utils";
+import { SchedulePicker, scheduleSummary } from "./schedule-picker";
 import { useUpdateLink } from "./use-link-mutations";
 
 type LinkRowProps = {
@@ -81,7 +83,9 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           id: link.id,
           ...fields,
           // Only player/embed blocks carry a style; stripping it elsewhere
-          // keeps plain rows out of music/video/embed edits.
+          // keeps plain rows out of music/video/embed edits. The schedule
+          // (visibleFrom/visibleUntil) lives in the dialog instead, which
+          // sends those fields explicitly.
           metadata:
             (link.kind === "music" || link.kind === "video" || link.kind === "embed") &&
             link.metadata
@@ -95,6 +99,11 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
 
   const icon = faviconUrl(link.url);
   const hidden = !link.isActive;
+  const status = scheduleStatus(link);
+  const summary = scheduleSummary(link.visibleFrom, link.visibleUntil);
+  // Scheduling is derived, not a separate flag: a schedule exists iff a bound
+  // is set, so toggling on opens the picker and removing the range turns it off.
+  const scheduled = link.visibleFrom !== null || link.visibleUntil !== null;
 
   return (
     <div
@@ -177,8 +186,19 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           >
             {link.title}
           </span>
-          <span className="text-muted-foreground max-w-full truncate text-xs">
-            {displayUrl(link.url)}
+          <span className="text-muted-foreground flex max-w-full items-center gap-1.5 truncate text-xs">
+            {summary ? (
+              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+                <CalendarBlankIcon className="size-2.5" />
+                {status === "scheduled"
+                  ? "Scheduled "
+                  : status === "expired"
+                    ? "Expired "
+                    : null}
+                {summary}
+              </span>
+            ) : null}
+            <span className="truncate">{displayUrl(link.url)}</span>
           </span>
         </button>
 
@@ -358,6 +378,63 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           )}
 
           <ThumbnailSection link={link} />
+
+          <SchedulePicker
+            from={link.visibleFrom}
+            until={link.visibleUntil}
+            onSave={(from, until) => {
+              update.mutate({
+                id: link.id,
+                title: link.title,
+                url: link.url,
+                variant: link.variant,
+                isActive: link.isActive,
+                imageUrl: link.imageUrl,
+                visibleFrom: from,
+                visibleUntil: until,
+              });
+              if (!from && !until) {
+                toast("Schedule removed");
+              } else {
+                toast("Schedule saved");
+              }
+            }}
+            trigger={
+              <button
+                type="button"
+                className="group/schedule flex w-full items-center gap-3 text-left"
+              >
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-sm leading-none font-medium">
+                    Schedule visibility
+                  </span>
+                  <span className="text-muted-foreground group-hover/schedule:text-foreground flex items-center gap-1.5 truncate text-xs transition-colors">
+                    {scheduled ? (
+                      <span className="truncate">
+                        {status === "scheduled"
+                          ? `Goes live ${summary}`
+                          : status === "expired"
+                            ? `Was live ${summary}`
+                            : `Live ${summary}`}
+                      </span>
+                    ) : (
+                      <span className="truncate">Show this link only on chosen days</span>
+                    )}
+                  </span>
+                </div>
+                <CalendarBlankIcon
+                  className={cn(
+                    "size-4.5 shrink-0 transition-colors",
+                    scheduled
+                      ? "text-foreground"
+                      : "text-muted-foreground group-hover/schedule:text-foreground",
+                  )}
+                  weight={scheduled ? "fill" : "regular"}
+                  aria-hidden
+                />
+              </button>
+            }
+          />
 
           <div className="flex items-center justify-between">
             <form.Field name="isActive">

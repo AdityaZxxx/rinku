@@ -61,6 +61,12 @@ export const links = pgTable(
     variant: linkVariant("variant").notNull().default("classic"),
     isActive: boolean("is_active").notNull().default(true),
 
+    // Null means no bound: visible_from in the future hides the link until
+    // then, visible_until in the past hides it after. Both null is always
+    // visible (subject to isActive/archivedAt).
+    visibleFrom: timestamp("visible_from", { withTimezone: true }),
+    visibleUntil: timestamp("visible_until", { withTimezone: true }),
+
     // Null while on the list. Set on archive, which keeps the position for
     // when the link comes back.
     archivedAt: timestamp("archived_at", { withTimezone: true }),
@@ -91,16 +97,23 @@ export const links = pgTable(
       "links_social_platform",
       sql`(${t.kind}::text = 'social' and ${t.platform} is not null) or (${t.kind}::text = 'custom' and ${t.platform} is null) or (${t.kind}::text in ('music', 'video', 'embed') and ${t.platform} is null and ${t.metadata} is not null) or (${t.kind}::text = 'heading' and ${t.platform} is null and ${t.metadata} is null)`,
     ),
+    check(
+      "links_visible_window",
+      sql`${t.visibleFrom} is null or ${t.visibleUntil} is null or ${t.visibleFrom} <= ${t.visibleUntil}`,
+    ),
 
     // Deactivated means draft; archived means off the list but kept for
-    // restore. Both are withheld from visitors at the database rather than
-    // filtered out in the app where a direct read would still expose them.
+    // restore; outside its schedule means not yet live or expired. All three
+    // are withheld from visitors at the database rather than filtered out in
+    // the app where a direct read would still expose them.
     // Ownership goes through the parent profile: one account may hold many
     // profiles, so profile_id no longer equals the user id.
     pgPolicy("active links are public", {
       for: "select",
       to: [anonRole, authenticatedRole],
-      using: sql`(${t.isActive} and ${t.archivedAt} is null) or exists (
+      using: sql`(${t.isActive} and ${t.archivedAt} is null
+          and (${t.visibleFrom} is null or ${t.visibleFrom} <= now())
+          and (${t.visibleUntil} is null or ${t.visibleUntil} > now())) or exists (
         select 1 from ${profiles}
         where ${profiles.id} = ${t.profileId} and ${profiles.userId} = ${authUid}
       )`,

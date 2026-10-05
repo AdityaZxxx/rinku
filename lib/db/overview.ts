@@ -4,6 +4,7 @@ import { and, eq, gte } from "drizzle-orm";
 import { getProfiles } from "@/lib/db/profile";
 import { linkClicks, links, profileVisits, type profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { scheduleStatus } from "@/lib/links";
 import "server-only";
 
 const recentMs = 30 * 24 * 60 * 60 * 1000;
@@ -60,8 +61,14 @@ export const getProfileSnapshots = cache(
             .select()
             .from(links)
             .where(eq(links.profileId, profile.id));
-          const active = allLinks.filter((l) => l.archivedAt === null && l.isActive);
-          const hidden = allLinks.filter((l) => l.archivedAt === null && !l.isActive);
+          // "Active" means live for visitors right now: inside its schedule
+          // window, not merely switched on.
+          const active = allLinks.filter(
+            (l) => l.archivedAt === null && l.isActive && scheduleStatus(l) === "live",
+          );
+          const hidden = allLinks.filter(
+            (l) => l.archivedAt === null && (!l.isActive || scheduleStatus(l) !== "live"),
+          );
           const archived = allLinks.filter((l) => l.archivedAt !== null);
 
           const [clickRows, visitRows] = await Promise.all([

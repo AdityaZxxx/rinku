@@ -24,7 +24,7 @@ import {
   mutedFor,
   resolveAppearance,
 } from "@/lib/appearance";
-import { faviconUrl } from "@/lib/links";
+import { faviconUrl, scheduleStatus } from "@/lib/links";
 import { isIconMedia } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,8 @@ export interface PreviewLink {
   variant: "classic" | "featured";
   isActive: boolean;
   archivedAt: Date | null;
+  visibleFrom: Date | null;
+  visibleUntil: Date | null;
   kind?: "custom" | "social" | "music" | "video" | "embed" | "heading";
   platform?: string | null;
   metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
@@ -106,7 +108,12 @@ export function ProfilePreviewContent({
   interactive?: boolean;
   bare?: boolean;
 }) {
-  const visibleLinks = links.filter((link) => link.isActive && link.archivedAt === null);
+  // Mirrors the public RLS window: scheduled-but-not-live and expired rows
+  // stay out of the visitor view — and out of the owner's preview of it.
+  const visibleLinks = links.filter(
+    (link) =>
+      link.isActive && link.archivedAt === null && scheduleStatus(link) === "live",
+  );
   const socialLinks = visibleLinks.filter((link) => link.kind === "social");
   const customLinks = visibleLinks.filter((link) => link.kind !== "social");
   const look = resolveAppearance(profile);

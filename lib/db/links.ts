@@ -39,5 +39,7 @@ export const getPublicLinksByProfile = unstable_cache(
     );
   },
   ["public-links-by-profile"],
-  { tags: [PUBLIC_PROFILE_TAG] },
+  // Time flips scheduled links without any mutation, so the cache cannot live
+  // forever on tag invalidation alone; a minute of staleness is the trade.
+  { tags: [PUBLIC_PROFILE_TAG], revalidate: 60 },
 );

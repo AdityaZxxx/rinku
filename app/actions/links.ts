@@ -12,6 +12,7 @@ import { parseEmbedUrl, type EmbedMetadata, embedMetadataSchema } from "@/lib/em
 import {
   httpUrlSchema,
   linkInputSchema,
+  linkScheduleSchema,
   linkUrlSchema,
   linkVariantSchema,
   linkTitleSchema,
@@ -339,6 +340,8 @@ export async function updateLink(input: {
   isActive: boolean;
   imageUrl?: string | null;
   metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
+  visibleFrom?: Date | null;
+  visibleUntil?: Date | null;
 }): Promise<
   | {
       ok: true;
@@ -366,6 +369,9 @@ export async function updateLink(input: {
         .nullable()
         .optional(),
     })
+    // Absent bounds leave the row's schedule untouched; the refine rejects a
+    // backwards window the database check would also reject.
+    .and(linkScheduleSchema)
     .safeParse(input);
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -394,6 +400,10 @@ export async function updateLink(input: {
           platform: null,
           metadata: null,
           imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
+          visibleFrom:
+            "visibleFrom" in input ? (parsed.data.visibleFrom ?? null) : undefined,
+          visibleUntil:
+            "visibleUntil" in input ? (parsed.data.visibleUntil ?? null) : undefined,
           updatedAt: new Date(),
         })
         .where(eq(links.id, parsed.data.id))
@@ -441,6 +451,10 @@ export async function updateLink(input: {
             ? (parsed.data.imageUrl ??
               (video ? await videoThumbnail(parsed.data.url, video) : null))
             : undefined,
+        visibleFrom:
+          "visibleFrom" in input ? (parsed.data.visibleFrom ?? null) : undefined,
+        visibleUntil:
+          "visibleUntil" in input ? (parsed.data.visibleUntil ?? null) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(links.id, parsed.data.id))

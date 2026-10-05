@@ -60,6 +60,8 @@ export function useUpdateLink(profileId: string) {
       isActive: boolean;
       imageUrl?: string | null;
       metadata?: Link["metadata"];
+      visibleFrom?: Date | null;
+      visibleUntil?: Date | null;
     }) => {
       const result = await updateLink(input);
       if ("error" in result) {
@@ -154,6 +156,8 @@ export function useCreateLink(profileId: string) {
                 : "custom",
         platform: input.platform ?? null,
         metadata: music ?? video ?? embed,
+        visibleFrom: null,
+        visibleUntil: null,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

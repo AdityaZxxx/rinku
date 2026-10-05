@@ -28,6 +28,7 @@ export const linkKind = pgEnum("link_kind", [
   "music",
   "video",
   "embed",
+  "heading",
 ]);
 
 /**
@@ -82,10 +83,13 @@ export const links = pgTable(
     }).onDelete("cascade"),
     index("links_profile_id_position_idx").on(t.profileId, t.position),
     check("links_title_length", sql`char_length(${t.title}) between 1 and 100`),
-    check("links_url_length", sql`char_length(${t.url}) between 1 and 2048`),
+    check(
+      "links_url_length",
+      sql`(${t.kind}::text = 'heading' and char_length(${t.url}) = 0) or (${t.kind}::text <> 'heading' and char_length(${t.url}) between 1 and 2048)`,
+    ),
     check(
       "links_social_platform",
-      sql`(${t.kind}::text = 'social' and ${t.platform} is not null) or (${t.kind}::text = 'custom' and ${t.platform} is null) or (${t.kind}::text in ('music', 'video', 'embed') and ${t.platform} is null and ${t.metadata} is not null)`,
+      sql`(${t.kind}::text = 'social' and ${t.platform} is not null) or (${t.kind}::text = 'custom' and ${t.platform} is null) or (${t.kind}::text in ('music', 'video', 'embed') and ${t.platform} is null and ${t.metadata} is not null) or (${t.kind}::text = 'heading' and ${t.platform} is null and ${t.metadata} is null)`,
     ),
 
     // Deactivated means draft; archived means off the list but kept for

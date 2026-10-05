@@ -14,6 +14,7 @@ import {
   PlusIcon,
   SoundcloudLogoIcon,
   SpotifyLogoIcon,
+  TextTIcon,
   TelegramLogoIcon,
   VideoCameraIcon,
   WhatsappLogoIcon,
@@ -23,7 +24,7 @@ import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
 import { searchAppleMusic } from "@/app/actions/apple-music";
-import { fetchUrlMetadata } from "@/app/actions/links";
+import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
 import { parseEmbedUrl } from "@/lib/embeds";
@@ -69,6 +71,8 @@ function CategoryIcon({ item }: { item: CatalogItem }) {
       return <WhatsappLogoIcon className="size-4" />;
     case "telegram":
       return <TelegramLogoIcon className="size-4" />;
+    case "heading":
+      return <TextTIcon className="size-4" />;
     default:
       return <LinkSimpleIcon className="size-4" />;
   }
@@ -164,6 +168,24 @@ export function AddLinkDialog({
     });
   }
 
+  function addHeading() {
+    const title = handle.trim();
+    if (!title) {
+      setError("Give the heading some text.");
+      return;
+    }
+    startTransition(async () => {
+      const created = await createSectionHeading({ profileId, title });
+      if ("error" in created) {
+        setError(created.error);
+        return;
+      }
+      setOpen(false);
+      reset();
+      onCreated(created.id);
+    });
+  }
+
   const form = useForm({
     defaultValues: { query: "" },
     onSubmit: async ({ value }) => {
@@ -234,9 +256,9 @@ export function AddLinkDialog({
     >
       <DialogTrigger render={<Button size="sm" />}>
         <PlusIcon />
-        Add link
+        Add
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl sm:min-w-[36rem]">
+      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-2xl sm:min-w-[36rem]">
         <DialogHeader>
           <DialogTitle>Add a link</DialogTitle>
         </DialogHeader>
@@ -284,7 +306,7 @@ export function AddLinkDialog({
               : CATALOG.filter((item) => item.category === category);
 
             return (
-              <div className="flex flex-col gap-3">
+              <div className="flex min-w-0 flex-col gap-3">
                 {!selected && (
                   <form
                     noValidate
@@ -349,7 +371,7 @@ export function AddLinkDialog({
                         onClick={() => form.handleSubmit()}
                         disabled={pending}
                       >
-                        Add link
+                        Add
                       </Button>
                     </div>
                     {music ? (
@@ -371,131 +393,203 @@ export function AddLinkDialog({
                   </div>
                 )}
 
-                <div className="flex flex-col gap-4 sm:flex-row">
+                <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
                   {!query && !selected ? (
-                    <nav className="flex flex-row gap-2 sm:w-20 sm:shrink-0 sm:flex-col">
-                      {CATEGORIES.map((entry) => (
-                        <button
-                          key={entry.id}
-                          type="button"
-                          onClick={() => setCategory(entry.id)}
-                          aria-current={category === entry.id || undefined}
-                          className={
-                            category === entry.id
-                              ? "bg-accent text-accent-foreground rounded-lg px-2 py-1.5 text-left text-sm font-medium"
-                              : "text-muted-foreground hover:bg-accent focus-visible:ring-ring/30 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus-visible:ring-3 focus-visible:outline-none"
-                          }
-                        >
-                          {entry.label}
-                        </button>
-                      ))}
-                    </nav>
+                    <>
+                      <ScrollArea className="scroll-fade-10 **:data-[slot=scroll-area-viewport]:scroll-fade-x min-w-0 px-2 sm:hidden">
+                        <nav className="flex w-max gap-2 pb-3">
+                          {CATEGORIES.map((entry) => (
+                            <button
+                              key={entry.id}
+                              type="button"
+                              onClick={() => setCategory(entry.id)}
+                              aria-current={category === entry.id || undefined}
+                              className={
+                                category === entry.id
+                                  ? "bg-accent text-accent-foreground rounded-lg px-2 py-1.5 text-left text-sm font-medium whitespace-nowrap"
+                                  : "text-muted-foreground hover:bg-accent focus-visible:ring-ring/30 rounded-lg px-2 py-1.5 text-left text-sm whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:outline-none"
+                              }
+                            >
+                              {entry.label}
+                            </button>
+                          ))}
+                        </nav>
+                        <ScrollBar
+                          orientation="horizontal"
+                          className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-[hovering]:opacity-100 data-[scrolling]:opacity-100"
+                        />
+                      </ScrollArea>
+                      <nav className="hidden sm:flex sm:w-20 sm:shrink-0 sm:flex-col sm:gap-2">
+                        {CATEGORIES.map((entry) => (
+                          <button
+                            key={entry.id}
+                            type="button"
+                            onClick={() => setCategory(entry.id)}
+                            aria-current={category === entry.id || undefined}
+                            className={
+                              category === entry.id
+                                ? "bg-accent text-accent-foreground rounded-lg px-2 py-1.5 text-left text-sm font-medium"
+                                : "text-muted-foreground hover:bg-accent focus-visible:ring-ring/30 rounded-lg px-2 py-1.5 text-left text-sm transition-colors focus-visible:ring-3 focus-visible:outline-none"
+                            }
+                          >
+                            {entry.label}
+                          </button>
+                        ))}
+                      </nav>
+                    </>
                   ) : null}
 
-                  <div className="flex flex-1 flex-col gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-3">
                     {selected ? (
-                      <form
-                        noValidate
-                        className="flex flex-col gap-3"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          addItem();
-                        }}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelected(null);
-                            setHandle("");
-                            setSearchResults([]);
-                            setSearching(false);
-                            setError(null);
+                      selected.id === "heading" ? (
+                        <form
+                          noValidate
+                          className="flex flex-col gap-3"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            addHeading();
                           }}
-                          className="self-start"
                         >
-                          <CaretLeftIcon />
-                          Back
-                        </Button>
-                        <InputGroup>
-                          <InputGroupAddon align="inline-start">
-                            {selected.platform ? (
-                              <SocialIcon id={selected.platform} />
-                            ) : (
-                              <CategoryIcon item={selected} />
-                            )}
-                          </InputGroupAddon>
-                          <InputGroupInput
-                            ref={handleRef}
-                            value={handle}
-                            onChange={(event) => {
-                              setHandle(event.target.value);
-                              // Stale results belong to the previous query; the
-                              // effect re-populates only when the debounce fires.
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelected(null);
+                              setHandle("");
+                              setError(null);
+                            }}
+                            className="self-start"
+                          >
+                            <CaretLeftIcon />
+                            Back
+                          </Button>
+                          <InputGroup>
+                            <InputGroupAddon align="inline-start">
+                              <TextTIcon />
+                            </InputGroupAddon>
+                            <InputGroupInput
+                              ref={handleRef}
+                              value={handle}
+                              onChange={(event) => setHandle(event.target.value)}
+                              placeholder="Section title"
+                              aria-label="Heading text"
+                            />
+                          </InputGroup>
+                          {error ? (
+                            <p className="text-destructive text-sm">{error}</p>
+                          ) : null}
+                          <DialogFooter>
+                            <Button type="submit" disabled={pending}>
+                              {pending && <Spinner />}
+                              Add heading
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      ) : (
+                        <form
+                          noValidate
+                          className="flex flex-col gap-3"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            addItem();
+                          }}
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelected(null);
+                              setHandle("");
                               setSearchResults([]);
                               setSearching(false);
+                              setError(null);
                             }}
-                            placeholder={
-                              selected.id === "apple-music"
-                                ? `Search ${selected.label} or paste a link`
-                                : selected.placeholder
-                            }
-                            aria-label={selected.label}
-                          />
-                          {searching ? (
-                            <InputGroupAddon align="inline-end">
-                              <Spinner />
-                            </InputGroupAddon>
-                          ) : null}
-                        </InputGroup>
-                        {selected?.id === "apple-music" && searchResults.length > 0 ? (
-                          <ul className="border-input flex max-h-64 flex-col overflow-y-auto rounded-xl border">
-                            {searchResults.map((result) => (
-                              <li key={`${result.type}-${result.id}`}>
-                                <button
-                                  type="button"
-                                  onClick={() => addMusicResult(result)}
-                                  className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
-                                >
-                                  {result.imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={result.imageUrl}
-                                      alt=""
-                                      className="size-10 rounded-md object-cover"
-                                    />
-                                  ) : (
-                                    <span className="bg-muted grid size-10 place-items-center rounded-md">
-                                      <MusicNoteIcon className="size-4" />
-                                    </span>
-                                  )}
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block truncate font-medium">
-                                      {result.title}
-                                    </span>
-                                    <span className="text-muted-foreground block truncate text-xs">
-                                      {result.subtitle}
-                                    </span>
-                                  </span>
-                                  <span className="text-muted-foreground text-xs capitalize">
-                                    {result.type}
-                                  </span>
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                        {error ? (
-                          <p className="text-destructive text-sm">{error}</p>
-                        ) : null}
-                        <DialogFooter>
-                          <Button type="submit" disabled={pending}>
-                            {pending && <Spinner />}
-                            Add {selected.label}
+                            className="self-start"
+                          >
+                            <CaretLeftIcon />
+                            Back
                           </Button>
-                        </DialogFooter>
-                      </form>
+                          <InputGroup>
+                            <InputGroupAddon align="inline-start">
+                              {selected.platform ? (
+                                <SocialIcon id={selected.platform} />
+                              ) : (
+                                <CategoryIcon item={selected} />
+                              )}
+                            </InputGroupAddon>
+                            <InputGroupInput
+                              ref={handleRef}
+                              value={handle}
+                              onChange={(event) => {
+                                setHandle(event.target.value);
+                                // Stale results belong to the previous query; the
+                                // effect re-populates only when the debounce fires.
+                                setSearchResults([]);
+                                setSearching(false);
+                              }}
+                              placeholder={
+                                selected.id === "apple-music"
+                                  ? `Search ${selected.label} or paste a link`
+                                  : selected.placeholder
+                              }
+                              aria-label={selected.label}
+                            />
+                            {searching ? (
+                              <InputGroupAddon align="inline-end">
+                                <Spinner />
+                              </InputGroupAddon>
+                            ) : null}
+                          </InputGroup>
+                          {selected?.id === "apple-music" && searchResults.length > 0 ? (
+                            <ul className="border-input flex max-h-64 flex-col overflow-y-auto rounded-xl border">
+                              {searchResults.map((result) => (
+                                <li key={`${result.type}-${result.id}`}>
+                                  <button
+                                    type="button"
+                                    onClick={() => addMusicResult(result)}
+                                    className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
+                                  >
+                                    {result.imageUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={result.imageUrl}
+                                        alt=""
+                                        className="size-10 rounded-md object-cover"
+                                      />
+                                    ) : (
+                                      <span className="bg-muted grid size-10 place-items-center rounded-md">
+                                        <MusicNoteIcon className="size-4" />
+                                      </span>
+                                    )}
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate font-medium">
+                                        {result.title}
+                                      </span>
+                                      <span className="text-muted-foreground block truncate text-xs">
+                                        {result.subtitle}
+                                      </span>
+                                    </span>
+                                    <span className="text-muted-foreground text-xs capitalize">
+                                      {result.type}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                          {error ? (
+                            <p className="text-destructive text-sm">{error}</p>
+                          ) : null}
+                          <DialogFooter>
+                            <Button type="submit" disabled={pending}>
+                              {pending && <Spinner />}
+                              Add {selected.label}
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      )
                     ) : (
                       results.map((item) => (
                         <button

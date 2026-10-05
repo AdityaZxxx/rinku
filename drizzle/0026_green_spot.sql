@@ -1,0 +1,5 @@
+ALTER TYPE "public"."link_kind" ADD VALUE 'heading';--> statement-breakpoint
+ALTER TABLE "links" DROP CONSTRAINT "links_url_length";--> statement-breakpoint
+ALTER TABLE "links" DROP CONSTRAINT "links_social_platform";--> statement-breakpoint
+ALTER TABLE "links" ADD CONSTRAINT "links_url_length" CHECK (("links"."kind"::text = 'heading' and char_length("links"."url") = 0) or ("links"."kind"::text <> 'heading' and char_length("links"."url") between 1 and 2048));--> statement-breakpoint
+ALTER TABLE "links" ADD CONSTRAINT "links_social_platform" CHECK (("links"."kind"::text = 'social' and "links"."platform" is not null) or ("links"."kind"::text = 'custom' and "links"."platform" is null) or ("links"."kind"::text in ('music', 'video', 'embed') and "links"."platform" is null and "links"."metadata" is not null) or ("links"."kind"::text = 'heading' and "links"."platform" is null and "links"."metadata" is null));

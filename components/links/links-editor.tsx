@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { changedPositions } from "@/lib/links";
 import { platformById } from "@/lib/platforms";
 import { AddLinkDialog } from "./add-link-dialog";
+import { HeadingRow } from "./heading-row";
 import { LinkRow } from "./link-row";
 import { useArchiveLink, useReorderLinks, useRestoreLink } from "./use-link-mutations";
 
@@ -213,14 +214,18 @@ export function LinksEditor({
             <div className="flex flex-col gap-3">
               {customLinks.map((link) => (
                 <div key={link.id} id={`link-${link.id}`}>
-                  <LinkRow
-                    link={link}
-                    expanded={expandedId === link.id}
-                    onToggleExpand={() =>
-                      setExpandedId((current) => (current === link.id ? null : link.id))
-                    }
-                    onArchive={onArchive}
-                  />
+                  {link.kind === "heading" ? (
+                    <HeadingRow link={link} onArchive={onArchive} />
+                  ) : (
+                    <LinkRow
+                      link={link}
+                      expanded={expandedId === link.id}
+                      onToggleExpand={() =>
+                        setExpandedId((current) => (current === link.id ? null : link.id))
+                      }
+                      onArchive={onArchive}
+                    />
+                  )}
                 </div>
               ))}
             </div>

@@ -8,7 +8,7 @@ export interface CatalogItem {
   id: string;
   label: string;
   tagline: string;
-  category: "socials" | "contact" | "music" | "video" | "embeds";
+  category: "socials" | "contact" | "music" | "video" | "embeds" | "heading";
   placeholder: string;
   buildUrl: (input: string) => string | null;
   // Custom rows carry no platform; socials do.
@@ -174,6 +174,19 @@ const EMBEDS: CatalogItem[] = [
   embedRow("typeform", "Typeform", "form.typeform.com/to/...", "Add a form"),
 ];
 
+const HEADINGS: CatalogItem[] = [
+  {
+    id: "heading",
+    label: "Heading",
+    category: "heading",
+    tagline: "Group your links under a label",
+    placeholder: "Shop, music, contact…",
+    platform: null,
+    buildUrl: () => null,
+    hint: "Headings don't need a URL.",
+  },
+];
+
 export const CATALOG: CatalogItem[] = [
   ...PLATFORMS.map((platform) => ({
     id: platform.id,
@@ -188,6 +201,7 @@ export const CATALOG: CatalogItem[] = [
   ...MUSIC,
   ...VIDEO,
   ...EMBEDS,
+  ...HEADINGS,
 ];
 
 export const CATEGORIES = [
@@ -196,4 +210,5 @@ export const CATEGORIES = [
   { id: "music", label: "Music" },
   { id: "video", label: "Video" },
   { id: "embeds", label: "Apps" },
+  { id: "heading", label: "Heading" },
 ] as const;

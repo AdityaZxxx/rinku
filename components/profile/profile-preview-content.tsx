@@ -36,7 +36,7 @@ export interface PreviewLink {
   variant: "classic" | "featured";
   isActive: boolean;
   archivedAt: Date | null;
-  kind?: "custom" | "social" | "music" | "video" | "embed";
+  kind?: "custom" | "social" | "music" | "video" | "embed" | "heading";
   platform?: string | null;
   metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
 }
@@ -166,6 +166,17 @@ export function ProfilePreviewContent({
               </p>
             ) : (
               customLinks.map((link) => {
+                if (link.kind === "heading") {
+                  return (
+                    <h2
+                      key={link.id}
+                      className="mt-4 text-sm font-semibold tracking-wide"
+                      style={{ color: muted }}
+                    >
+                      {link.title}
+                    </h2>
+                  );
+                }
                 const style =
                   (link.kind === "music" ||
                     link.kind === "video" ||

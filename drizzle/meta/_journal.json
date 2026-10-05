@@ -183,6 +183,13 @@
       "when": 1791163851788,
       "tag": "0025_rainy_colleen_wing",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791166447418,
+      "tag": "0026_green_spot",
+      "breakpoints": true
     }
   ]
 }

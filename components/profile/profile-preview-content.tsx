@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
+import type { EmbedMetadata } from "@/lib/embeds";
 import type { LinkMetadata } from "@/lib/music";
 import type { VideoMetadata } from "@/lib/video";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
+import { BlockEmbed } from "@/components/links/block-embed";
 import { MusicEmbed } from "@/components/links/music-embed";
 import { VideoEmbed } from "@/components/links/video-embed";
 import { MediaIcon } from "@/components/media-icon";
@@ -34,9 +36,9 @@ export interface PreviewLink {
   variant: "classic" | "featured";
   isActive: boolean;
   archivedAt: Date | null;
-  kind?: "custom" | "social" | "music" | "video";
+  kind?: "custom" | "social" | "music" | "video" | "embed";
   platform?: string | null;
-  metadata?: LinkMetadata | VideoMetadata | null;
+  metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
 }
 
 function LinkContent({ link }: { link: PreviewLink }) {
@@ -165,17 +167,24 @@ export function ProfilePreviewContent({
             ) : (
               customLinks.map((link) => {
                 const style =
-                  (link.kind === "music" || link.kind === "video") && link.metadata
+                  (link.kind === "music" ||
+                    link.kind === "video" ||
+                    link.kind === "embed") &&
+                  link.metadata
                     ? (link.metadata.style ?? "embed")
                     : null;
                 if (style === "embed" && link.metadata) {
                   return (
                     <div key={link.id} className="w-full">
-                      {link.metadata.provider === "youtube" ||
-                      link.metadata.provider === "vimeo" ? (
-                        <VideoEmbed metadata={link.metadata} />
+                      {link.kind === "video" ? (
+                        // SAFETY: kind === "video" implies VideoMetadata shape.
+                        <VideoEmbed metadata={link.metadata as VideoMetadata} />
+                      ) : link.kind === "embed" ? (
+                        // SAFETY: kind === "embed" implies EmbedMetadata shape.
+                        <BlockEmbed metadata={link.metadata as EmbedMetadata} />
                       ) : (
-                        <MusicEmbed metadata={link.metadata} />
+                        // SAFETY: only music left.
+                        <MusicEmbed metadata={link.metadata as LinkMetadata} />
                       )}
                     </div>
                   );

@@ -8,6 +8,7 @@ import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import { links, profiles, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { parseEmbedUrl, type EmbedMetadata, embedMetadataSchema } from "@/lib/embeds";
 import {
   httpUrlSchema,
   linkInputSchema,
@@ -161,6 +162,10 @@ export async function createLink(input: {
             const music = parsed.data.platform ? null : parseMusicUrl(parsed.data.url);
             const video =
               music || parsed.data.platform ? null : parseVideoUrl(parsed.data.url);
+            const embed =
+              music || video || parsed.data.platform
+                ? null
+                : parseEmbedUrl(parsed.data.url);
             return {
               profileId: parsed.data.profileId,
               title: parsed.data.title,
@@ -173,9 +178,11 @@ export async function createLink(input: {
                   ? ("music" as const)
                   : video
                     ? ("video" as const)
-                    : ("custom" as const),
+                    : embed
+                      ? ("embed" as const)
+                      : ("custom" as const),
               platform: parsed.data.platform ?? null,
-              metadata: music ?? video,
+              metadata: music ?? video ?? embed,
               position: positionAfter(aggregate?.maxPosition),
             };
           })(),
@@ -274,13 +281,13 @@ export async function updateLink(input: {
   variant: "classic" | "featured";
   isActive: boolean;
   imageUrl?: string | null;
-  metadata?: LinkMetadata | VideoMetadata | null;
+  metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
 }): Promise<
   | {
       ok: true;
       kind: Link["kind"];
       platform: string | null;
-      metadata: LinkMetadata | VideoMetadata | null;
+      metadata: LinkMetadata | VideoMetadata | EmbedMetadata | null;
     }
   | { error: string }
 > {
@@ -295,7 +302,10 @@ export async function updateLink(input: {
   const parsed = linkInputSchema
     .extend({
       id: z.uuid(),
-      metadata: z.union([linkMetadataSchema, videoMetadataSchema]).nullable().optional(),
+      metadata: z
+        .union([linkMetadataSchema, videoMetadataSchema, embedMetadataSchema])
+        .nullable()
+        .optional(),
     })
     .safeParse(input);
   if (!parsed.success) {
@@ -316,7 +326,8 @@ export async function updateLink(input: {
     // the new URL is a music/video one.
     const music = parseMusicUrl(parsed.data.url);
     const video = music ? null : parseVideoUrl(parsed.data.url);
-    const typed = music ?? video;
+    const embed = music || video ? null : parseEmbedUrl(parsed.data.url);
+    const typed = music ?? video ?? embed;
     const social = !typed && existing.platform !== null;
     // Embed style carries across saves: the editor sends it explicitly, a
     // URL-only edit keeps what the row already had.
@@ -330,7 +341,15 @@ export async function updateLink(input: {
         url: parsed.data.url,
         variant: parsed.data.variant,
         isActive: parsed.data.isActive,
-        kind: typed ? (music ? "music" : "video") : social ? "social" : "custom",
+        kind: music
+          ? ("music" as const)
+          : video
+            ? ("video" as const)
+            : embed
+              ? ("embed" as const)
+              : social
+                ? ("social" as const)
+                : ("custom" as const),
         platform: social ? existing.platform : null,
         metadata,
         imageUrl:

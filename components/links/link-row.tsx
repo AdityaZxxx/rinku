@@ -80,10 +80,11 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
         update.mutate({
           id: link.id,
           ...fields,
-          // Only music links carry embed style; stripping it elsewhere keeps
-          // styleless kinds out of edits.
+          // Only player/embed blocks carry a style; stripping it elsewhere
+          // keeps plain rows out of music/video/embed edits.
           metadata:
-            (link.kind === "music" || link.kind === "video") && link.metadata
+            (link.kind === "music" || link.kind === "video" || link.kind === "embed") &&
+            link.metadata
               ? { ...link.metadata, style }
               : undefined,
         });
@@ -256,7 +257,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             }}
           </form.Field>
 
-          {link.kind === "music" || link.kind === "video" ? (
+          {link.kind === "music" || link.kind === "video" || link.kind === "embed" ? (
             <form.Field name="style">
               {(field) => (
                 <Field>

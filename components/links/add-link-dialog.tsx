@@ -3,12 +3,21 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { AppleMusicResult } from "@/lib/apple-music";
 import {
+  AppleLogoIcon,
+  CalendarIcon,
   CaretLeftIcon,
   LinkSimpleIcon,
+  ListChecksIcon,
   MagnifyingGlassIcon,
+  MapTrifoldIcon,
   MusicNoteIcon,
-  PlayCircleIcon,
   PlusIcon,
+  SoundcloudLogoIcon,
+  SpotifyLogoIcon,
+  TelegramLogoIcon,
+  VideoCameraIcon,
+  WhatsappLogoIcon,
+  YoutubeLogoIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
@@ -32,10 +41,38 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
+import { parseEmbedUrl } from "@/lib/embeds";
 import { linkUrlSchema, normalizeUrl } from "@/lib/links";
 import { parseMusicUrl } from "@/lib/music";
 import { parseVideoUrl } from "@/lib/video";
 import { useCreateLink } from "./use-link-mutations";
+
+function CategoryIcon({ item }: { item: CatalogItem }) {
+  switch (item.id) {
+    case "spotify":
+      return <SpotifyLogoIcon className="size-4" />;
+    case "apple-music":
+      return <AppleLogoIcon className="size-4" />;
+    case "soundcloud":
+      return <SoundcloudLogoIcon className="size-4" />;
+    case "youtube":
+      return <YoutubeLogoIcon className="size-4" />;
+    case "vimeo":
+      return <VideoCameraIcon className="size-4" />;
+    case "google-maps":
+      return <MapTrifoldIcon className="size-4" />;
+    case "google-calendar":
+      return <CalendarIcon className="size-4" />;
+    case "typeform":
+      return <ListChecksIcon className="size-4" />;
+    case "whatsapp":
+      return <WhatsappLogoIcon className="size-4" />;
+    case "telegram":
+      return <TelegramLogoIcon className="size-4" />;
+    default:
+      return <LinkSimpleIcon className="size-4" />;
+  }
+}
 
 type Category = (typeof CATEGORIES)[number]["id"];
 
@@ -238,6 +275,8 @@ export function AddLinkDialog({
             const isUrl = isLinkLike(query);
             const music = isUrl ? parseMusicUrl(normalizeUrl(query)) : null;
             const video = music || !isUrl ? null : parseVideoUrl(normalizeUrl(query));
+            const embed =
+              music || video || !isUrl ? null : parseEmbedUrl(normalizeUrl(query));
             const results = query
               ? CATALOG.filter((item) =>
                   item.label.toLowerCase().includes(query.toLowerCase()),
@@ -315,11 +354,15 @@ export function AddLinkDialog({
                     </div>
                     {music ? (
                       <p className="text-muted-foreground px-1 text-xs">
-                        Music link — your profile will embed the player.
+                        Music link — your profile will play it inline.
                       </p>
                     ) : video ? (
                       <p className="text-muted-foreground px-1 text-xs">
-                        Video link — your profile will embed the player.
+                        Video link — your profile will play it inline.
+                      </p>
+                    ) : embed ? (
+                      <p className="text-muted-foreground px-1 text-xs">
+                        Web link — your profile will render it inline.
                       </p>
                     ) : null}
                     {error ? (
@@ -379,11 +422,9 @@ export function AddLinkDialog({
                           <InputGroupAddon align="inline-start">
                             {selected.platform ? (
                               <SocialIcon id={selected.platform} />
-                            ) : selected.category === "video" ? (
-                              <PlayCircleIcon />
-                            ) : selected.category === "music" ? (
-                              <MusicNoteIcon />
-                            ) : null}
+                            ) : (
+                              <CategoryIcon item={selected} />
+                            )}
                           </InputGroupAddon>
                           <InputGroupInput
                             ref={handleRef}
@@ -469,12 +510,8 @@ export function AddLinkDialog({
                           <span className="border-input inline-flex size-9 items-center justify-center rounded-full border">
                             {item.platform ? (
                               <SocialIcon id={item.platform} className="size-4" />
-                            ) : item.category === "video" ? (
-                              <PlayCircleIcon className="size-4" />
-                            ) : item.category === "music" ? (
-                              <MusicNoteIcon className="size-4" />
                             ) : (
-                              <LinkSimpleIcon className="size-4" />
+                              <CategoryIcon item={item} />
                             )}
                           </span>
                           <span className="flex flex-col">

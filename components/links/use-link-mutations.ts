@@ -12,6 +12,7 @@ import {
   restoreLink,
   updateLink,
 } from "@/app/actions/links";
+import { parseEmbedUrl } from "@/lib/embeds";
 import { parseMusicUrl } from "@/lib/music";
 import { parseVideoUrl } from "@/lib/video";
 
@@ -131,6 +132,7 @@ export function useCreateLink(profileId: string) {
       const tempId = crypto.randomUUID();
       const music = input.platform ? null : parseMusicUrl(input.url);
       const video = music || input.platform ? null : parseVideoUrl(input.url);
+      const embed = music || video || input.platform ? null : parseEmbedUrl(input.url);
       const optimistic: Link = {
         id: tempId,
         profileId,
@@ -141,9 +143,17 @@ export function useCreateLink(profileId: string) {
         clickCount: 0,
         isActive: true,
         archivedAt: null,
-        kind: input.platform ? "social" : music ? "music" : video ? "video" : "custom",
+        kind: input.platform
+          ? "social"
+          : music
+            ? "music"
+            : video
+              ? "video"
+              : embed
+                ? "embed"
+                : "custom",
         platform: input.platform ?? null,
-        metadata: music ?? video,
+        metadata: music ?? video ?? embed,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

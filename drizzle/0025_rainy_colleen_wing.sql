@@ -1,0 +1,3 @@
+ALTER TYPE "public"."link_kind" ADD VALUE 'embed';--> statement-breakpoint
+ALTER TABLE "links" DROP CONSTRAINT "links_social_platform";--> statement-breakpoint
+ALTER TABLE "links" ADD CONSTRAINT "links_social_platform" CHECK (("links"."kind"::text = 'social' and "links"."platform" is not null) or ("links"."kind"::text = 'custom' and "links"."platform" is null) or ("links"."kind"::text in ('music', 'video', 'embed') and "links"."platform" is null and "links"."metadata" is not null));

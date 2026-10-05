@@ -1,3 +1,4 @@
+import { parseEmbedUrl } from "@/lib/embeds";
 import { normalizeUrl } from "@/lib/links";
 import { parseMusicUrl } from "@/lib/music";
 import { PLATFORMS } from "@/lib/platforms";
@@ -7,7 +8,7 @@ export interface CatalogItem {
   id: string;
   label: string;
   tagline: string;
-  category: "socials" | "contact" | "music" | "video";
+  category: "socials" | "contact" | "music" | "video" | "embeds";
   placeholder: string;
   buildUrl: (input: string) => string | null;
   // Custom rows carry no platform; socials do.
@@ -41,6 +42,32 @@ const CONTACTS: CatalogItem[] = [
       return digits.replace(/\D/g, "").length >= 7 ? `tel:${digits}` : null;
     },
   },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    category: "contact",
+    tagline: "Chat with you on WhatsApp",
+    placeholder: "+1 555 010 2233",
+    platform: null,
+    hint: "Enter your WhatsApp number with country code.",
+    buildUrl: (input) => {
+      const digits = input.replace(/\D/g, "");
+      return digits.length >= 7 ? `https://wa.me/${digits}` : null;
+    },
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    category: "contact",
+    tagline: "Message you on Telegram",
+    placeholder: "@username",
+    platform: null,
+    hint: "Enter your Telegram username.",
+    buildUrl: (input) => {
+      const handle = input.trim().replace(/^@/, "");
+      return /^[A-Za-z0-9_]{5,32}$/.test(handle) ? `https://t.me/${handle}` : null;
+    },
+  },
 ];
 
 function musicRow(
@@ -66,18 +93,18 @@ function musicRow(
 }
 
 const MUSIC: CatalogItem[] = [
-  musicRow("spotify", "Spotify", "open.spotify.com/track/...", "Embed a Spotify player"),
+  musicRow("spotify", "Spotify", "open.spotify.com/track/...", "Play a Spotify track"),
   musicRow(
     "apple-music",
     "Apple Music",
     "music.apple.com/us/album/...",
-    "Embed an Apple Music player",
+    "Play an Apple Music track",
   ),
   musicRow(
     "soundcloud",
     "SoundCloud",
     "soundcloud.com/artist/track",
-    "Embed a SoundCloud player",
+    "Play a SoundCloud track or set",
   ),
 ];
 
@@ -104,8 +131,47 @@ function videoRow(
 }
 
 const VIDEO: CatalogItem[] = [
-  videoRow("youtube", "YouTube", "youtube.com/watch?v=...", "Embed a YouTube player"),
-  videoRow("vimeo", "Vimeo", "vimeo.com/123456789", "Embed a Vimeo player"),
+  videoRow("youtube", "YouTube", "youtube.com/watch?v=...", "Add a YouTube video"),
+  videoRow("vimeo", "Vimeo", "vimeo.com/123456789", "Add a Vimeo video"),
+];
+
+function embedRow(
+  id: string,
+  label: string,
+  placeholder: string,
+  tagline: string,
+): CatalogItem {
+  return {
+    id,
+    label,
+    category: "embeds",
+    tagline,
+    placeholder,
+    platform: null,
+    hint: `Paste a full ${label} link.`,
+    buildUrl: (input) => {
+      const normalized = normalizeUrl(input);
+      const metadata = parseEmbedUrl(normalized);
+      const provider =
+        id === "google-maps"
+          ? "google-maps"
+          : id === "google-calendar"
+            ? "google-calendar"
+            : "typeform";
+      return metadata?.provider === provider ? normalized : null;
+    },
+  };
+}
+
+const EMBEDS: CatalogItem[] = [
+  embedRow("google-maps", "Google Maps", "google.com/maps?q=...", "Show a map"),
+  embedRow(
+    "google-calendar",
+    "Google Calendar",
+    "calendar.google.com/calendar/embed?src=...",
+    "Show a calendar",
+  ),
+  embedRow("typeform", "Typeform", "form.typeform.com/to/...", "Add a form"),
 ];
 
 export const CATALOG: CatalogItem[] = [
@@ -121,6 +187,7 @@ export const CATALOG: CatalogItem[] = [
   ...CONTACTS,
   ...MUSIC,
   ...VIDEO,
+  ...EMBEDS,
 ];
 
 export const CATEGORIES = [
@@ -128,4 +195,5 @@ export const CATEGORIES = [
   { id: "contact", label: "Contact" },
   { id: "music", label: "Music" },
   { id: "video", label: "Video" },
+  { id: "embeds", label: "Apps" },
 ] as const;

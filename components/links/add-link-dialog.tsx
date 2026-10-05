@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import type { AppleMusicResult } from "@/lib/apple-music";
 import {
   CaretLeftIcon,
   LinkSimpleIcon,
   MagnifyingGlassIcon,
+  MusicNoteIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
+import { searchAppleMusic } from "@/app/actions/apple-music";
 import { fetchUrlMetadata } from "@/app/actions/links";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
@@ -29,6 +32,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
 import { linkUrlSchema, normalizeUrl } from "@/lib/links";
+import { parseMusicUrl } from "@/lib/music";
 import { useCreateLink } from "./use-link-mutations";
 
 type Category = (typeof CATEGORIES)[number]["id"];
@@ -52,6 +56,8 @@ export function AddLinkDialog({
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [handle, setHandle] = useState("");
   const [meta, setMeta] = useState<LinkMeta | null>(null);
+  const [searchResults, setSearchResults] = useState<Array<AppleMusicResult>>([]);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -67,8 +73,56 @@ export function AddLinkDialog({
     setSelected(null);
     setHandle("");
     setMeta(null);
+    setSearchResults([]);
+    setSearching(false);
     setError(null);
     form.reset();
+  }
+
+  // Spotify links can be found without a pasted URL: search the catalogue
+  // live, but stand down the moment the input is cleared or looks like a URL.
+  useEffect(() => {
+    // Apple Music search works key-free; Spotify is paste-only until the
+    // account has Premium.
+    if (selected?.id !== "apple-music") {
+      return;
+    }
+    const query = handle.trim();
+    if (query.length < 2 || isLinkLike(query)) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearching(true);
+      void (async () => {
+        const result = await searchAppleMusic({ query });
+        setSearchResults("error" in result ? [] : result.results);
+        setSearching(false);
+      })();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [handle, selected]);
+
+  function addMusicResult(result: AppleMusicResult) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const created = await create.mutateAsync({
+          title: result.title,
+          url: result.url,
+          variant: "classic",
+          imageUrl: result.imageUrl,
+        });
+        setOpen(false);
+        reset();
+        onCreated(created.id);
+      } catch (mutationError) {
+        setError(
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Adding this link failed. Try again.",
+        );
+      }
+    });
   }
 
   const form = useForm({
@@ -102,7 +156,10 @@ export function AddLinkDialog({
     if (!selected) return;
     const url = selected.buildUrl(handle);
     if (!url) {
-      setError(`Enter a valid ${selected.label.toLowerCase()} ${selected.placeholder}.`);
+      setError(
+        selected.hint ??
+          `Enter a valid ${selected.label.toLowerCase()} ${selected.placeholder}.`,
+      );
       return;
     }
     setError(null);
@@ -177,6 +234,7 @@ export function AddLinkDialog({
           {(field) => {
             const query = field.state.value.trim();
             const isUrl = isLinkLike(query);
+            const music = isUrl ? parseMusicUrl(normalizeUrl(query)) : null;
             const results = query
               ? CATALOG.filter((item) =>
                   item.label.toLowerCase().includes(query.toLowerCase()),
@@ -252,6 +310,11 @@ export function AddLinkDialog({
                         Add link
                       </Button>
                     </div>
+                    {music ? (
+                      <p className="text-muted-foreground px-1 text-xs">
+                        Music link — your profile will embed the player.
+                      </p>
+                    ) : null}
                     {error ? (
                       <p className="text-destructive px-1 text-sm">{error}</p>
                     ) : null}
@@ -296,6 +359,8 @@ export function AddLinkDialog({
                           onClick={() => {
                             setSelected(null);
                             setHandle("");
+                            setSearchResults([]);
+                            setSearching(false);
                             setError(null);
                           }}
                           className="self-start"
@@ -307,16 +372,70 @@ export function AddLinkDialog({
                           <InputGroupAddon align="inline-start">
                             {selected.platform ? (
                               <SocialIcon id={selected.platform} />
+                            ) : selected.category === "music" ? (
+                              <MusicNoteIcon />
                             ) : null}
                           </InputGroupAddon>
                           <InputGroupInput
                             ref={handleRef}
                             value={handle}
-                            onChange={(event) => setHandle(event.target.value)}
-                            placeholder={selected.placeholder}
+                            onChange={(event) => {
+                              setHandle(event.target.value);
+                              // Stale results belong to the previous query; the
+                              // effect re-populates only when the debounce fires.
+                              setSearchResults([]);
+                              setSearching(false);
+                            }}
+                            placeholder={
+                              selected.id === "apple-music"
+                                ? `Search ${selected.label} or paste a link`
+                                : selected.placeholder
+                            }
                             aria-label={selected.label}
                           />
+                          {searching ? (
+                            <InputGroupAddon align="inline-end">
+                              <Spinner />
+                            </InputGroupAddon>
+                          ) : null}
                         </InputGroup>
+                        {selected?.id === "apple-music" && searchResults.length > 0 ? (
+                          <ul className="border-input flex max-h-64 flex-col overflow-y-auto rounded-xl border">
+                            {searchResults.map((result) => (
+                              <li key={`${result.type}-${result.id}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => addMusicResult(result)}
+                                  className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
+                                >
+                                  {result.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={result.imageUrl}
+                                      alt=""
+                                      className="size-10 rounded-md object-cover"
+                                    />
+                                  ) : (
+                                    <span className="bg-muted grid size-10 place-items-center rounded-md">
+                                      <MusicNoteIcon className="size-4" />
+                                    </span>
+                                  )}
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate font-medium">
+                                      {result.title}
+                                    </span>
+                                    <span className="text-muted-foreground block truncate text-xs">
+                                      {result.subtitle}
+                                    </span>
+                                  </span>
+                                  <span className="text-muted-foreground text-xs capitalize">
+                                    {result.type}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                         {error ? (
                           <p className="text-destructive text-sm">{error}</p>
                         ) : null}
@@ -341,6 +460,8 @@ export function AddLinkDialog({
                           <span className="border-input inline-flex size-9 items-center justify-center rounded-full border">
                             {item.platform ? (
                               <SocialIcon id={item.platform} className="size-4" />
+                            ) : item.category === "music" ? (
+                              <MusicNoteIcon className="size-4" />
                             ) : (
                               <LinkSimpleIcon className="size-4" />
                             )}

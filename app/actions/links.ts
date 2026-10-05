@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { and, eq, max, sql } from "drizzle-orm";
+import { and, eq, max } from "drizzle-orm";
 import * as z from "zod";
 
 import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
@@ -208,6 +208,63 @@ export async function createLink(input: {
   return created;
 }
 
+export async function createSectionHeading(input: {
+  profileId: string;
+  title: string;
+}): Promise<Link | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({ profileId: z.uuid(), title: linkTitleSchema })
+    .safeParse(input);
+  if (!parsed.success) {
+    return { error: firstIssue(parsed.error) };
+  }
+
+  let created: Link | undefined;
+  try {
+    created = await withUserDb(user.id, async (tx) => {
+      const [aggregate] = await tx
+        .select({ maxPosition: max(links.position) })
+        .from(links)
+        .where(eq(links.profileId, parsed.data.profileId));
+      const [row] = await tx
+        .insert(links)
+        .values({
+          profileId: parsed.data.profileId,
+          title: parsed.data.title,
+          url: "",
+          variant: "classic",
+          kind: "heading",
+          platform: null,
+          metadata: null,
+          position: positionAfter(aggregate?.maxPosition),
+        })
+        .returning();
+      return row;
+    });
+  } catch (error) {
+    log.error(
+      "links",
+      "createSectionHeading failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Adding a heading failed. Try again." };
+  }
+
+  if (!created) {
+    return { error: "Adding a heading failed. Try again." };
+  }
+  updateTag(PUBLIC_PROFILE_TAG);
+  return created;
+}
+
 export async function uploadLinkImage(
   formData: FormData,
 ): Promise<{ url: string } | { error: string }> {
@@ -302,6 +359,8 @@ export async function updateLink(input: {
   const parsed = linkInputSchema
     .extend({
       id: z.uuid(),
+      // Heading rows carry no URL.
+      url: z.union([linkInputSchema.shape.url, z.literal("")]),
       metadata: z
         .union([linkMetadataSchema, videoMetadataSchema, embedMetadataSchema])
         .nullable()
@@ -314,11 +373,36 @@ export async function updateLink(input: {
 
   const updated = await withUserDb(user.id, async (tx) => {
     const [existing] = await tx
-      .select({ platform: links.platform, metadata: links.metadata })
+      .select({ kind: links.kind, platform: links.platform, metadata: links.metadata })
       .from(links)
       .where(eq(links.id, parsed.data.id));
     if (!existing) {
       return [];
+    }
+
+    // A heading stays a heading as long as it carries no URL; giving it one
+    // promotes it into a real link.
+    if (existing.kind === "heading" && parsed.data.url.trim() === "") {
+      return tx
+        .update(links)
+        .set({
+          title: parsed.data.title,
+          url: "",
+          variant: parsed.data.variant,
+          isActive: parsed.data.isActive,
+          kind: "heading",
+          platform: null,
+          metadata: null,
+          imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(links.id, parsed.data.id))
+        .returning({
+          id: links.id,
+          kind: links.kind,
+          platform: links.platform,
+          metadata: links.metadata,
+        });
     }
 
     // Reclassify on URL change: pasting a music or video link into a plain
@@ -488,15 +572,21 @@ export async function reorderLinks(input: {
     return { error: "Reordering failed. Try again." };
   }
 
-  const ids = parsed.data.updates.map((update) => update.id);
-  const positions = parsed.data.updates.map((update) => update.position);
-
   try {
     await withUserDb(user.id, async (tx) => {
-      await tx.execute(
-        sql`update links set position = data.position
-            from unnest(${ids}::uuid[], ${positions}::int[]) as data(id, position)
-            where links.id = data.id and links.profile_id = ${parsed.data.profileId}`,
+      // One statement per moved row rather than a single unnest-with-array-params
+      // query: drizzle expands JS arrays in sql`` into `($1, $2)::uuid[]`,
+      // which Postgres cannot cast. Runs in parallel; only rows that actually
+      // moved are updated, so the batch is small.
+      await Promise.all(
+        parsed.data.updates.map((update) =>
+          tx
+            .update(links)
+            .set({ position: update.position })
+            .where(
+              and(eq(links.id, update.id), eq(links.profileId, parsed.data.profileId)),
+            ),
+        ),
       );
     });
   } catch (error) {

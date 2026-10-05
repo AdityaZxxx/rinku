@@ -287,7 +287,13 @@ export function useReorderLinks(profileId: string) {
   const key = linksKey(profileId);
 
   return useMutation({
-    mutationFn: (updates: PositionUpdate[]) => reorderLinks({ profileId, updates }),
+    mutationFn: async (updates: PositionUpdate[]) => {
+      const result = await reorderLinks({ profileId, updates });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Link[]>(key);
@@ -302,8 +308,11 @@ export function useReorderLinks(profileId: string) {
       );
       return { previous };
     },
-    onError: (_error, _updates, context) => {
+    onError: (error, _updates, context) => {
       rollback(queryClient, key, context?.previous);
+      toast.error(
+        error instanceof Error ? error.message : "Reordering failed. Try again.",
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: key });

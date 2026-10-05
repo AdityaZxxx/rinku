@@ -38,9 +38,14 @@ export default async function ProfilePage({ params }: PageProps<"/[username]/pro
       mobilePreview={
         <MobileDock
           username={username}
-          profileId={profile.id}
-          initialProfile={profile}
-          initialLinks={initialLinks}
+          preview={
+            <ProfilePreview
+              username={username}
+              profileId={profile.id}
+              initialProfile={profile}
+              initialLinks={initialLinks}
+            />
+          }
         />
       }
     >

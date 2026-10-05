@@ -40,9 +40,14 @@ export default async function AppearancePage({
       mobilePreview={
         <MobileDock
           username={username}
-          profileId={profile.id}
-          initialProfile={profile}
-          initialLinks={initialLinks}
+          preview={
+            <ProfilePreview
+              username={username}
+              profileId={profile.id}
+              initialProfile={profile}
+              initialLinks={initialLinks}
+            />
+          }
         />
       }
     >

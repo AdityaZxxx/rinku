@@ -1,24 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import type { Link as LinkData, Profile } from "@/lib/db/schema";
 import { EyesIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ProfilePreview } from "./profile-preview";
 
 export function MobileDock({
   username,
-  profileId,
-  initialProfile,
-  initialLinks,
+  preview,
 }: {
   username: string;
-  profileId: string;
-  initialProfile: Profile;
-  initialLinks: LinkData[];
+  preview: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -54,14 +49,7 @@ export function MobileDock({
               </div>
               <div className="bg-background flex-1 overflow-hidden rounded-t-3xl">
                 <div className="mx-auto flex h-full w-full max-w-[420px] flex-col overflow-hidden">
-                  <div className="flex-1 overflow-y-auto">
-                    <ProfilePreview
-                      username={username}
-                      profileId={profileId}
-                      initialProfile={initialProfile}
-                      initialLinks={initialLinks}
-                    />
-                  </div>
+                  <div className="flex-1 overflow-y-auto">{preview}</div>
                 </div>
               </div>
             </div>

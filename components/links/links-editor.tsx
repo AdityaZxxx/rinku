@@ -24,10 +24,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { ArchiveIcon } from "@phosphor-icons/react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { getLinks } from "@/app/actions/links";
 import { EditSocialDialog } from "@/components/links/edit-social-dialog";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
@@ -37,6 +35,7 @@ import { AddLinkDialog } from "./add-link-dialog";
 import { HeadingRow } from "./heading-row";
 import { LinkRow } from "./link-row";
 import { useArchiveLink, useReorderLinks, useRestoreLink } from "./use-link-mutations";
+import { useLinksQuery } from "./use-links-query";
 
 const VERTICAL_AXIS = [restrictToVerticalAxis];
 
@@ -60,18 +59,7 @@ export function LinksEditor({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const query = useQuery({
-    queryKey: ["links", profileId],
-    queryFn: async () => {
-      const result = await getLinks(profileId);
-      if ("error" in result) {
-        throw new Error(result.error);
-      }
-      return result;
-    },
-    initialData: initialLinks,
-  });
-  const links = Array.isArray(query.data) ? query.data : [];
+  const { query, links } = useLinksQuery(profileId, initialLinks);
   const socialLinks = links.filter((link) => link.kind === "social");
   const customLinks = links.filter((link) => link.kind !== "social");
   const itemIds = customLinks.map((link) => link.id);
@@ -178,12 +166,7 @@ export function LinksEditor({
           <SortableContext items={socialIds} strategy={rectSortingStrategy}>
             <div className="flex flex-wrap items-center gap-2">
               {socialLinks.map((link) => (
-                <SocialChip
-                  key={link.id}
-                  link={link}
-                  profileId={profileId}
-                  draggingRef={socialDraggingRef}
-                />
+                <SocialChip key={link.id} link={link} draggingRef={socialDraggingRef} />
               ))}
             </div>
           </SortableContext>
@@ -238,11 +221,9 @@ export function LinksEditor({
 
 function SocialChip({
   link,
-  profileId,
   draggingRef,
 }: {
   link: LinkData;
-  profileId: string;
   draggingRef: React.RefObject<boolean>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -277,12 +258,7 @@ function SocialChip({
           <SocialIcon id={Platform.id} className="size-4" />
         </button>
       </span>
-      <EditSocialDialog
-        link={link}
-        profileId={profileId}
-        open={editing}
-        onOpenChange={setEditing}
-      />
+      <EditSocialDialog link={link} open={editing} onOpenChange={setEditing} />
     </>
   );
 }

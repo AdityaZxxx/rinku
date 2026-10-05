@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Profile } from "@/lib/db/schema";
 import { ImageIcon, VideoCameraIcon, XIcon, CheckIcon } from "@phosphor-icons/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { getProfile } from "@/app/actions/profiles";
 import { AllFontsStylesheet } from "@/components/appearance/font-stylesheet";
 import { patternBackground } from "@/components/appearance/wallpaper-layer";
+import { useProfileQuery } from "@/components/profile/use-profile-query";
 import {
   Attachment,
   AttachmentContent,
@@ -359,18 +359,7 @@ export function AppearanceEditor({
   const videoInputRef = useRef<HTMLInputElement>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const query = useQuery({
-    queryKey: ["profile", username],
-    queryFn: async () => {
-      const result = await getProfile({ username });
-      if ("error" in result) {
-        throw new Error(result.error);
-      }
-      return result;
-    },
-    initialData: initialProfile,
-  });
-  const profile = query.data && !("error" in query.data) ? query.data : initialProfile;
+  const { profile } = useProfileQuery(username, initialProfile);
 
   const [values, setValues] = useState<Appearance>(() => appearanceFromProfile(profile));
   const [fontOpen, setFontOpen] = useState(false);

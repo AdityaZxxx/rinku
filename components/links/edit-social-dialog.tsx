@@ -23,12 +23,10 @@ import { useDeleteLink } from "./use-link-mutations";
 
 export function EditSocialDialog({
   link,
-  profileId,
   open,
   onOpenChange,
 }: {
   link: LinkData;
-  profileId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -36,7 +34,7 @@ export function EditSocialDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const queryClient = useQueryClient();
-  const remove = useDeleteLink(profileId);
+  const remove = useDeleteLink(link.profileId);
   const Platform = platformById(link.platform);
 
   function onSave() {
@@ -58,7 +56,7 @@ export function EditSocialDialog({
         setError(result.error);
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ["links", profileId] });
+      await queryClient.invalidateQueries({ queryKey: ["links", link.profileId] });
       onOpenChange(false);
     });
   }

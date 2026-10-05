@@ -93,7 +93,7 @@ export function ArchiveList({
       ) : (
         <div className="flex flex-col gap-3">
           {archived.map((link) => (
-            <ArchivedRow key={link.id} link={link} profileId={profileId} />
+            <ArchivedRow key={link.id} link={link} />
           ))}
         </div>
       )}
@@ -101,9 +101,9 @@ export function ArchiveList({
   );
 }
 
-function ArchivedRow({ link, profileId }: { link: ArchivedLink; profileId: string }) {
-  const restore = useRestoreLink(profileId);
-  const remove = useDeleteLink(profileId);
+function ArchivedRow({ link }: { link: ArchivedLink }) {
+  const restore = useRestoreLink(link.profileId);
+  const remove = useDeleteLink(link.profileId);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

@@ -5,10 +5,8 @@ import Image from "next/image";
 import type { Profile } from "@/lib/db/schema";
 import { CameraIcon, ImageIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { getProfile } from "@/app/actions/profiles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -20,6 +18,7 @@ import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles";
 import { avatarUrl, bannerUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useUpdateProfile, useUploadProfileImage } from "./use-profile-mutations";
+import { useProfileQuery } from "./use-profile-query";
 
 export function ProfileEditor({
   username,
@@ -33,18 +32,7 @@ export function ProfileEditor({
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const query = useQuery({
-    queryKey: ["profile", username],
-    queryFn: async () => {
-      const result = await getProfile({ username });
-      if ("error" in result) {
-        throw new Error(result.error);
-      }
-      return result;
-    },
-    initialData: initialProfile,
-  });
-  const profile = query.data && !("error" in query.data) ? query.data : initialProfile;
+  const { query, profile } = useProfileQuery(username, initialProfile);
 
   const form = useForm({
     defaultValues: {

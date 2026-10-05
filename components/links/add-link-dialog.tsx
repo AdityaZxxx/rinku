@@ -7,6 +7,7 @@ import {
   LinkSimpleIcon,
   MagnifyingGlassIcon,
   MusicNoteIcon,
+  PlayCircleIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
@@ -33,6 +34,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
 import { linkUrlSchema, normalizeUrl } from "@/lib/links";
 import { parseMusicUrl } from "@/lib/music";
+import { parseVideoUrl } from "@/lib/video";
 import { useCreateLink } from "./use-link-mutations";
 
 type Category = (typeof CATEGORIES)[number]["id"];
@@ -235,6 +237,7 @@ export function AddLinkDialog({
             const query = field.state.value.trim();
             const isUrl = isLinkLike(query);
             const music = isUrl ? parseMusicUrl(normalizeUrl(query)) : null;
+            const video = music || !isUrl ? null : parseVideoUrl(normalizeUrl(query));
             const results = query
               ? CATALOG.filter((item) =>
                   item.label.toLowerCase().includes(query.toLowerCase()),
@@ -314,6 +317,10 @@ export function AddLinkDialog({
                       <p className="text-muted-foreground px-1 text-xs">
                         Music link — your profile will embed the player.
                       </p>
+                    ) : video ? (
+                      <p className="text-muted-foreground px-1 text-xs">
+                        Video link — your profile will embed the player.
+                      </p>
                     ) : null}
                     {error ? (
                       <p className="text-destructive px-1 text-sm">{error}</p>
@@ -372,6 +379,8 @@ export function AddLinkDialog({
                           <InputGroupAddon align="inline-start">
                             {selected.platform ? (
                               <SocialIcon id={selected.platform} />
+                            ) : selected.category === "video" ? (
+                              <PlayCircleIcon />
                             ) : selected.category === "music" ? (
                               <MusicNoteIcon />
                             ) : null}
@@ -460,6 +469,8 @@ export function AddLinkDialog({
                           <span className="border-input inline-flex size-9 items-center justify-center rounded-full border">
                             {item.platform ? (
                               <SocialIcon id={item.platform} className="size-4" />
+                            ) : item.category === "video" ? (
+                              <PlayCircleIcon className="size-4" />
                             ) : item.category === "music" ? (
                               <MusicNoteIcon className="size-4" />
                             ) : (

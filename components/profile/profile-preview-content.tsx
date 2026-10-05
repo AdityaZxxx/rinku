@@ -2,10 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
 import type { LinkMetadata } from "@/lib/music";
+import type { VideoMetadata } from "@/lib/video";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { MusicEmbed } from "@/components/links/music-embed";
+import { VideoEmbed } from "@/components/links/video-embed";
 import { MediaIcon } from "@/components/media-icon";
 import {
   ProfileHeader,
@@ -32,9 +34,9 @@ export interface PreviewLink {
   variant: "classic" | "featured";
   isActive: boolean;
   archivedAt: Date | null;
-  kind?: "custom" | "social" | "music";
+  kind?: "custom" | "social" | "music" | "video";
   platform?: string | null;
-  metadata?: LinkMetadata | null;
+  metadata?: LinkMetadata | VideoMetadata | null;
 }
 
 function LinkContent({ link }: { link: PreviewLink }) {
@@ -163,13 +165,18 @@ export function ProfilePreviewContent({
             ) : (
               customLinks.map((link) => {
                 const style =
-                  link.kind === "music" && link.metadata
+                  (link.kind === "music" || link.kind === "video") && link.metadata
                     ? (link.metadata.style ?? "embed")
                     : null;
                 if (style === "embed" && link.metadata) {
                   return (
                     <div key={link.id} className="w-full">
-                      <MusicEmbed metadata={link.metadata} />
+                      {link.metadata.provider === "youtube" ||
+                      link.metadata.provider === "vimeo" ? (
+                        <VideoEmbed metadata={link.metadata} />
+                      ) : (
+                        <MusicEmbed metadata={link.metadata} />
+                      )}
                     </div>
                   );
                 }

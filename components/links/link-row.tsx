@@ -83,7 +83,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
           // Only music links carry embed style; stripping it elsewhere keeps
           // styleless kinds out of edits.
           metadata:
-            link.kind === "music" && link.metadata
+            (link.kind === "music" || link.kind === "video") && link.metadata
               ? { ...link.metadata, style }
               : undefined,
         });
@@ -256,7 +256,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
             }}
           </form.Field>
 
-          {link.kind === "music" ? (
+          {link.kind === "music" || link.kind === "video" ? (
             <form.Field name="style">
               {(field) => (
                 <Field>

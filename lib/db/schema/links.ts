@@ -1,4 +1,5 @@
 import type { LinkMetadata } from "@/lib/music";
+import type { VideoMetadata } from "@/lib/video";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -20,7 +21,7 @@ import { profiles } from "./profiles";
 
 export const linkVariant = pgEnum("link_variant", ["classic", "featured"]);
 
-export const linkKind = pgEnum("link_kind", ["custom", "social", "music"]);
+export const linkKind = pgEnum("link_kind", ["custom", "social", "music", "video"]);
 
 /**
  * The ordered list of buttons on a public profile page.
@@ -42,9 +43,9 @@ export const links = pgTable(
     // Set for social rows; the platform fixes the icon and the URL shape.
     platform: text("platform"),
 
-    // Kind-specific payload: provider/id for music embeds today, room for
-    // more typed blocks later. Null for plain custom/social rows.
-    metadata: jsonb("metadata").$type<LinkMetadata>(),
+    // Kind-specific payload: provider/id for music and video embeds today,
+    // room for more typed blocks later. Null for plain custom/social rows.
+    metadata: jsonb("metadata").$type<LinkMetadata | VideoMetadata>(),
 
     // Remote URL stored as-is: no storage, no download, so the origin keeps
     // serving the bytes and Rinku never mirrors them.
@@ -77,7 +78,7 @@ export const links = pgTable(
     check("links_url_length", sql`char_length(${t.url}) between 1 and 2048`),
     check(
       "links_social_platform",
-      sql`(${t.kind} = 'social' and ${t.platform} is not null) or (${t.kind} = 'custom' and ${t.platform} is null) or (${t.kind} = 'music' and ${t.platform} is null and ${t.metadata} is not null)`,
+      sql`(${t.kind}::text = 'social' and ${t.platform} is not null) or (${t.kind}::text = 'custom' and ${t.platform} is null) or (${t.kind}::text in ('music', 'video') and ${t.platform} is null and ${t.metadata} is not null)`,
     ),
 
     // Deactivated means draft; archived means off the list but kept for

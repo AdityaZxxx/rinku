@@ -23,6 +23,26 @@ import { imageExtension, imageMaxBytes } from "@/lib/profiles";
 import { linkImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPageMetadata } from "@/lib/url-metadata";
+import { parseVideoUrl, type VideoMetadata, videoMetadataSchema } from "@/lib/video";
+
+/** Thumbnails derived server-side when the row carries no image of its own. */
+async function videoThumbnail(url: string, video: VideoMetadata): Promise<string | null> {
+  if (video.provider === "youtube") {
+    // Static per-id render of the video's poster frame; no request needed.
+    return `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+  }
+  // Vimeo's public oEmbed resolves the poster for a given watch URL.
+  const response = await fetch(
+    `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`,
+    { next: { revalidate: 3600 } },
+  );
+  if (!response.ok) {
+    return null;
+  }
+  // SAFETY: thumbnail_url is optional; a malformed body narrows to undefined.
+  const data = (await response.json()) as { thumbnail_url?: string };
+  return data.thumbnail_url ?? null;
+}
 
 function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "That input was not valid.";
@@ -117,6 +137,16 @@ export async function createLink(input: {
     return { error: firstIssue(parsed.error) };
   }
 
+  // Featured cards render link.imageUrl; for video links with no image of
+  // their own, derive one so the card isn't a muted block.
+  const createdMusic = parsed.data.platform ? null : parseMusicUrl(parsed.data.url);
+  const createdVideo =
+    !createdMusic && !parsed.data.platform ? parseVideoUrl(parsed.data.url) : null;
+  const fallbackImage =
+    createdVideo && parsed.data.imageUrl == null
+      ? await videoThumbnail(parsed.data.url, createdVideo)
+      : null;
+
   let created: Link | undefined;
   try {
     created = await withUserDb(user.id, async (tx) => {
@@ -129,19 +159,23 @@ export async function createLink(input: {
         .values(
           (() => {
             const music = parsed.data.platform ? null : parseMusicUrl(parsed.data.url);
+            const video =
+              music || parsed.data.platform ? null : parseVideoUrl(parsed.data.url);
             return {
               profileId: parsed.data.profileId,
               title: parsed.data.title,
               url: parsed.data.url,
-              imageUrl: parsed.data.imageUrl ?? null,
+              imageUrl: parsed.data.imageUrl ?? fallbackImage,
               variant: parsed.data.variant,
               kind: parsed.data.platform
                 ? ("social" as const)
                 : music
                   ? ("music" as const)
-                  : ("custom" as const),
+                  : video
+                    ? ("video" as const)
+                    : ("custom" as const),
               platform: parsed.data.platform ?? null,
-              metadata: music,
+              metadata: music ?? video,
               position: positionAfter(aggregate?.maxPosition),
             };
           })(),
@@ -240,13 +274,13 @@ export async function updateLink(input: {
   variant: "classic" | "featured";
   isActive: boolean;
   imageUrl?: string | null;
-  metadata?: LinkMetadata | null;
+  metadata?: LinkMetadata | VideoMetadata | null;
 }): Promise<
   | {
       ok: true;
       kind: Link["kind"];
       platform: string | null;
-      metadata: LinkMetadata | null;
+      metadata: LinkMetadata | VideoMetadata | null;
     }
   | { error: string }
 > {
@@ -259,7 +293,10 @@ export async function updateLink(input: {
   }
 
   const parsed = linkInputSchema
-    .extend({ id: z.uuid(), metadata: linkMetadataSchema.nullable().optional() })
+    .extend({
+      id: z.uuid(),
+      metadata: z.union([linkMetadataSchema, videoMetadataSchema]).nullable().optional(),
+    })
     .safeParse(input);
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -274,15 +311,17 @@ export async function updateLink(input: {
       return [];
     }
 
-    // Reclassify on URL change: pasting a Spotify link into a plain row turns
-    // it into a music embed; a social row keeps its platform unless the new
-    // URL is a music one.
+    // Reclassify on URL change: pasting a music or video link into a plain
+    // row turns it into that embed; a social row keeps its platform unless
+    // the new URL is a music/video one.
     const music = parseMusicUrl(parsed.data.url);
-    const social = !music && existing.platform !== null;
+    const video = music ? null : parseVideoUrl(parsed.data.url);
+    const typed = music ?? video;
+    const social = !typed && existing.platform !== null;
     // Embed style carries across saves: the editor sends it explicitly, a
     // URL-only edit keeps what the row already had.
     const style = parsed.data.metadata?.style ?? existing.metadata?.style;
-    const metadata = music && style ? { ...music, style } : music;
+    const metadata = typed && style ? { ...typed, style } : typed;
 
     return tx
       .update(links)
@@ -291,10 +330,14 @@ export async function updateLink(input: {
         url: parsed.data.url,
         variant: parsed.data.variant,
         isActive: parsed.data.isActive,
-        kind: music ? "music" : social ? "social" : "custom",
+        kind: typed ? (music ? "music" : "video") : social ? "social" : "custom",
         platform: social ? existing.platform : null,
         metadata,
-        imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
+        imageUrl:
+          "imageUrl" in input
+            ? (parsed.data.imageUrl ??
+              (video ? await videoThumbnail(parsed.data.url, video) : null))
+            : undefined,
         updatedAt: new Date(),
       })
       .where(eq(links.id, parsed.data.id))

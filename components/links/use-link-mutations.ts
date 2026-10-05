@@ -13,6 +13,7 @@ import {
   updateLink,
 } from "@/app/actions/links";
 import { parseMusicUrl } from "@/lib/music";
+import { parseVideoUrl } from "@/lib/video";
 
 type LinkVariant = Link["variant"];
 type PositionUpdate = { id: string; position: number };
@@ -129,6 +130,7 @@ export function useCreateLink(profileId: string) {
       const previous = queryClient.getQueryData<Link[]>(key);
       const tempId = crypto.randomUUID();
       const music = input.platform ? null : parseMusicUrl(input.url);
+      const video = music || input.platform ? null : parseVideoUrl(input.url);
       const optimistic: Link = {
         id: tempId,
         profileId,
@@ -139,9 +141,9 @@ export function useCreateLink(profileId: string) {
         clickCount: 0,
         isActive: true,
         archivedAt: null,
-        kind: input.platform ? "social" : music ? "music" : "custom",
+        kind: input.platform ? "social" : music ? "music" : video ? "video" : "custom",
         platform: input.platform ?? null,
-        metadata: music,
+        metadata: music ?? video,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

@@ -11,6 +11,7 @@ import { BlockEmbed } from "@/components/links/block-embed";
 import { MusicEmbed } from "@/components/links/music-embed";
 import { VideoEmbed } from "@/components/links/video-embed";
 import { MediaIcon } from "@/components/media-icon";
+import { AgeGateLink, AgeBadge } from "@/components/profile/age-gate-link";
 import {
   ProfileHeader,
   type ProfileHeaderVariant,
@@ -26,6 +27,7 @@ import {
 } from "@/lib/appearance";
 import { faviconUrl, scheduleStatus } from "@/lib/links";
 import { isIconMedia } from "@/lib/media";
+import { gatedThumbUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 export interface PreviewLink {
@@ -38,9 +40,21 @@ export interface PreviewLink {
   archivedAt: Date | null;
   visibleFrom: Date | null;
   visibleUntil: Date | null;
+  minAge?: number | null;
+  /** Locked gated link that has a thumbnail: render the blurred derivative. */
+  hasPreview?: boolean;
+  /**
+   * For a locked typed link the page withholds `metadata`, so the rendering
+   * style (embed/classic/featured) is passed on its own.
+   */
+  gatedStyle?: "embed" | "classic" | "featured" | null;
   kind?: "custom" | "social" | "music" | "video" | "embed" | "heading";
   platform?: string | null;
   metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
+}
+
+function isGated(link: PreviewLink): boolean {
+  return link.minAge != null && link.minAge > 0 && link.url === "";
 }
 
 function LinkContent({ link }: { link: PreviewLink }) {
@@ -68,6 +82,7 @@ function LinkContent({ link }: { link: PreviewLink }) {
         <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
       ) : null}
       <span className="line-clamp-2">{link.title}</span>
+      {link.minAge && link.minAge > 0 ? <AgeBadge minAge={link.minAge} /> : null}
     </>
   );
 }
@@ -188,9 +203,33 @@ export function ProfilePreviewContent({
                   (link.kind === "music" ||
                     link.kind === "video" ||
                     link.kind === "embed") &&
-                  link.metadata
-                    ? (link.metadata.style ?? "embed")
+                  (link.metadata || link.gatedStyle)
+                    ? (link.metadata?.style ?? link.gatedStyle ?? "embed")
                     : null;
+                const classicClass = cn(
+                  "flex w-full items-center border text-sm font-medium transition hover:brightness-95",
+                  contour,
+                );
+                const featuredClass = cn(
+                  "flex w-full flex-col overflow-hidden border text-left text-sm transition hover:brightness-95",
+                  featuredContour,
+                );
+                if (isGated(link)) {
+                  const gatedVariant = style ?? link.variant;
+                  const asCard = gatedVariant === "featured" || gatedVariant === "embed";
+                  return (
+                    <AgeGateLink
+                      key={link.id}
+                      linkId={link.id}
+                      title={link.title}
+                      minAge={link.minAge ?? 0}
+                      presentation={asCard ? "featured" : "classic"}
+                      previewSrc={link.hasPreview ? gatedThumbUrl(link.id) : undefined}
+                      className={asCard && link.hasPreview ? featuredClass : classicClass}
+                      style={bodyStyle}
+                    />
+                  );
+                }
                 if (style === "embed" && link.metadata) {
                   return (
                     <div key={link.id} className="w-full">
@@ -210,14 +249,6 @@ export function ProfilePreviewContent({
                 // Classic/featured music links render exactly like custom ones.
                 const variant: PreviewLink["variant"] =
                   style !== null && style !== "embed" ? style : link.variant;
-                const classicClass = cn(
-                  "flex w-full items-center border text-sm font-medium transition hover:brightness-95",
-                  contour,
-                );
-                const featuredClass = cn(
-                  "flex w-full flex-col overflow-hidden border text-left text-sm transition hover:brightness-95",
-                  featuredContour,
-                );
                 return interactive ? (
                   <div
                     key={link.id}

@@ -62,6 +62,7 @@ export function useUpdateLink(profileId: string) {
       metadata?: Link["metadata"];
       visibleFrom?: Date | null;
       visibleUntil?: Date | null;
+      minAge?: number | null;
     }) => {
       const result = await updateLink(input);
       if ("error" in result) {
@@ -158,6 +159,7 @@ export function useCreateLink(profileId: string) {
         metadata: music ?? video ?? embed,
         visibleFrom: null,
         visibleUntil: null,
+        minAge: null,
         // Sorts last, so the new row appears at the end of the list until the
         // server hands back the real position.
         position: Number.MAX_SAFE_INTEGER,

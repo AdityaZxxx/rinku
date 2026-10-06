@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
 import { VisitBeacon } from "@/components/profile/visit-beacon";
+import { AGE_GATE_COOKIE, isAgeGateCleared } from "@/lib/age-gate";
 import { resolveAppearance } from "@/lib/appearance";
 import { getPublicLinksByProfile } from "@/lib/db/links";
 import { getPublicProfileByUsername } from "@/lib/db/profile";
@@ -44,6 +46,23 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
   const links = await getPublicLinksByProfile(profile.id);
   const look = resolveAppearance(profile);
 
+  const gateCookie = (await cookies()).get(AGE_GATE_COOKIE)?.value;
+  const gatedLinks = links.map((link) => {
+    if (link.minAge !== null && !isAgeGateCleared(gateCookie, link.id, link.minAge)) {
+      const hasPreview = link.imageUrl !== null && link.imageUrl.startsWith("https://");
+      return Object.assign({}, link, {
+        url: "",
+        imageUrl: null,
+        metadata: null,
+        gatedStyle: link.metadata?.style ?? null,
+        // `icon:` pseudo-images and http sources can't be fetched by the
+        // derivative route, so those fall back to the plain locked button.
+        hasPreview,
+      });
+    }
+    return link;
+  });
+
   return (
     <main className="relative flex min-h-dvh w-full flex-1 flex-col">
       <WallpaperLayer
@@ -55,7 +74,7 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
         videoPath={look.wallpaperVideoPath}
         titleColor={look.titleColor}
       />
-      <ProfilePreviewContent profile={profile} links={links} interactive bare />
+      <ProfilePreviewContent profile={profile} links={gatedLinks} interactive bare />
       <VisitBeacon username={username} profileId={profile.id} />
     </main>
   );

@@ -8,6 +8,7 @@ import {
   ArchiveIcon,
   CalendarBlankIcon,
   CaretDownIcon,
+  LockSimpleIcon,
   DotsSixVerticalIcon,
   EyeClosedIcon,
   EyeIcon,
@@ -33,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { displayUrl, faviconUrl, linkInputSchema, scheduleStatus } from "@/lib/links";
 import { isIconMedia } from "@/lib/media";
 import { cn } from "@/lib/utils";
+import { AgeGateSection } from "./age-gate-section";
 import { SchedulePicker, scheduleSummary } from "./schedule-picker";
 import { useUpdateLink } from "./use-link-mutations";
 
@@ -199,6 +201,12 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
               </span>
             ) : null}
             <span className="truncate">{displayUrl(link.url)}</span>
+            {link.minAge ? (
+              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+                <LockSimpleIcon className="size-2.5" />
+                {link.minAge}+
+              </span>
+            ) : null}
           </span>
         </button>
 
@@ -434,6 +442,26 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                 />
               </button>
             }
+          />
+
+          <AgeGateSection
+            minAge={link.minAge}
+            onSave={(minAge) => {
+              update.mutate({
+                id: link.id,
+                title: link.title,
+                url: link.url,
+                variant: link.variant,
+                isActive: link.isActive,
+                imageUrl: link.imageUrl,
+                minAge,
+              });
+              toast(
+                minAge === null
+                  ? "Age restriction removed"
+                  : `Visitors will confirm they are ${minAge}+`,
+              );
+            }}
           />
 
           <div className="flex items-center justify-between">

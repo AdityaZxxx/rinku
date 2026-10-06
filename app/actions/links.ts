@@ -342,6 +342,7 @@ export async function updateLink(input: {
   metadata?: LinkMetadata | VideoMetadata | EmbedMetadata | null;
   visibleFrom?: Date | null;
   visibleUntil?: Date | null;
+  minAge?: number | null;
 }): Promise<
   | {
       ok: true;
@@ -372,6 +373,11 @@ export async function updateLink(input: {
     // Absent bounds leave the row's schedule untouched; the refine rejects a
     // backwards window the database check would also reject.
     .and(linkScheduleSchema)
+    .and(
+      z.object({
+        minAge: z.number().int().min(13).max(99).nullable().optional(),
+      }),
+    )
     .safeParse(input);
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -400,6 +406,7 @@ export async function updateLink(input: {
           platform: null,
           metadata: null,
           imageUrl: "imageUrl" in input ? (parsed.data.imageUrl ?? null) : undefined,
+          minAge: "minAge" in input ? (parsed.data.minAge ?? null) : undefined,
           visibleFrom:
             "visibleFrom" in input ? (parsed.data.visibleFrom ?? null) : undefined,
           visibleUntil:
@@ -455,6 +462,7 @@ export async function updateLink(input: {
           "visibleFrom" in input ? (parsed.data.visibleFrom ?? null) : undefined,
         visibleUntil:
           "visibleUntil" in input ? (parsed.data.visibleUntil ?? null) : undefined,
+        minAge: "minAge" in input ? (parsed.data.minAge ?? null) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(links.id, parsed.data.id))

@@ -67,6 +67,10 @@ export const links = pgTable(
     visibleFrom: timestamp("visible_from", { withTimezone: true }),
     visibleUntil: timestamp("visible_until", { withTimezone: true }),
 
+    // Null means open to everyone. When set, the public page withholds the URL
+    // and visitors confirm they are at least this age before /go redirects.
+    minAge: integer("min_age"),
+
     // Null while on the list. Set on archive, which keeps the position for
     // when the link comes back.
     archivedAt: timestamp("archived_at", { withTimezone: true }),
@@ -101,6 +105,7 @@ export const links = pgTable(
       "links_visible_window",
       sql`${t.visibleFrom} is null or ${t.visibleUntil} is null or ${t.visibleFrom} <= ${t.visibleUntil}`,
     ),
+    check("links_min_age", sql`${t.minAge} is null or (${t.minAge} between 13 and 99)`),
 
     // Deactivated means draft; archived means off the list but kept for
     // restore; outside its schedule means not yet live or expired. All three

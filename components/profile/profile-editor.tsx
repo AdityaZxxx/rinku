@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { Profile } from "@/lib/db/schema";
 import { CameraIcon, ImageIcon } from "@phosphor-icons/react";
@@ -14,41 +14,71 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { profileDraftFromProfile, type ProfileDraftFields } from "@/lib/editor-draft";
 import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles";
 import { avatarUrl, bannerUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { useEditorDraft } from "./editor-draft-context";
+import { PublishControls } from "./publish-controls";
+import { useUnsavedChangesWarning } from "./unsaved-guard";
+import {
+  useDraftDirty,
+  usePublishProfileSection,
+  useSaveProfileDraft,
+} from "./use-draft-mutations";
 import { useUpdateProfile, useUploadProfileImage } from "./use-profile-mutations";
 import { useProfileQuery } from "./use-profile-query";
+import { useUndoRedo } from "./use-undo-redo";
+
+type HeaderStyle =
+  | "classic"
+  | "hero"
+  | "banner"
+  | "cutout"
+  | "minimal"
+  | "left"
+  | "statement";
 
 export function ProfileEditor({
   username,
   initialProfile,
+  mode,
+  initialDraft,
 }: {
   username: string;
   initialProfile: Profile;
+  mode: "auto" | "manual";
+  initialDraft: ProfileDraftFields | null;
 }) {
+  const manual = mode === "manual";
   const update = useUpdateProfile(username);
   const upload = useUploadProfileImage(username);
+  const saveDraft = useSaveProfileDraft(username, initialProfile.id);
+  const publish = usePublishProfileSection(username, initialProfile.id);
+  const { setProfileDraft } = useEditorDraft() ?? {};
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const { query, profile } = useProfileQuery(username, initialProfile);
+  const { profile } = useProfileQuery(username, initialProfile);
+
+  // In manual mode the editable baseline is the pending draft if one exists,
+  // otherwise the published row. Undo starts from that baseline. It is state,
+  // not a derivation, so publishing can advance it without a remount.
+  const [baseline, setBaseline] = useState<ProfileDraftFields>(
+    () => initialDraft ?? profileDraftFromProfile(profile),
+  );
+  const history = useUndoRedo<ProfileDraftFields>(baseline);
+  const dirty = manual && JSON.stringify(history.present) !== JSON.stringify(baseline);
+  useDraftDirty(history.present, baseline);
+  useUnsavedChangesWarning();
 
   const form = useForm({
     defaultValues: {
-      displayName: profile.displayName ?? "",
-      bio: profile.bio ?? "",
+      displayName: history.present.displayName ?? "",
+      bio: history.present.bio ?? "",
       // SAFETY: headerStyle is constrained to this union by the database
       // CHECK and the zod schema, so the persisted value narrows safely.
-      headerStyle:
-        (profile.headerStyle as
-          | "classic"
-          | "hero"
-          | "banner"
-          | "cutout"
-          | "minimal"
-          | "left"
-          | "statement") ?? "classic",
+      headerStyle: history.present.headerStyle as HeaderStyle,
     },
     validators: { onChange: profileBasicsSchema },
     listeners: {
@@ -56,10 +86,91 @@ export function ProfileEditor({
         if (!formApi.state.isValid) {
           return;
         }
-        update.mutate(formApi.state.values);
+        const next: ProfileDraftFields = {
+          displayName: formApi.state.values.displayName.trim(),
+          bio: formApi.state.values.bio.trim(),
+          headerStyle: formApi.state.values.headerStyle,
+          // Paths are owned by uploads, not the text form; carry the staged ones.
+          avatarPath: history.present.avatarPath,
+          bannerPath: history.present.bannerPath,
+        };
+        if (manual) {
+          if (JSON.stringify(next) !== JSON.stringify(history.present)) {
+            // One coalesced entry per burst of typing in the same field; any
+            // discrete choice (header style) commits on its own via `push`.
+            history.push(next, "profile-text");
+            setProfileDraft?.(next);
+            saveDraft.mutate(next);
+          }
+          return;
+        }
+        update.mutate({
+          ...formApi.state.values,
+          // SAFETY: the form's validator constrains headerStyle to this union.
+          headerStyle: formApi.state.values.headerStyle as HeaderStyle,
+        });
       },
       onChangeDebounceMs: 800,
     },
+  });
+
+  // Undo/redo rewrite the draft and the form. The form reset is what makes the
+  // header-style tiles and text fields visibly rewind.
+  function applyHistory(next: ProfileDraftFields) {
+    form.reset({
+      displayName: next.displayName,
+      bio: next.bio,
+      // SAFETY: headerStyle is constrained to this union by the database CHECK
+      // and the zod schema, so the draft's value narrows safely.
+      headerStyle: next.headerStyle as HeaderStyle,
+    });
+    setProfileDraft?.(next);
+    saveDraft.mutate(next);
+  }
+
+  function onUndo() {
+    const next = history.undo();
+    if (next) {
+      applyHistory(next);
+    }
+  }
+
+  function onRedo() {
+    const next = history.redo();
+    if (next) {
+      applyHistory(next);
+    }
+  }
+
+  function onPublish() {
+    publish.mutate(undefined, {
+      onSuccess: () => {
+        setBaseline(history.present);
+        history.reset(history.present);
+        setProfileDraft?.(null);
+        form.reset();
+      },
+    });
+  }
+
+  // Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z, only while this route is in manual mode.
+  useEffect(() => {
+    if (!manual) {
+      return;
+    }
+    const handler = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      event.preventDefault();
+      if (event.shiftKey) {
+        onRedo();
+      } else {
+        onUndo();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   });
 
   function onPickImage(event: React.ChangeEvent<HTMLInputElement>) {
@@ -76,26 +187,56 @@ export function ProfileEditor({
       );
       return;
     }
-    upload.mutate({ profileId: profile.id, file, target });
+    upload.mutate(
+      { profileId: profile.id, file, target },
+      manual
+        ? {
+            onSuccess: (result) => {
+              const next: ProfileDraftFields = {
+                ...history.present,
+                ...(result.target === "avatar"
+                  ? { avatarPath: result.path }
+                  : { bannerPath: result.path }),
+              };
+              history.push(next);
+              setProfileDraft?.(next);
+              saveDraft.mutate(next);
+            },
+          }
+        : undefined,
+    );
   }
 
-  const avatarSrc = profile.avatarPath ? avatarUrl(profile.avatarPath) : null;
-  const bannerSrc = profile.bannerPath ? bannerUrl(profile.bannerPath) : null;
+  // Manual mode shows the staged paths (an upload lands on the draft, not the
+  // live row); auto mode shows the published ones.
+  const shownAvatarPath = manual ? history.present.avatarPath : profile.avatarPath;
+  const shownBannerPath = manual ? history.present.bannerPath : profile.bannerPath;
+  const avatarSrc = shownAvatarPath ? avatarUrl(shownAvatarPath) : null;
+  const bannerSrc = shownBannerPath ? bannerUrl(shownBannerPath) : null;
   const fallback = (profile.displayName ?? username)[0]?.toUpperCase();
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-medium">Profile</h1>
-        <p className="text-muted-foreground text-sm">
-          Your photo, banner, name, and bio — what visitors see first. Changes save as you
-          type.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-lg font-medium">Profile</h1>
+          <p className="text-muted-foreground text-sm">
+            Your photo, banner, name, and bio — what visitors see first.{" "}
+            {manual ? "Publish to make changes live." : "Changes save as you type."}
+          </p>
+        </div>
+        {manual && (dirty || history.canUndo || history.canRedo) ? (
+          <PublishControls
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+            onUndo={onUndo}
+            onRedo={onRedo}
+            onPublish={onPublish}
+            publishDisabled={!dirty}
+            publishing={publish.isPending}
+          />
+        ) : null}
       </div>
-
-      {query.isError && (
-        <output className="text-destructive text-sm">{query.error.message}</output>
-      )}
 
       <div className="bg-card flex flex-col gap-6 rounded-2xl border p-4 sm:p-5">
         <div className="flex flex-col gap-2">
@@ -217,7 +358,21 @@ export function ProfileEditor({
                         name="header-style"
                         value={value}
                         checked={field.state.value === value}
-                        onChange={() => field.handleChange(value)}
+                        onChange={() => {
+                          field.handleChange(value);
+                          if (manual) {
+                            const next: ProfileDraftFields = {
+                              displayName: history.present.displayName,
+                              bio: history.present.bio,
+                              headerStyle: value,
+                              avatarPath: history.present.avatarPath,
+                              bannerPath: history.present.bannerPath,
+                            };
+                            history.push(next);
+                            setProfileDraft?.(next);
+                            saveDraft.mutate(next);
+                          }
+                        }}
                         className="sr-only"
                       />
                       <HeaderStyleMock value={value} />

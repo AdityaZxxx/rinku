@@ -9,7 +9,16 @@ import { toast } from "sonner";
 
 import { AllFontsStylesheet } from "@/components/appearance/font-stylesheet";
 import { patternBackground } from "@/components/appearance/wallpaper-layer";
+import { useEditorDraft } from "@/components/profile/editor-draft-context";
+import { PublishControls } from "@/components/profile/publish-controls";
+import { useUnsavedChangesWarning } from "@/components/profile/unsaved-guard";
+import {
+  useDraftDirty,
+  usePublishAppearanceSection,
+  useSaveAppearanceDraft,
+} from "@/components/profile/use-draft-mutations";
 import { useProfileQuery } from "@/components/profile/use-profile-query";
+import { useUndoRedo } from "@/components/profile/use-undo-redo";
 import {
   Attachment,
   AttachmentContent,
@@ -47,6 +56,10 @@ import {
   type PresetThemeId,
   type WallpaperPattern,
 } from "@/lib/appearance";
+import {
+  appearanceDraftFromProfile,
+  type AppearanceDraftFields,
+} from "@/lib/editor-draft";
 import { imageMaxBytes } from "@/lib/profiles";
 import { wallpaperUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -321,47 +334,41 @@ function ColorField({
 export function AppearanceEditor({
   username,
   initialProfile,
+  mode,
+  initialDraft,
 }: {
   username: string;
   initialProfile: Profile;
+  mode: "auto" | "manual";
+  initialDraft: AppearanceDraftFields | null;
 }) {
+  const manual = mode === "manual";
   const queryClient = useQueryClient();
   const update = useUpdateAppearance(username);
-  const upload = useUploadWallpaper(username, {
-    onDone: (kind, path) => {
-      setValues((prev) => ({
-        ...prev,
-        themeId: "custom",
-        wallpaperKind: kind,
-        wallpaperImagePath: kind === "image" ? path : prev.wallpaperImagePath,
-        wallpaperVideoPath: kind === "video" ? path : prev.wallpaperVideoPath,
-      }));
-      setUploadDialog(null);
-      if (kind === "image") {
-        setImageFile(null);
-      } else {
-        setVideoFile(null);
-      }
-    },
-  });
-  const removeMedia = useRemoveWallpaperMedia(username, {
-    onDone: (target) => {
-      setValues((prev) => ({
-        ...prev,
-        themeId: "custom",
-        wallpaperKind: "fill",
-        wallpaperImagePath: target === "wallpaper-image" ? null : prev.wallpaperImagePath,
-        wallpaperVideoPath: target === "wallpaper-video" ? null : prev.wallpaperVideoPath,
-      }));
-    },
-  });
+  const saveDraft = useSaveAppearanceDraft(username, initialProfile.id);
+  const publish = usePublishAppearanceSection(username, initialProfile.id);
+  const { setAppearanceDraft } = useEditorDraft() ?? {};
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { profile } = useProfileQuery(username, initialProfile);
 
-  const [values, setValues] = useState<Appearance>(() => appearanceFromProfile(profile));
+  // Manual mode edits a draft seeded from the pending row if there is one,
+  // otherwise the published appearance. Auto mode edits the profile directly.
+  // Baseline is state so publishing can advance it without a remount.
+  const [baseline, setBaseline] = useState<Appearance>(() =>
+    manual
+      ? (initialDraft ?? appearanceDraftFromProfile(profile))
+      : appearanceFromProfile(profile),
+  );
+  const history = useUndoRedo<Appearance>(baseline);
+  const [values, setValues] = useState<Appearance>(() =>
+    manual ? baseline : appearanceFromProfile(profile),
+  );
+  const dirty = manual && JSON.stringify(history.present) !== JSON.stringify(baseline);
+  useDraftDirty(history.present, baseline);
+  useUnsavedChangesWarning();
   const [fontOpen, setFontOpen] = useState(false);
   const [fontQuery, setFontQuery] = useState("");
   const [uploadDialog, setUploadDialog] = useState<"image" | "video" | null>(null);
@@ -397,19 +404,31 @@ export function AppearanceEditor({
       clearTimeout(commitTimer.current);
     }
     commitTimer.current = setTimeout(() => {
-      update.mutate(next);
+      if (manual) {
+        saveDraft.mutate(next);
+      } else {
+        update.mutate(next);
+      }
     }, 600);
   }
 
-  function tweak(patchValues: Partial<Appearance>) {
-    setValues((prev) => {
-      const next: Appearance = { ...prev, ...patchValues, themeId: "custom" };
+  /** Sets the visible value and records one history step under `key`. */
+  function applyValues(next: Appearance, key?: string) {
+    if (manual) {
+      history.push(next, key);
+      setAppearanceDraft?.(next);
+    } else {
       queryClient.setQueryData<Profile>(["profile", username], (old) =>
         old ? { ...old, ...next, updatedAt: new Date() } : old,
       );
-      scheduleCommit(next);
-      return next;
-    });
+    }
+    setValues(next);
+    scheduleCommit(next);
+  }
+
+  function tweak(patchValues: Partial<Appearance>, key?: string) {
+    const next: Appearance = { ...values, ...patchValues, themeId: "custom" };
+    applyValues(next, key);
   }
 
   function applyPreset(id: PresetThemeId) {
@@ -417,9 +436,91 @@ export function AppearanceEditor({
       clearTimeout(commitTimer.current);
     }
     const next = themePresetValues[id];
-    setValues(next);
-    update.mutate(next);
+    applyValues(next);
   }
+
+  function onUndo() {
+    const next = history.undo();
+    if (next) {
+      applyHistory(next);
+    }
+  }
+
+  function onRedo() {
+    const next = history.redo();
+    if (next) {
+      applyHistory(next);
+    }
+  }
+
+  function applyHistory(next: Appearance) {
+    setValues(next);
+    setAppearanceDraft?.(next);
+    scheduleCommit(next);
+  }
+
+  function onPublish() {
+    publish.mutate(undefined, {
+      onSuccess: () => {
+        setBaseline(history.present);
+        history.reset(history.present);
+        setAppearanceDraft?.(null);
+      },
+    });
+  }
+
+  // Uploads keep their immediate server side effect (the file is written and
+  // the live path updated); the resulting value is then folded into the draft
+  // so the preview reflects it. Deferred uploads are a later pass.
+  const upload = useUploadWallpaper(username, {
+    onDone: (kind, path) => {
+      const prev = history.present;
+      applyValues({
+        ...prev,
+        themeId: "custom",
+        wallpaperKind: kind,
+        wallpaperImagePath: kind === "image" ? path : prev.wallpaperImagePath,
+        wallpaperVideoPath: kind === "video" ? path : prev.wallpaperVideoPath,
+      });
+      setUploadDialog(null);
+      if (kind === "image") {
+        setImageFile(null);
+      } else {
+        setVideoFile(null);
+      }
+    },
+  });
+  const removeMedia = useRemoveWallpaperMedia(username, {
+    onDone: (target) => {
+      const prev = history.present;
+      applyValues({
+        ...prev,
+        themeId: "custom",
+        wallpaperKind: "fill",
+        wallpaperImagePath: target === "wallpaper-image" ? null : prev.wallpaperImagePath,
+        wallpaperVideoPath: target === "wallpaper-video" ? null : prev.wallpaperVideoPath,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!manual) {
+      return;
+    }
+    const handler = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      event.preventDefault();
+      if (event.shiftKey) {
+        onRedo();
+      } else {
+        onUndo();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
 
   function acceptSelectedFile(
     target: "wallpaper-image" | "wallpaper-video",
@@ -487,11 +588,25 @@ export function AppearanceEditor({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-medium">Appearance</h1>
-        <p className="text-muted-foreground text-sm">
-          Themes, page background, buttons, and text. Changes save automatically.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-lg font-medium">Appearance</h1>
+          <p className="text-muted-foreground text-sm">
+            Themes, page background, buttons, and text.{" "}
+            {manual ? "Publish to make changes live." : "Changes save automatically."}
+          </p>
+        </div>
+        {manual && (dirty || history.canUndo || history.canRedo) ? (
+          <PublishControls
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+            onUndo={onUndo}
+            onRedo={onRedo}
+            onPublish={onPublish}
+            publishDisabled={!dirty}
+            publishing={publish.isPending}
+          />
+        ) : null}
       </div>
 
       <div className="bg-card flex flex-col gap-2 rounded-2xl border p-4 sm:p-5">
@@ -571,8 +686,8 @@ export function AppearanceEditor({
           <ColorField
             label="Background"
             value={values.wallpaperColor}
-            onPreview={(wallpaperColor) => tweak({ wallpaperColor })}
-            onCommit={(wallpaperColor) => tweak({ wallpaperColor })}
+            onPreview={(wallpaperColor) => tweak({ wallpaperColor }, "wallpaperColor")}
+            onCommit={(wallpaperColor) => tweak({ wallpaperColor }, "wallpaperColor")}
           />
           {values.wallpaperKind === "gradient" ||
           values.wallpaperKind === "blur" ||
@@ -580,8 +695,12 @@ export function AppearanceEditor({
             <ColorField
               label="Accent"
               value={values.wallpaperColorB}
-              onPreview={(wallpaperColorB) => tweak({ wallpaperColorB })}
-              onCommit={(wallpaperColorB) => tweak({ wallpaperColorB })}
+              onPreview={(wallpaperColorB) =>
+                tweak({ wallpaperColorB }, "wallpaperColorB")
+              }
+              onCommit={(wallpaperColorB) =>
+                tweak({ wallpaperColorB }, "wallpaperColorB")
+              }
             />
           ) : null}
         </div>
@@ -959,14 +1078,14 @@ export function AppearanceEditor({
           <ColorField
             label="Button"
             value={values.buttonColor}
-            onPreview={(buttonColor) => tweak({ buttonColor })}
-            onCommit={(buttonColor) => tweak({ buttonColor })}
+            onPreview={(buttonColor) => tweak({ buttonColor }, "buttonColor")}
+            onCommit={(buttonColor) => tweak({ buttonColor }, "buttonColor")}
           />
           <ColorField
             label="Button text"
             value={values.buttonTextColor}
-            onPreview={(buttonTextColor) => tweak({ buttonTextColor })}
-            onCommit={(buttonTextColor) => tweak({ buttonTextColor })}
+            onPreview={(buttonTextColor) => tweak({ buttonTextColor }, "buttonTextColor")}
+            onCommit={(buttonTextColor) => tweak({ buttonTextColor }, "buttonTextColor")}
           />
         </div>
       </div>
@@ -1063,14 +1182,14 @@ export function AppearanceEditor({
           <ColorField
             label="Titles"
             value={values.titleColor}
-            onPreview={(titleColor) => tweak({ titleColor })}
-            onCommit={(titleColor) => tweak({ titleColor })}
+            onPreview={(titleColor) => tweak({ titleColor }, "titleColor")}
+            onCommit={(titleColor) => tweak({ titleColor }, "titleColor")}
           />
           <ColorField
             label="Body text"
             value={values.bodyColor}
-            onPreview={(bodyColor) => tweak({ bodyColor })}
-            onCommit={(bodyColor) => tweak({ bodyColor })}
+            onPreview={(bodyColor) => tweak({ bodyColor }, "bodyColor")}
+            onCommit={(bodyColor) => tweak({ bodyColor }, "bodyColor")}
           />
         </div>
       </div>

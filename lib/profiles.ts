@@ -16,6 +16,16 @@ export const profileBasicsSchema = z.object({
   ]),
 });
 
+// How edits reach the public page, per editor area. The database checks mirror
+// this enum; a missing settings row reads as all-auto.
+export const saveModeSchema = z.enum(["auto", "manual"]);
+export type SaveMode = z.infer<typeof saveModeSchema>;
+
+// The three independently configurable areas, keyed the same in the settings
+// table and the editor routes.
+export const editorAreas = ["links", "profile", "appearance"] as const;
+export type EditorArea = (typeof editorAreas)[number];
+
 // The same format and length the handle trigger checks in the database.
 export const usernameSchema = z
   .string()

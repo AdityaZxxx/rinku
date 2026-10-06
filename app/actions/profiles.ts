@@ -5,18 +5,52 @@ import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
 import { appearanceSchema } from "@/lib/appearance";
+import { getSaveMode } from "@/lib/db/editor";
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
-import { profiles, type Profile } from "@/lib/db/schema";
+import {
+  appearanceDrafts,
+  profileDrafts,
+  profileEditorSettings,
+  profiles,
+  type Profile,
+} from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { appearanceDraftFromProfile } from "@/lib/editor-draft";
 import { log } from "@/lib/log";
 import {
   imageExtension,
   imageMaxBytes,
   profileBasicsSchema,
+  editorAreas,
+  saveModeSchema,
   usernameSchema,
   videoExtension,
+  type EditorArea,
 } from "@/lib/profiles";
 import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Best-effort removal of storage objects a draft superseded. Failures are
+ * logged, never surfaced: the publish already committed, and an orphaned
+ * object is a storage concern, not a correctness one.
+ */
+async function cleanupSupersededImages(
+  entries: Array<{ bucket: string; path: string }>,
+): Promise<void> {
+  const supabase = await createClient();
+  const byBucket = new Map<string, string[]>();
+  for (const { bucket, path } of entries) {
+    byBucket.set(bucket, [...(byBucket.get(bucket) ?? []), path]);
+  }
+  await Promise.all(
+    [...byBucket].map(async ([bucket, paths]) => {
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+      if (error) {
+        log.error("profiles", `cleanupSupersededImages ${bucket} failed`, error.message);
+      }
+    }),
+  );
+}
 
 export async function renameProfile(input: {
   username: string;
@@ -126,6 +160,328 @@ export async function updateProfile(input: {
   );
   if (updated.length === 0) {
     return { error: "This profile could not be saved." };
+  }
+  updateTag(PUBLIC_PROFILE_TAG);
+  return { ok: true };
+}
+
+/**
+ * Sets one area's save mode. Upserts because a profile only grows a settings
+ * row the first time it leaves the all-auto default.
+ */
+export async function updateSaveMode(input: {
+  profileId: string;
+  area: EditorArea;
+  saveMode: "auto" | "manual";
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({
+      profileId: z.uuid(),
+      area: z.enum(editorAreas),
+      saveMode: saveModeSchema,
+    })
+    .safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "That input was not valid." };
+  }
+
+  // Column name is derived from the validated area, never from raw input.
+  const column =
+    parsed.data.area === "links"
+      ? "linksSaveMode"
+      : parsed.data.area === "profile"
+        ? "profileSaveMode"
+        : "appearanceSaveMode";
+
+  try {
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(profileEditorSettings)
+        .values({ profileId: parsed.data.profileId, [column]: parsed.data.saveMode })
+        .onConflictDoUpdate({
+          target: profileEditorSettings.profileId,
+          set: { [column]: parsed.data.saveMode, updatedAt: new Date() },
+        }),
+    );
+  } catch (error) {
+    log.error(
+      "profiles",
+      "updateSaveMode failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Saving this setting failed. Try again." };
+  }
+  return { ok: true };
+}
+
+/** Stages the Profile section's text basics and any uploaded photo/banner. */
+export async function saveProfileDraft(input: {
+  profileId: string;
+  displayName: string;
+  bio: string;
+  headerStyle: string;
+  avatarPath?: string | null;
+  bannerPath?: string | null;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = profileBasicsSchema
+    .extend({
+      profileId: z.uuid(),
+      avatarPath: z.string().max(512).nullable().optional(),
+      bannerPath: z.string().max(512).nullable().optional(),
+    })
+    .safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "That input was not valid." };
+  }
+
+  // A field left out of the payload keeps its staged value; an explicit null
+  // clears it. Text fields are always sent.
+  const paths: Partial<typeof profileDrafts.$inferInsert> = {};
+  if (parsed.data.avatarPath !== undefined) {
+    paths.avatarPath = parsed.data.avatarPath;
+  }
+  if (parsed.data.bannerPath !== undefined) {
+    paths.bannerPath = parsed.data.bannerPath;
+  }
+
+  try {
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(profileDrafts)
+        .values({
+          profileId: parsed.data.profileId,
+          displayName: parsed.data.displayName.trim() || null,
+          bio: parsed.data.bio.trim() || null,
+          headerStyle: parsed.data.headerStyle,
+          ...paths,
+        })
+        .onConflictDoUpdate({
+          target: profileDrafts.profileId,
+          set: {
+            displayName: parsed.data.displayName.trim() || null,
+            bio: parsed.data.bio.trim() || null,
+            headerStyle: parsed.data.headerStyle,
+            ...paths,
+            updatedAt: new Date(),
+          },
+        }),
+    );
+  } catch (error) {
+    log.error(
+      "profiles",
+      "saveProfileDraft failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Saving this draft failed. Try again." };
+  }
+  return { ok: true };
+}
+
+/** Stages the Appearance section. Owner-only via RLS. */
+export async function saveAppearanceDraft(
+  input: { profileId: string } & z.infer<typeof appearanceSchema>,
+): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = appearanceSchema.extend({ profileId: z.uuid() }).safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "That input was not valid." };
+  }
+  const { profileId, ...values } = parsed.data;
+
+  try {
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(appearanceDrafts)
+        .values({ profileId, ...values })
+        .onConflictDoUpdate({
+          target: appearanceDrafts.profileId,
+          set: { ...values, updatedAt: new Date() },
+        }),
+    );
+  } catch (error) {
+    log.error(
+      "profiles",
+      "saveAppearanceDraft failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Saving this draft failed. Try again." };
+  }
+  return { ok: true };
+}
+
+/**
+ * Copies the Profile draft onto the live profile and clears it. A no-op when
+ * there is no draft, so Publish is always safe to call.
+ */
+export async function publishProfileSection(input: {
+  profileId: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z.object({ profileId: z.uuid() }).safeParse(input);
+  if (!parsed.success) {
+    return { error: "Publishing failed. Try again." };
+  }
+
+  try {
+    await withUserDb(user.id, async (tx) => {
+      const [draft] = await tx
+        .select()
+        .from(profileDrafts)
+        .where(eq(profileDrafts.profileId, parsed.data.profileId))
+        .limit(1);
+      if (!draft) {
+        return;
+      }
+      // Read the old paths first: the objects they point at become obsolete the
+      // moment the draft's paths go live.
+      const [live] = await tx
+        .select({ avatarPath: profiles.avatarPath, bannerPath: profiles.bannerPath })
+        .from(profiles)
+        .where(eq(profiles.id, parsed.data.profileId))
+        .limit(1);
+
+      // Only overwrite a path when the draft carries one, so publishing text
+      // edits does not clear a photo that was never staged.
+      const published: Partial<typeof profiles.$inferInsert> = {
+        displayName: draft.displayName,
+        bio: draft.bio,
+        headerStyle: draft.headerStyle,
+        updatedAt: new Date(),
+      };
+      if (draft.avatarPath !== null) {
+        published.avatarPath = draft.avatarPath;
+      }
+      if (draft.bannerPath !== null) {
+        published.bannerPath = draft.bannerPath;
+      }
+      await tx
+        .update(profiles)
+        .set(published)
+        .where(eq(profiles.id, parsed.data.profileId));
+      await tx
+        .delete(profileDrafts)
+        .where(eq(profileDrafts.profileId, parsed.data.profileId));
+
+      // Delete only the objects the draft superseded; anything else on disk is
+      // still referenced (an abandoned upload keeps its file for storage
+      // cleanup to sweep later).
+      const superseded = [
+        draft.avatarPath !== null &&
+        live?.avatarPath &&
+        live.avatarPath !== draft.avatarPath
+          ? { bucket: "avatars", path: live.avatarPath }
+          : null,
+        draft.bannerPath !== null &&
+        live?.bannerPath &&
+        live.bannerPath !== draft.bannerPath
+          ? { bucket: "banners", path: live.bannerPath }
+          : null,
+      ].filter((entry): entry is { bucket: string; path: string } => entry !== null);
+      if (superseded.length > 0) {
+        await cleanupSupersededImages(superseded);
+      }
+    });
+  } catch (error) {
+    log.error(
+      "profiles",
+      "publishProfileSection failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Publishing failed. Try again." };
+  }
+  updateTag(PUBLIC_PROFILE_TAG);
+  return { ok: true };
+}
+
+/** Copies the Appearance draft onto the live profile and clears it. */
+export async function publishAppearanceSection(input: {
+  profileId: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z.object({ profileId: z.uuid() }).safeParse(input);
+  if (!parsed.success) {
+    return { error: "Publishing failed. Try again." };
+  }
+
+  try {
+    await withUserDb(user.id, async (tx) => {
+      const [draft] = await tx
+        .select()
+        .from(appearanceDrafts)
+        .where(eq(appearanceDrafts.profileId, parsed.data.profileId))
+        .limit(1);
+      if (!draft) {
+        return;
+      }
+      await tx
+        .update(profiles)
+        .set({
+          themeId: draft.themeId,
+          buttonContour: draft.buttonContour,
+          buttonVariant: draft.buttonVariant,
+          buttonUmbra: draft.buttonUmbra,
+          buttonColor: draft.buttonColor,
+          buttonTextColor: draft.buttonTextColor,
+          fontId: draft.fontId,
+          titleColor: draft.titleColor,
+          bodyColor: draft.bodyColor,
+          wallpaperKind: draft.wallpaperKind,
+          wallpaperColor: draft.wallpaperColor,
+          wallpaperColorB: draft.wallpaperColorB,
+          wallpaperPattern: draft.wallpaperPattern,
+          wallpaperImagePath: draft.wallpaperImagePath,
+          wallpaperVideoPath: draft.wallpaperVideoPath,
+          updatedAt: new Date(),
+        })
+        .where(eq(profiles.id, parsed.data.profileId));
+      await tx
+        .delete(appearanceDrafts)
+        .where(eq(appearanceDrafts.profileId, parsed.data.profileId));
+    });
+  } catch (error) {
+    log.error(
+      "profiles",
+      "publishAppearanceSection failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Publishing failed. Try again." };
   }
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
@@ -282,6 +638,24 @@ export async function uploadProfileImage(
     return { error: "Image upload failed. Try again." };
   }
 
+  // Manual mode stages the new path on the draft and leaves the live object and
+  // `profiles` row untouched, so an undo or a discard never destroyed a live
+  // photo. Publishing writes the path and deletes the superseded object.
+  const manual = (await getSaveMode(user.id, profileId, "profile")) === "manual";
+  if (manual) {
+    const column = target === "avatar" ? "avatarPath" : "bannerPath";
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(profileDrafts)
+        .values({ profileId, [column]: path })
+        .onConflictDoUpdate({
+          target: profileDrafts.profileId,
+          set: { [column]: path, updatedAt: new Date() },
+        }),
+    );
+    return { path, target };
+  }
+
   const updated =
     target === "avatar"
       ? await withUserDb(user.id, (tx) =>
@@ -385,6 +759,34 @@ export async function uploadWallpaper(
     return { error: "Upload failed. Try again." };
   }
 
+  // Manual mode stages the path on the appearance draft; the live wallpaper
+  // object and `profiles` row are untouched until publish.
+  const manual = (await getSaveMode(user.id, profileId, "appearance")) === "manual";
+  if (manual) {
+    const [full] = await withUserDb(user.id, (tx) =>
+      tx.select().from(profiles).where(eq(profiles.id, profileId)).limit(1),
+    );
+    if (!full) {
+      return { error: "Profile not found." };
+    }
+    const next = {
+      ...appearanceDraftFromProfile(full),
+      wallpaperKind: isVideo ? "video" : "image",
+      themeId: "custom" as const,
+      ...(isVideo ? { wallpaperVideoPath: path } : { wallpaperImagePath: path }),
+    };
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(appearanceDrafts)
+        .values({ profileId, ...next })
+        .onConflictDoUpdate({
+          target: appearanceDrafts.profileId,
+          set: { ...next, updatedAt: new Date() },
+        }),
+    );
+    return { path, target };
+  }
+
   const column = isVideo ? "wallpaperVideoPath" : "wallpaperImagePath";
   const updated = await withUserDb(user.id, (tx) =>
     tx
@@ -451,6 +853,36 @@ export async function removeWallpaperMedia(input: {
   }
 
   const isVideo = parsed.data.target === "wallpaper-video";
+
+  // Manual mode stages the removal on the draft and keeps the live object, so a
+  // discard restores it; publish clears the live path and deletes the file.
+  const manual =
+    (await getSaveMode(user.id, parsed.data.profileId, "appearance")) === "manual";
+  if (manual) {
+    const [full] = await withUserDb(user.id, (tx) =>
+      tx.select().from(profiles).where(eq(profiles.id, parsed.data.profileId)).limit(1),
+    );
+    if (!full) {
+      return { error: "Profile not found." };
+    }
+    const next = {
+      ...appearanceDraftFromProfile(full),
+      themeId: "custom" as const,
+      wallpaperKind: "fill" as const,
+      ...(isVideo ? { wallpaperVideoPath: null } : { wallpaperImagePath: null }),
+    };
+    await withUserDb(user.id, (tx) =>
+      tx
+        .insert(appearanceDrafts)
+        .values({ profileId: parsed.data.profileId, ...next })
+        .onConflictDoUpdate({
+          target: appearanceDrafts.profileId,
+          set: { ...next, updatedAt: new Date() },
+        }),
+    );
+    return { ok: true };
+  }
+
   const oldPath = isVideo ? profile.wallpaperVideoPath : profile.wallpaperImagePath;
   if (oldPath) {
     const { error } = await supabase.storage.from("wallpapers").remove([oldPath]);

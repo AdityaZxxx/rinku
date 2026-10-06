@@ -1,7 +1,6 @@
 "use client";
 
 import type { Route } from "next";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { profiles } from "@/lib/db/schema";
 import {
@@ -23,6 +22,10 @@ import {
 import { useTheme } from "next-themes";
 
 import { signOut } from "@/app/actions/auth";
+import {
+  GuardedLink,
+  useConfirmLeave,
+} from "@/components/profile/unsaved-changes-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +63,7 @@ export function AppSidebar({
   const { theme, setTheme } = useTheme();
   const { setOpenMobile } = useSidebar();
   const pathname = usePathname();
+  const confirmLeave = useConfirmLeave();
   const currentUsername = pathname.split("/")[1];
   const current =
     profiles.find((profile) => profile.username === currentUsername) ?? profiles[0];
@@ -102,7 +106,7 @@ export function AppSidebar({
                     isActive={pathname === "/dashboard"}
                     tooltip="Dashboard"
                     onClick={closeMobile}
-                    render={<Link href="/dashboard" />}
+                    render={<GuardedLink href="/dashboard" />}
                   >
                     <HouseIcon />
                     Dashboard
@@ -114,7 +118,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/overview`}
                     tooltip="Overview"
                     onClick={closeMobile}
-                    render={<Link href={editPath("overview")} />}
+                    render={<GuardedLink href={editPath("overview")} />}
                   >
                     <SquaresFourIcon />
                     Overview
@@ -126,7 +130,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/links`}
                     tooltip="Links"
                     onClick={closeMobile}
-                    render={<Link href={editPath("links")} />}
+                    render={<GuardedLink href={editPath("links")} />}
                   >
                     <LinkIcon />
                     Links
@@ -138,7 +142,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/profile`}
                     tooltip="Profile"
                     onClick={closeMobile}
-                    render={<Link href={editPath("profile")} />}
+                    render={<GuardedLink href={editPath("profile")} />}
                   >
                     <UserCircleIcon />
                     Profile
@@ -150,7 +154,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/appearance`}
                     tooltip="Appearance"
                     onClick={closeMobile}
-                    render={<Link href={editPath("appearance")} />}
+                    render={<GuardedLink href={editPath("appearance")} />}
                   >
                     <PaletteIcon />
                     Appearance
@@ -162,7 +166,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/insights`}
                     tooltip="Insights"
                     onClick={closeMobile}
-                    render={<Link href={editPath("insights")} />}
+                    render={<GuardedLink href={editPath("insights")} />}
                   >
                     <ChartBarIcon />
                     Insights
@@ -182,7 +186,7 @@ export function AppSidebar({
                     isActive={pathname === `/${editing}/settings`}
                     tooltip="Profile settings"
                     onClick={closeMobile}
-                    render={<Link href={editPath("settings")} />}
+                    render={<GuardedLink href={editPath("settings")} />}
                   >
                     <GearIcon />
                     Settings
@@ -218,7 +222,7 @@ export function AppSidebar({
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="end" className="w-48">
                 <DropdownMenuItem
-                  render={<Link href="/account/settings" />}
+                  render={<GuardedLink href="/account/settings" />}
                   onClick={closeMobile}
                 >
                   <GearIcon />
@@ -247,7 +251,10 @@ export function AppSidebar({
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem variant="destructive" onClick={() => void signOut()}>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => confirmLeave(() => void signOut())}
+                >
                   <SignOutIcon />
                   Log out
                 </DropdownMenuItem>

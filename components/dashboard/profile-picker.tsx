@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { profiles } from "@/lib/db/schema";
 import { CheckIcon, CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
 
+import { GuardedLink } from "@/components/profile/unsaved-changes-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +65,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
               render={
                 // SAFETY: /:username/:section; the typed route union is only
                 // knowable for literals.
-                <Link href={`/${profile.username}/${section}` as Route} />
+                <GuardedLink href={`/${profile.username}/${section}` as Route} />
               }
             >
               <Avatar className="size-5 shrink-0">

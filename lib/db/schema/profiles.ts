@@ -152,8 +152,14 @@ export const profileUsernames = pgTable(
 
     acquiredAt: timestamp("acquired_at", { withTimezone: true }).notNull().defaultNow(),
 
-    // Null while held. Set on rename, which is also when the cooldown starts.
+    // Null while held. Set on rename. Records when the handle was given up.
     releasedAt: timestamp("released_at", { withTimezone: true }),
+
+    // When the owner chose to hold the handle after releasing it, the instant
+    // that hold ends; null means it was released immediately. Availability is
+    // "no other profile is holding or reserving this", so a null here frees the
+    // handle at once and a future value keeps it away from others until then.
+    reservedUntil: timestamp("reserved_until", { withTimezone: true }),
   },
   (t) => [
     foreignKey({

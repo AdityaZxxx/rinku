@@ -42,7 +42,7 @@ export default async function ProfileSettingsPage({
         </p>
       </div>
       <SaveModeSection profileId={profile.id} initial={initial} />
-      <ChangeUsernameSection username={username} />
+      <ChangeUsernameSection username={username} profileId={profile.id} />
       <DeleteProfileSection username={username} />
     </div>
   );

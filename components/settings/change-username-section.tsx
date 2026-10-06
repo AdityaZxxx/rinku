@@ -1,14 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { CheckIcon } from "@phosphor-icons/react";
+import type { ReservedUsername } from "@/lib/profiles";
+import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
-import { checkUsernameAvailability, renameProfile } from "@/app/actions/profiles";
+import {
+  checkUsernameAvailability,
+  getUsernameHistory,
+  reclaimUsername,
+  renameProfile,
+} from "@/app/actions/profiles";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -22,23 +39,55 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { usernameSchema } from "@/lib/profiles";
+import { cn } from "@/lib/utils";
 
-export function ChangeUsernameSection({ username }: { username: string }) {
+const holdFormatters = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+});
+
+function reservedUntilLabel(reservedUntil: string | null): string {
+  if (!reservedUntil) {
+    return "Reserved";
+  }
+  const date = new Date(reservedUntil);
+  if (Number.isNaN(date.getTime())) {
+    return "Reserved";
+  }
+  return `Reserved until ${holdFormatters.format(date)}`;
+}
+
+export function ChangeUsernameSection({
+  username,
+  profileId,
+}: {
+  username: string;
+  profileId: string;
+}) {
   const [open, setOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [checkedValue, setCheckedValue] = useState(username.toLowerCase());
+  const [keepOldUsername, setKeepOldUsername] = useState(false);
   const router = useRouter();
 
   const form = useForm({
     defaultValues: { username },
     onSubmit: async ({ value }) => {
       const candidate = value.username.trim().toLowerCase();
-      const result = await renameProfile({ username, newUsername: candidate });
+      const result = await renameProfile({
+        username,
+        newUsername: candidate,
+        keepOldUsername,
+      });
       if ("error" in result) {
         toast.error(result.error);
         return;
       }
-      toast("Username updated");
+      toast(
+        keepOldUsername
+          ? "Username updated — your old one is held for you for 30 days."
+          : "Username updated",
+      );
       setOpen(false);
       form.reset();
       setCheckedValue(candidate);
@@ -56,9 +105,9 @@ export function ChangeUsernameSection({ username }: { username: string }) {
         <div className="flex max-w-sm flex-col gap-2">
           <h2 className="text-sm font-medium">Username</h2>
           <p className="text-muted-foreground text-sm">
-            Your page lives at{" "}
-            <span className="text-foreground font-medium">/{username}</span>. Renaming
-            moves it there. Your old username remains yours for 30 days.
+            Your page is at{" "}
+            <span className="text-foreground font-medium">/{username}</span>. On rename,
+            keep your old one for 30 days or release it now.
           </p>
         </div>
         <Dialog
@@ -68,6 +117,7 @@ export function ChangeUsernameSection({ username }: { username: string }) {
             if (!nextOpen) {
               form.reset();
               setChecking(false);
+              setKeepOldUsername(false);
               setCheckedValue(username.toLowerCase());
             }
           }}
@@ -75,7 +125,7 @@ export function ChangeUsernameSection({ username }: { username: string }) {
           <DialogTrigger render={<Button variant="outline" size="sm" />}>
             Change username
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="gap-4 p-5 sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Change username</DialogTitle>
             </DialogHeader>
@@ -111,7 +161,7 @@ export function ChangeUsernameSection({ username }: { username: string }) {
                       }
                       return result.available
                         ? undefined
-                        : { message: "That username is taken or still in cooldown." };
+                        : { message: "That username is taken." };
                     } finally {
                       setChecking(false);
                     }
@@ -158,6 +208,34 @@ export function ChangeUsernameSection({ username }: { username: string }) {
                   );
                 }}
               />
+
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="keep-old-username"
+                  checked={keepOldUsername}
+                  onCheckedChange={(checked) => setKeepOldUsername(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="keep-old-username" className="flex flex-col gap-0.5">
+                  <span className="text-sm">Keep my old username for 30 days</span>
+                  <span className="text-muted-foreground text-xs">
+                    Otherwise it&apos;s released now and anyone can claim it.
+                  </span>
+                </label>
+              </div>
+
+              <UsernameHistory
+                profileId={profileId}
+                username={username}
+                onReclaim={(handle) => {
+                  setOpen(false);
+                  // SAFETY: same shape as the rename destination above.
+                  const destination = `/${handle}/settings` as Route;
+                  router.replace(destination);
+                  router.refresh();
+                }}
+              />
+
               <DialogFooter>
                 <DialogClose
                   render={
@@ -202,5 +280,155 @@ export function ChangeUsernameSection({ username }: { username: string }) {
         </Dialog>
       </div>
     </section>
+  );
+}
+
+function UsernameHistory({
+  profileId,
+  username,
+  onReclaim,
+}: {
+  profileId: string;
+  username: string;
+  onReclaim: (handle: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<ReservedUsername[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reclaiming, setReclaiming] = useState<string | null>(null);
+  // The handle awaiting confirmation; non-null means the gate is open.
+  const [confirmHandle, setConfirmHandle] = useState<string | null>(null);
+
+  // Load once, the first time the list is expanded.
+  useEffect(() => {
+    if (!open || entries !== null) {
+      return;
+    }
+    let active = true;
+    async function load() {
+      const result = await getUsernameHistory({ profileId });
+      if (!active) {
+        return;
+      }
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      setEntries(result);
+    }
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [open, entries, profileId]);
+
+  async function reclaim(handle: string) {
+    setConfirmHandle(null);
+    setReclaiming(handle);
+    const result = await reclaimUsername({ currentUsername: username, username: handle });
+    setReclaiming(null);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast(`Reclaimed @${handle}`);
+    onReclaim(handle);
+  }
+
+  return (
+    <>
+      <div>
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-2 py-2 text-left text-sm"
+        >
+          <span className="font-medium">Reserved usernames</span>
+          <CaretDownIcon
+            aria-hidden="true"
+            className={cn(
+              "text-muted-foreground size-4 transition-transform duration-150 motion-reduce:transition-none",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+
+        {open ? (
+          <div className="flex flex-col gap-2 pt-1 pb-2">
+            {error ? (
+              <p className="text-muted-foreground text-xs">{error}</p>
+            ) : entries === null ? (
+              <p className="text-muted-foreground text-xs">Loading…</p>
+            ) : entries.length === 0 ? (
+              <p className="text-muted-foreground text-xs">
+                No held usernames. When you rename, choose to keep the old one and it
+                shows up here.
+              </p>
+            ) : (
+              <ul className="flex max-h-40 flex-col divide-y overflow-y-auto">
+                {entries.map((entry) => (
+                  <li
+                    key={`${entry.username}-${entry.releasedAt}`}
+                    className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+                  >
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm">/{entry.username}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {reservedUntilLabel(entry.reservedUntil)}
+                      </span>
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      disabled={reclaiming !== null}
+                      onClick={() => setConfirmHandle(entry.username)}
+                    >
+                      {reclaiming === entry.username ? <Spinner /> : null}
+                      Reclaim
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      <AlertDialog
+        open={confirmHandle !== null}
+        onOpenChange={(next) => {
+          if (!next) {
+            setConfirmHandle(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reclaim /{confirmHandle}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your page moves back to{" "}
+              <span className="text-foreground font-medium">/{confirmHandle}</span>, and
+              your current username{" "}
+              <span className="text-foreground font-medium">/{username}</span> is
+              released. Links and content stay the same.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmHandle !== null) {
+                  void reclaim(confirmHandle);
+                }
+              }}
+            >
+              Reclaim username
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

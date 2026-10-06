@@ -218,6 +218,27 @@
       "when": 1791260219845,
       "tag": "0031_steady_violations",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791267004596,
+      "tag": "0032_username_release",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791267615375,
+      "tag": "0033_username_history_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791281198519,
+      "tag": "0034_username_history_reserved",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,14 @@ export type SaveMode = z.infer<typeof saveModeSchema>;
 export const editorAreas = ["links", "profile", "appearance"] as const;
 export type EditorArea = (typeof editorAreas)[number];
 
+// A handle this profile released but still holds for its 30-day window. Only
+// reserved handles are listed, so the list is exactly the reclaimable set.
+export interface ReservedUsername {
+  username: string;
+  releasedAt: string | null;
+  reservedUntil: string | null;
+}
+
 // The same format and length the handle trigger checks in the database.
 export const usernameSchema = z
   .string()

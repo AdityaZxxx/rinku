@@ -44,5 +44,12 @@
     "**/*.tsx",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "supabase", "tools/oxlint/anti-slop"]
+  "exclude": [
+    "node_modules",
+    "supabase",
+    // Vendored plugin: written against a laxer compiler config and imports with
+    // explicit .ts extensions. oxlint transpiles it itself, so its type errors
+    // never reach runtime.
+    "tools/oxlint/anti-slop"
+  ]
 }

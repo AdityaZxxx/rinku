@@ -24,6 +24,21 @@
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error"] }],
 
+    // Direct db access bypasses RLS: a direct Postgres connection has no
+    // auth.uid() claims, so policies silently evaluate false. lib/db owns the
+    // connection; the helpers in lib/db/with-user.ts set the claims per query.
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@/lib/db/client", "postgres"],
+            "message": "Direct db access bypasses RLS. Use withUserDb or withAnonDb from lib/db/with-user.ts."
+          }
+        ]
+      }
+    ],
+
     "react/react-in-jsx-scope": "off",
     "import/no-unassigned-import": "off",
 
@@ -51,12 +66,17 @@
     "react/jsx-key": "error",
     "react/hook-use-state": "error",
     "react/self-closing-comp": "error",
+    // The music embeds are third-party players whose official snippets ship no
+    // sandbox; a partial sandbox is exactly what breaks them.
     "react/iframe-missing-sandbox": "off",
 
+    // The React Compiler (next.config.ts) handles closure churn, and Base UI
+    // composes with its render prop, so these would flag correct code.
     "react-perf/jsx-no-new-function-as-prop": "off",
     "react-perf/jsx-no-jsx-as-prop": "off",
     "react-perf/jsx-no-new-object-as-prop": "off",
     "react-perf/jsx-no-new-array-as-prop": "off",
+    // TanStack Form's form.Field render-prop API has no alternative.
     "react/no-children-prop": "off",
 
     "anti-slop/no-array-filter-map": "error",
@@ -99,6 +119,12 @@
       "files": ["proxy.ts", "next.config.ts", "postcss.config.mjs"],
       "rules": {
         "no-console": "off"
+      }
+    },
+    {
+      "files": ["lib/db/**"],
+      "rules": {
+        "no-restricted-imports": "off"
       }
     }
   ]

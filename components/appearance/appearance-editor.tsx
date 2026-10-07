@@ -928,7 +928,7 @@ export function AppearanceEditor({
             >
               <AttachmentMedia variant="image" className="size-14 rounded-xl">
                 {uploadDialog === "image" && imageFile ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+                  // eslint-disable-next-line @next/next/no-img-element -- local blob preview of the picked file, rendered once
                   <img
                     src={imagePreviewUrl ?? ""}
                     alt=""

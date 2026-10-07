@@ -7,8 +7,8 @@ import { Spinner } from "@/components/ui/spinner";
 
 /**
  * The manual-mode action cluster: undo, redo, and Publish. Rendered inline in
- * the editor's header row (alongside the title), matching how the Links editor
- * places its actions — no full-width strip that would read as detached chrome.
+ * the editor's header row (alongside the title), not a full-width strip that
+ * would read as detached chrome.
  *
  * Mounted only while there are unpublished changes, so its presence is itself
  * the signal that a publish is pending.

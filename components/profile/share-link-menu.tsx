@@ -126,7 +126,7 @@ export function ShareLinkMenu({
       await navigator.share({ title: link.title, url: shareUrl() });
       setOpen(false);
     } catch {
-      // User dismissed the sheet or share failed — leave the dialog open.
+      // User dismissed the sheet or share failed, so leave the dialog open.
     }
   }
 
@@ -173,7 +173,7 @@ export function ShareLinkMenu({
             <img
               src={link.imageUrl}
               alt=""
-              className="aspect-[1200/630] w-full object-cover"
+              className="aspect-1200/630 w-full object-cover"
             />
           ) : null}
           <div className="flex items-center gap-3 px-3 py-2.5">

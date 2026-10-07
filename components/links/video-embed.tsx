@@ -1,6 +1,6 @@
 import { videoEmbed, type VideoMetadata } from "@/lib/video";
 
-/** Inline player for a video link, like MusicEmbed but 16:9. */
+/** Inline player for a video link at 16:9. */
 export function VideoEmbed({ metadata }: { metadata: VideoMetadata }) {
   return (
     <div className="aspect-video w-full overflow-hidden rounded-xl">

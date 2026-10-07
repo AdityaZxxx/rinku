@@ -2,7 +2,7 @@
 -- thumbnails into.
 --
 -- `variant` picks the rendering: `classic` is a standard row, `featured` a large
--- card with its thumbnail. `image_url` keeps the remote og:image URL as-is —
+-- card with its thumbnail. `image_url` keeps the remote og:image URL as-is:
 -- no storage, no download, so the origin keeps serving the bytes.
 
 create type public.link_variant as enum ('classic', 'featured');

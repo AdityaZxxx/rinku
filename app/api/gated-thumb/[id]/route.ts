@@ -48,8 +48,8 @@ function notFound(): NextResponse {
 }
 
 /**
- * Blurred, downscaled preview of a gated link's thumbnail. Always blurred —
- * never a redirect to the source — so the URL can be embedded anywhere without
+ * Blurred, downscaled preview of a gated link's thumbnail. Always blurred,
+ * never a redirect to the source, so the URL can be embedded anywhere without
  * leaking the original bytes.
  */
 export async function GET(

@@ -26,7 +26,7 @@ function ownsProfile(profileIdColumn: AnyPgColumn) {
  * wait for an explicit publish. One row per profile; a missing row reads as
  * all-auto, so existing profiles need no backfill.
  *
- * Private by design — the public `profiles` row is world-readable, and editor
+ * Private by design: the public `profiles` row is world-readable, and editor
  * preferences have no business being there.
  */
 export const profileEditorSettings = pgTable(
@@ -88,8 +88,7 @@ export const profileEditorSettings = pgTable(
  * `profiles` keeps the published values, so every public read path and its RLS
  * policy stay exactly as they were; publishing copies this row over the
  * profile. A row exists only while the Profile section is in manual mode with
- * pending changes. Profile photo and banner join this table when upload
- * deferral lands.
+ * pending changes.
  *
  * Split from `appearance_drafts` so publishing one section never disturbs the
  * other's pending changes.
@@ -103,7 +102,7 @@ export const profileDrafts = pgTable(
     headerStyle: text("header_style").notNull().default("classic"),
 
     // Staged photo/banner. Uploaded to storage immediately (a file has to live
-    // somewhere), but not written onto `profiles` until publish — so the live
+    // somewhere), but not written onto `profiles` until publish. The live
     // object survives until then and can be discarded.
     avatarPath: text("avatar_path"),
     bannerPath: text("banner_path"),

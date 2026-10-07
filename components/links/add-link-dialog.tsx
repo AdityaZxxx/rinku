@@ -341,7 +341,7 @@ export function AddLinkDialog({
                   <div className="flex flex-col gap-2">
                     <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
                       {meta?.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
+                        // eslint-disable-next-line @next/next/no-img-element -- cross-host og:image preview: the optimizer cache never earns its keep for one-off hosts
                         <img
                           src={meta.imageUrl}
                           alt=""
@@ -552,7 +552,7 @@ export function AddLinkDialog({
                                     className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
                                   >
                                     {result.imageUrl ? (
-                                      // eslint-disable-next-line @next/next/no-img-element
+                                      // eslint-disable-next-line @next/next/no-img-element -- transient search preview: next/image adds nothing for a thumbnail shown for a moment
                                       <img
                                         src={result.imageUrl}
                                         alt=""

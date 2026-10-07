@@ -66,7 +66,7 @@ export function SeoSection({
     listeners: {
       // Auto-save, the same pattern as the profile editor: the debounced burst
       // of edits is the save trigger, so there is no Save button. A field over
-      // its limit is skipped — its error is already showing next to it — and a
+      // its limit is skipped (its error is already showing next to it), and a
       // save failure toasts while the typed value stays for the next attempt.
       onChange: ({ formApi }) => {
         if (!formApi.state.isValid) {
@@ -125,7 +125,7 @@ export function SeoSection({
       <div className="flex flex-col gap-4">
         <div className="flex max-w-sm flex-col gap-2">
           <h2 className="text-sm font-medium">SEO and discoverability</h2>
-          <p className="text-muted-foreground text-sm leading-normal text-pretty break-words">
+          <p className="text-muted-foreground text-sm leading-normal text-pretty wrap-break-word">
             Choose how /{username} appears in search results and link previews. Leave a
             field blank to use your profile details.
           </p>
@@ -257,7 +257,7 @@ export function SeoSection({
               used in link previews.
             </span>
           </div>
-          <div className="bg-muted relative aspect-[1200/630] w-full max-w-xs overflow-hidden rounded-xl border">
+          <div className="bg-muted relative aspect-1200/630 w-full max-w-xs overflow-hidden rounded-xl border">
             {ogImagePath ? (
               <Image
                 src={ogImageUrl(ogImagePath)}

@@ -13,9 +13,9 @@ export const EDIT_SECTIONS = [
 ] as const;
 
 /**
- * The gate pattern for the profile-scoped paths — /:username/links and friends,
- * so a prefix match cannot find them. Auth is the proxy's job; ownership
- * (does this account own that username) is the edit layout's.
+ * The gate pattern for the profile-scoped paths, such as /:username/links and
+ * friends: a plain prefix match cannot find them. Auth is the proxy's job;
+ * ownership (does this account own that username) is the edit layout's.
  */
 export const EDIT_SECTION = new RegExp(
   `^\\/[^/]+\\/(${EDIT_SECTIONS.join("|")})(?:\\/|$)`,

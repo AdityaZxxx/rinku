@@ -512,7 +512,7 @@ export async function archiveLink(input: {
 
 /**
  * Undo for an archive: the row keeps its old id and position, which the sparse
- * position column preserves through the archive — nothing shifts.
+ * position column preserves through the archive. Nothing shifts.
  */
 export async function restoreLink(input: {
   id: string;
@@ -543,7 +543,7 @@ export async function restoreLink(input: {
   return { ok: true };
 }
 
-// Permanent delete stays reachable only through the archive — the editor's own
+// Permanent delete stays reachable only through the archive: the editor's own
 // remove is the reversible archive.
 export async function deleteLink(input: {
   id: string;

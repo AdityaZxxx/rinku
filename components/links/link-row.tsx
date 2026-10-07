@@ -112,7 +112,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       // The whole row is the drag surface; the keyboard listener is dropped
-      // here so Space/Enter inside the expand button can't start a drag — the
+      // here so Space/Enter inside the expand button can't start a drag: the
       // keyboard path stays on the grip button. The pointer gesture carries no
       // control semantics, so the surface stays out of the a11y tree.
       {...listeners}

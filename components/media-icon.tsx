@@ -19,7 +19,7 @@ export function MediaIcon({
   // SAFETY: the slice of the barrel we read is a component name, so the
   // module record is indexed by its own key space; misses render nothing.
   const key = `${iconMediaId(imageUrl)}Icon` as keyof typeof Ph;
-  // eslint-disable-next-line import/namespace
+  // eslint-disable-next-line import/namespace -- dynamic barrel key (iconMediaId + "Icon"), guarded above
   const Icon = Ph[key];
   if (!Icon) return null;
   // SAFETY: Icon is the module's component export, its props accept className.

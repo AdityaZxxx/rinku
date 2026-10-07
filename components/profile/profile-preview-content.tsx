@@ -75,10 +75,7 @@ function LinkContent({ link }: { link: PreviewLink }) {
           unoptimized
         />
       ) : link.imageUrl === null && favicon ? (
-        // Tiny renderer favicons: next/image would proxy each host, and the
-        // user's list changes hosts often enough that the optimizer cache
-        // never earns its keep.
-        // eslint-disable-next-line @next/next/no-img-element
+        // eslint-disable-next-line @next/next/no-img-element -- tiny cross-host favicon: next/image would proxy each host and the optimizer cache never earns its keep
         <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
       ) : null}
       <span className="line-clamp-2">{link.title}</span>
@@ -124,7 +121,7 @@ export function ProfilePreviewContent({
   bare?: boolean;
 }) {
   // Mirrors the public RLS window: scheduled-but-not-live and expired rows
-  // stay out of the visitor view — and out of the owner's preview of it.
+  // stay out of the visitor view and out of the owner's preview of it.
   const visibleLinks = links.filter(
     (link) =>
       link.isActive && link.archivedAt === null && scheduleStatus(link) === "live",

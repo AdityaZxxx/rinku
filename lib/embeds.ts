@@ -2,8 +2,8 @@ import * as z from "zod";
 
 /**
  * Typed metadata for a miscellaneous iframe-embed block (maps, calendar,
- * forms). Mirrors the music/video blocks: a provider tag plus the fields the
- * embed URL needs, and the same embed/classic/featured style option.
+ * forms): a provider tag plus the fields the embed URL needs, and the same
+ * embed/classic/featured style option.
  */
 
 export type EmbedProvider = "google-maps" | "google-calendar" | "typeform";

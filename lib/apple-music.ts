@@ -52,7 +52,7 @@ export async function searchAppleMusicLibrary(
     fetch(make("song"), { next: { revalidate: 60 } })
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null) as Promise<{ results?: ItunesTrack[] } | null>,
-    // SAFETY: same as above — optional fields, guarded below.
+    // SAFETY: same as above (optional fields, guarded below).
     fetch(make("album"), { next: { revalidate: 60 } })
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null) as Promise<{ results?: ItunesAlbum[] } | null>,

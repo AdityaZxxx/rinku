@@ -22,7 +22,7 @@ export const profiles = pgTable(
     id: uuid("id").primaryKey().defaultRandom().notNull(),
 
     // The owning account. One account may hold many profiles; this column is
-    // the only ownership boundary — never a URL identity.
+    // the only ownership boundary, never a URL identity.
     userId: uuid("user_id").notNull(),
 
     // A cache, not the source of truth. `profile_usernames` is authoritative; a
@@ -35,7 +35,7 @@ export const profiles = pgTable(
     // Crawler-facing overrides for the public page's <head>. Every one is
     // nullable because null means "derive it": the title from display name and
     // handle, the description from bio, the share image from banner then avatar.
-    // These are public by nature — search engines and link unfurlers read them —
+    // These are public by nature (search engines and link unfurlers read them),
     // so they belong on the world-readable row, not a private table.
     metaTitle: text("meta_title"),
     metaDescription: text("meta_description"),
@@ -208,10 +208,10 @@ export const profileUsernames = pgTable(
 // No policy by design: past handles are private, so every access path is a
 // trigger or a SECURITY DEFINER function. RLS is enabled by an explicit ALTER in
 // the custom migration, because Drizzle only emits it for tables that have a
-// policy — and a GRANT alone would leave this history readable by anyone.
+// policy. A GRANT alone would leave this history readable by anyone.
 
-// Timestamped page views, mirroring link_clicks: the owner reads them for the
-// insights page; a SECURITY DEFINER function records them on render.
+// Timestamped page views: the owner reads them for the insights page; a
+// SECURITY DEFINER function records them on render.
 export const profileVisits = pgTable(
   "profile_visits",
   {

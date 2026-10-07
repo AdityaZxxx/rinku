@@ -26,7 +26,7 @@ export type Transaction = PostgresJsTransaction<
  * reads `request.jwt.claims`, a session setting that PostgREST normally populates
  * from the incoming bearer token. A direct Postgres connection never has that
  * setting, so `auth.uid()` returns null and every policy comparing against it
- * evaluates false — silently. Without this wrapper, a missing `WHERE user_id`
+ * silently evaluates false. Without this wrapper, a missing `WHERE user_id`
  * would look like it "worked" (returning zero rows) while the RLS story was
  * never actually being tested.
  *

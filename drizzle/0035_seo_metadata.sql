@@ -1,6 +1,6 @@
 -- Crawler-facing overrides for the public page's <head>. Every column is
--- nullable because null means "derive it" — the title from display name and
--- handle, the description from bio, the share image from banner then avatar —
+-- nullable because null means "derive it" (the title from display name and
+-- handle, the description from bio, the share image from banner then avatar),
 -- so an existing profile's public metadata is unchanged until its owner edits.
 -- They sit on the world-readable row because search engines must read them.
 --

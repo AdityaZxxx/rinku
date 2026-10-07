@@ -44,8 +44,8 @@ function rollback(
 
 /**
  * Every link action returns an `{ error }` union, which React Query reads as a
- * success. Each mutationFn narrows and throws, which is what makes onError —
- * and the rollback inside it — fire.
+ * success. Each mutationFn narrows and throws, which is what makes onError,
+ * and the rollback inside it, fire.
  */
 export function useUpdateLink(profileId: string) {
   const queryClient = useQueryClient();

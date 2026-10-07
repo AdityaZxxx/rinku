@@ -2,7 +2,7 @@
 --
 -- The list is the reclaim surface, and reclaiming is only meant to apply to
 -- handles the owner chose to keep. A handle released immediately (the default)
--- is gone for good, so listing it — even with a Reclaim button — contradicted
+-- is gone for good, so listing it (even with a Reclaim button) contradicted
 -- the "keep it for 30 days or release it now" choice that produced it.
 --
 -- The `status` column stays in the shape for a stable client contract; with the

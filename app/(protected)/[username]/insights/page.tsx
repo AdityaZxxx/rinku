@@ -108,11 +108,9 @@ export default async function InsightsPage({
     notFound();
   }
 
-  // Insights is request-scoped (searchParams drive the page), so reading the
-  // current time at the top is stable for this render.
-  // eslint-disable-next-line react/purity
+  // eslint-disable-next-line react/purity -- request-scoped page: searchParams drive the render, so one now per render
   const timeZone = parseTimeZone(query.tz);
-  // eslint-disable-next-line react/purity
+  // eslint-disable-next-line react/purity -- request-scoped page: the range defaults to today in this render
   const toDay = parseDayString(query.to) ?? tzDayKey(timeZone, new Date());
   const fromDay = parseDayString(query.from) ?? toDay;
 
@@ -150,7 +148,7 @@ function InsightsFallback() {
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading insights">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-[76px] rounded-lg border" />
+          <Skeleton key={i} className="h-19 rounded-lg border" />
         ))}
       </div>
       <Skeleton className="h-48 rounded-lg border" />
@@ -201,8 +199,6 @@ async function InsightsStats({
           where ${linkClicks.createdAt} >= ${rangeStart.toISOString()} and ${linkClicks.createdAt} <= ${rangeEnd.toISOString()}
           group by 1
         `),
-        // The chart only needs raw timestamps for a single-day range, so that
-        // case fetches them; wider ranges aggregate in SQL above.
         singleDay
           ? tx.execute<{ created_at: Date }>(sql`
               select ${linkClicks.createdAt} as created_at from link_clicks
@@ -273,8 +269,6 @@ async function InsightsStats({
         </div>
       </div>
 
-      {/* The chart always renders, even with zero activity, so the layout
-          stays stable; an empty range just shows flat bars. */}
       <ActivityChart
         data={chartData}
         from={fromDay}

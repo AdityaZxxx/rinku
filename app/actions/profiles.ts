@@ -407,7 +407,6 @@ export async function updateSaveMode(input: {
   return { ok: true };
 }
 
-/** Stages the Profile section's text basics and any uploaded photo/banner. */
 export async function saveProfileDraft(input: {
   profileId: string;
   displayName: string;
@@ -608,7 +607,6 @@ export async function publishProfileSection(input: {
   return { ok: true };
 }
 
-/** Copies the Appearance draft onto the live profile and clears it. */
 export async function publishAppearanceSection(input: {
   profileId: string;
 }): Promise<{ ok: true } | { error: string }> {

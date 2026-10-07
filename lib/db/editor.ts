@@ -40,7 +40,6 @@ export const getEditorSettings = cache(
   },
 );
 
-/** The mode for one area of the editor. */
 export async function getSaveMode(
   userId: string,
   profileId: string,

@@ -153,7 +153,6 @@ export function ProfileEditor({
     });
   }
 
-  // Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z, only while this route is in manual mode.
   useEffect(() => {
     if (!manual) {
       return;

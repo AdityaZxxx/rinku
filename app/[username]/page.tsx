@@ -50,9 +50,6 @@ export async function generateMetadata({
       images: image ? [{ url: image }] : undefined,
     },
     twitter: {
-      // Only summary_large_image when an image exists; a large-image card with
-      // no image renders as a bare summary in scrapers anyway, so an imageless
-      // profile declares the honest type instead.
       card: image ? "summary_large_image" : "summary",
       title,
       description,

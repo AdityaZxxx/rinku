@@ -17,7 +17,6 @@ function profileKey(username: string) {
   return ["profile", username] as const;
 }
 
-/** Stages the Profile draft. */
 export function useSaveProfileDraft(username: string, profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -62,7 +61,6 @@ export function usePublishProfileSection(username: string, profileId: string) {
   });
 }
 
-/** Stages the Appearance draft. */
 export function useSaveAppearanceDraft(username: string, profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({

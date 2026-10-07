@@ -5,8 +5,7 @@ import { defineConfig } from "drizzle-kit";
  *
  * Use the **Session pooler** connection string for migrations and for anything
  * long-lived. The Transaction pooler (port 6543) does not support prepared
- * statements, which the `postgres` driver needs, and Supabase's own Drizzle
- * guide calls out the same caveat.
+ * statements, which the `postgres` driver needs.
  */
 export default defineConfig({
   schema: "./lib/db/schema/index.ts",

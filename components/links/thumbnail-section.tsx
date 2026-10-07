@@ -70,7 +70,7 @@ export function ThumbnailSection({ link }: { link: Link }) {
           {isIconMedia(link.imageUrl) ? (
             <MediaIcon imageUrl={link.imageUrl} className="size-5" />
           ) : link.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+            // eslint-disable-next-line @next/next/no-img-element -- cross-host thumbnail preview: the optimizer cache never earns its keep for one-off hosts
             <img src={link.imageUrl} alt="" className="size-12 object-cover" />
           ) : (
             <ImageIcon className="text-muted-foreground size-5" />

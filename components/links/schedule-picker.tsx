@@ -30,7 +30,7 @@ export function scheduleSummary(
 /**
  * Date-range popover for a link's visibility window, after the insights
  * date-range-picker: pick a start, pick an end, the window saves and closes.
- * Full days only — the from date means the start of that day, the until date
+ * Full days only: the from date means the start of that day, the until date
  * the end of that day, so picking Oct 20 keeps the link up for all of Oct 20.
  */
 export function SchedulePicker({

@@ -18,7 +18,7 @@ export type UrlMetadata = {
 /**
  * The fetch runs on the server with a user-supplied URL, so private ranges are
  * blocked here rather than trusting the target to be public. A redirect can
- * still land on a private host — accepted for now.
+ * still land on a private host (accepted for now).
  */
 function isPublicHost(hostname: string): boolean {
   const host = hostname.toLowerCase();

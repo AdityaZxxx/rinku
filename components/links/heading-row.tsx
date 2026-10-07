@@ -46,7 +46,6 @@ export function HeadingRow({
     setTitle(link.title);
   }
 
-  // Debounced autosave, mirroring LinkRow's cadence.
   useEffect(() => {
     const trimmed = title.trim();
     if (trimmed.length === 0 || trimmed === link.title) {
@@ -69,7 +68,7 @@ export function HeadingRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      // The whole row is the drag surface, like LinkRow; the 6px mouse
+      // The whole row is the drag surface; the 6px mouse
       // sensor activation distance keeps clicks/text selection in the input
       // working.
       {...listeners}

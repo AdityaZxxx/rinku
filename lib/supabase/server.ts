@@ -30,7 +30,7 @@ export async function createClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Intentionally ignored: see comment above.
+          // Intentionally ignored.
         }
       },
     },

@@ -43,7 +43,6 @@ export function AgeGateSection({
               : "Ask visitors to confirm their age before opening"}
           </span>
         </div>
-        {/* Fill marks the locked state, matching the schedule row's icon. */}
         <LockSimpleIcon
           className={cn(
             "size-4.5 shrink-0 transition-colors",

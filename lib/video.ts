@@ -1,6 +1,7 @@
 import * as z from "zod";
 
-/** Typed metadata for "video" links, mirroring the music block. */
+/** Typed metadata for "video" links. Stored in links.metadata once at write
+ * time, so the public page renders the embed without re-parsing URLs. */
 
 export type VideoProvider = "youtube" | "vimeo";
 

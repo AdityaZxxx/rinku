@@ -87,7 +87,7 @@ export function ArchiveList({
         <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 sm:p-10">
           <p className="text-sm font-medium">Nothing archived</p>
           <p className="text-muted-foreground text-sm">
-            Links you archive wait here — restore them or delete them for good.
+            Links you archive wait here. Restore them or delete them permanently.
           </p>
         </div>
       ) : (

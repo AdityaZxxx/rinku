@@ -108,7 +108,7 @@ function OptionTile({
   return (
     <label
       className={cn(
-        "relative flex cursor-pointer flex-col items-stretch gap-2 rounded-xl border p-2 pb-6 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+        "relative flex cursor-pointer flex-col items-stretch gap-2 rounded-xl border p-2 pb-6 text-sm has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
         checked ? "border-ring ring-ring/30 ring-3" : "border-input",
       )}
     >
@@ -644,7 +644,7 @@ export function AppearanceEditor({
           </div>
           {values.themeId === "custom" ? (
             <p className="text-muted-foreground mt-2 text-xs">
-              Customized — pick a theme to start over.
+              Customized: pick a theme to start over.
             </p>
           ) : null}
         </Field>
@@ -783,7 +783,7 @@ export function AppearanceEditor({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="text-sm font-medium">Background image</span>
                   <span className="text-muted-foreground text-xs">
-                    No image yet — choose one to upload.
+                    No image yet: choose one to upload.
                   </span>
                 </div>
                 <button
@@ -844,7 +844,7 @@ export function AppearanceEditor({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="text-sm font-medium">Background video</span>
                   <span className="text-muted-foreground text-xs">
-                    No video yet — choose one to upload.
+                    No video yet: choose one to upload.
                   </span>
                 </div>
                 <button

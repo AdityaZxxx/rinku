@@ -85,7 +85,7 @@ export function ChangeUsernameSection({
       }
       toast(
         keepOldUsername
-          ? "Username updated — your old one is held for you for 30 days."
+          ? "Username updated: your old one is kept for 30 days."
           : "Username updated",
       );
       setOpen(false);

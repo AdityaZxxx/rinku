@@ -67,7 +67,7 @@ export function AgeGateLink({
                 src={previewSrc}
                 alt=""
                 aria-hidden
-                className="aspect-[1200/630] w-full object-cover"
+                className="aspect-1200/630 w-full object-cover"
               />
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className="text-background flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium backdrop-blur-xs">

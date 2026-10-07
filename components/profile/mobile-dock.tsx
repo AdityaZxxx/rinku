@@ -31,7 +31,7 @@ export function MobileDock({
           <SheetContent
             side="bottom"
             showCloseButton={false}
-            className="border-none bg-transparent p-0 data-[side=bottom]:h-[100dvh] sm:p-0"
+            className="border-none bg-transparent p-0 data-[side=bottom]:h-dvh sm:p-0"
           >
             <div className="flex h-full flex-col">
               <div className="flex h-[10dvh] items-center justify-between px-4">
@@ -48,7 +48,7 @@ export function MobileDock({
                 </Button>
               </div>
               <div className="bg-background flex-1 overflow-hidden rounded-t-3xl">
-                <div className="mx-auto flex h-full w-full max-w-[420px] flex-col overflow-hidden">
+                <div className="mx-auto flex h-full w-full max-w-105 flex-col overflow-hidden">
                   <div className="flex-1 overflow-y-auto">{preview}</div>
                 </div>
               </div>

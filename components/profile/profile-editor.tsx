@@ -220,7 +220,7 @@ export function ProfileEditor({
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-medium">Profile</h1>
           <p className="text-muted-foreground text-sm">
-            Your photo, banner, name, and bio — what visitors see first.{" "}
+            Your photo, banner, name, and bio: what visitors see first.{" "}
             {manual ? "Publish to make changes live." : "Changes save as you type."}
           </p>
         </div>
@@ -346,7 +346,7 @@ export function ProfileEditor({
                     <label
                       key={value}
                       className={cn(
-                        "relative flex w-32 shrink-0 snap-start flex-col items-stretch gap-2 rounded-xl border p-2 pb-6 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                        "relative flex w-32 shrink-0 snap-start flex-col items-stretch gap-2 rounded-xl border p-2 pb-6 text-sm has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
                         field.state.value === value
                           ? "border-ring ring-ring/30 ring-3"
                           : "border-input",
@@ -383,7 +383,7 @@ export function ProfileEditor({
                 </div>
                 <ScrollBar
                   orientation="horizontal"
-                  className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-[hovering]:opacity-100 data-[scrolling]:opacity-100"
+                  className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-hovering:opacity-100 data-scrolling:opacity-100"
                 />
               </ScrollArea>
             </Field>

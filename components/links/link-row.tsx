@@ -295,7 +295,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                       <label
                         key={value}
                         className={cn(
-                          "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                          "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
                           field.state.value === value
                             ? "border-ring ring-ring/30 ring-3"
                             : "border-input",
@@ -346,7 +346,7 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                         <label
                           key={value}
                           className={cn(
-                            "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                            "relative flex flex-col gap-2 rounded-xl border p-2.5 pb-6 text-left text-sm has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
                             field.state.value === value
                               ? "border-ring ring-ring/30 ring-3"
                               : "border-input",

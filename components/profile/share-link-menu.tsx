@@ -224,7 +224,7 @@ export function ShareLinkMenu({
           </div>
           <ScrollBar
             orientation="horizontal"
-            className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-[hovering]:opacity-100 data-[scrolling]:opacity-100"
+            className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-hovering:opacity-100 data-scrolling:opacity-100"
           />
         </ScrollArea>
 

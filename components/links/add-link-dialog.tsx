@@ -258,7 +258,7 @@ export function AddLinkDialog({
         <PlusIcon />
         Add
       </DialogTrigger>
-      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-2xl sm:min-w-[36rem]">
+      <DialogContent className="grid-cols-[minmax(0,1fr)] sm:max-w-2xl sm:min-w-xl">
         <DialogHeader>
           <DialogTitle>Add a link</DialogTitle>
         </DialogHeader>
@@ -376,15 +376,15 @@ export function AddLinkDialog({
                     </div>
                     {music ? (
                       <p className="text-muted-foreground px-1 text-xs">
-                        Music link — your profile will play it inline.
+                        Music link: your profile will play it inline.
                       </p>
                     ) : video ? (
                       <p className="text-muted-foreground px-1 text-xs">
-                        Video link — your profile will play it inline.
+                        Video link: your profile will play it inline.
                       </p>
                     ) : embed ? (
                       <p className="text-muted-foreground px-1 text-xs">
-                        Web link — your profile will render it inline.
+                        Web link: your profile will render it inline.
                       </p>
                     ) : null}
                     {error ? (
@@ -416,7 +416,7 @@ export function AddLinkDialog({
                         </nav>
                         <ScrollBar
                           orientation="horizontal"
-                          className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-[hovering]:opacity-100 data-[scrolling]:opacity-100"
+                          className="opacity-0 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100 data-hovering:opacity-100 data-scrolling:opacity-100"
                         />
                       </ScrollArea>
                       <nav className="hidden sm:flex sm:w-20 sm:shrink-0 sm:flex-col sm:gap-2">

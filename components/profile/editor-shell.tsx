@@ -20,7 +20,7 @@ export function EditorShell({
         <div className="hidden lg:sticky lg:top-18 lg:block lg:self-start">
           <div className="flex flex-col gap-3">
             {username ? <PreviewActions username={username} /> : null}
-            <div className="bg-background mx-auto flex h-[min(700px,85vh)] w-full max-w-[360px] flex-col overflow-hidden rounded-[2rem] shadow-xl">
+            <div className="bg-background mx-auto flex h-[min(700px,85vh)] w-full max-w-90 flex-col overflow-hidden rounded-[2rem] shadow-xl">
               <div className="flex-1 overflow-y-auto">{preview}</div>
             </div>
           </div>

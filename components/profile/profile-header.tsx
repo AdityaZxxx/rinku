@@ -87,7 +87,7 @@ export function ProfileHeader({
               src={avatarUrl(avatarPath)}
               alt=""
               fill
-              className="[mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)] object-cover"
+              className="mask-[linear-gradient(to_bottom,black_60%,transparent_100%)] object-cover"
               sizes="448px"
             />
           ) : null}
@@ -143,7 +143,7 @@ export function ProfileHeader({
                 : username}
           </p>
           <p className="text-sm" style={{ color: muted }}>
-            — {displayName?.trim() ? displayName.trim() : username}
+            {displayName?.trim() ? displayName.trim() : username}
           </p>
           <p className="text-sm" style={{ color: muted }}>
             @{username}

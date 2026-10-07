@@ -111,7 +111,7 @@ export function SaveModeSection({
                         key={mode.id}
                         title={area.comingSoon ? "Available soon" : mode.hint}
                         className={cn(
-                          "relative rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30",
+                          "relative rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
                           checked
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground cursor-pointer",

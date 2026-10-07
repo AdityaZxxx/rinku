@@ -86,13 +86,11 @@ function LinkContent({ link }: { link: PreviewLink }) {
 
 function FeaturedCardImage({ link, muted }: { link: PreviewLink; muted: string }) {
   if (!link.imageUrl) {
-    return (
-      <div className="aspect-[1200/630] w-full" style={{ backgroundColor: muted }} />
-    );
+    return <div className="aspect-1200/630 w-full" style={{ backgroundColor: muted }} />;
   }
   if (isIconMedia(link.imageUrl)) {
     return (
-      <div className="grid aspect-[1200/630] w-full place-items-center">
+      <div className="grid aspect-1200/630 w-full place-items-center">
         <MediaIcon imageUrl={link.imageUrl} className="size-16" />
       </div>
     );
@@ -103,7 +101,7 @@ function FeaturedCardImage({ link, muted }: { link: PreviewLink; muted: string }
       alt=""
       width={1200}
       height={630}
-      className="aspect-[1200/630] w-full object-cover"
+      className="aspect-1200/630 w-full object-cover"
       unoptimized
     />
   );

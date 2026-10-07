@@ -56,7 +56,7 @@ export function ActivityChart({
         visits: { label: "Visits", color: "var(--chart-2)" },
         clicks: { label: "Clicks", color: "var(--chart-3)" },
       }}
-      className="aspect-[2/1] w-full"
+      className="aspect-2/1 w-full"
     >
       <BarChart data={hourlyData ?? data}>
         <CartesianGrid vertical={false} />

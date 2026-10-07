@@ -11,7 +11,7 @@ export default function ProtectedLoading() {
       <Skeleton className="h-4 w-64 max-w-full rounded" />
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }, (_, i) => (
-          <Skeleton key={i} className="h-[76px] rounded-lg border" />
+          <Skeleton key={i} className="h-19 rounded-lg border" />
         ))}
       </div>
       <Skeleton className="h-48 rounded-lg border" />

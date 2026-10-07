@@ -4,6 +4,7 @@ import type { EditorArea, SaveMode } from "@/lib/profiles";
 import { ChangeUsernameSection } from "@/components/settings/change-username-section";
 import { DeleteProfileSection } from "@/components/settings/delete-profile-section";
 import { SaveModeSection } from "@/components/settings/save-mode-section";
+import { SeoSection } from "@/components/settings/seo-section";
 import { getUserId } from "@/lib/auth";
 import { getEditorSettings } from "@/lib/db/editor";
 import { getProfileByUsername } from "@/lib/db/profile";
@@ -37,12 +38,26 @@ export default async function ProfileSettingsPage({
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 p-4 sm:p-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-lg font-medium">Profile settings</h1>
-        <p className="text-muted-foreground text-sm">
-          Change your username, editing mode, or delete this profile.
+        <p className="text-muted-foreground max-w-[65ch] text-sm leading-normal text-pretty">
+          Change your username, search settings, or editing mode. You can also delete this
+          profile.
         </p>
       </div>
       <SaveModeSection profileId={profile.id} initial={initial} />
       <ChangeUsernameSection username={username} profileId={profile.id} />
+      <SeoSection
+        profileId={profile.id}
+        username={username}
+        initial={{
+          metaTitle: profile.metaTitle ?? "",
+          metaDescription: profile.metaDescription ?? "",
+          keywords: profile.keywords ?? "",
+          searchIndexing: profile.searchIndexing,
+        }}
+        fallbackTitle={`${profile.displayName?.trim() || username} (@${username})`}
+        fallbackDescription={profile.bio ?? ""}
+        initialOgImagePath={profile.ogImagePath}
+      />
       <DeleteProfileSection username={username} />
     </div>
   );

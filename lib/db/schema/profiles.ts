@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -30,6 +31,19 @@ export const profiles = pgTable(
 
     displayName: text("display_name"),
     bio: text("bio"),
+
+    // Crawler-facing overrides for the public page's <head>. Every one is
+    // nullable because null means "derive it": the title from display name and
+    // handle, the description from bio, the share image from banner then avatar.
+    // These are public by nature — search engines and link unfurlers read them —
+    // so they belong on the world-readable row, not a private table.
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    keywords: text("keywords"),
+    // Opt-out, not opt-in: a new profile is discoverable unless its owner says
+    // otherwise.
+    searchIndexing: boolean("search_indexing").notNull().default(true),
+    ogImagePath: text("og_image_path"),
 
     // Object path rather than a full URL, so moving to another CDN or domain
     // does not mean rewriting rows.
@@ -108,6 +122,20 @@ export const profiles = pgTable(
       sql`${t.displayName} is null or char_length(${t.displayName}) <= 80`,
     ),
     check("profiles_bio_length", sql`${t.bio} is null or char_length(${t.bio}) <= 200`),
+    // Search-result truncation points: ~60 characters for a title, ~160 for a
+    // description. Keywords are capped so the meta tag cannot balloon.
+    check(
+      "profiles_meta_title_length",
+      sql`${t.metaTitle} is null or char_length(${t.metaTitle}) <= 70`,
+    ),
+    check(
+      "profiles_meta_description_length",
+      sql`${t.metaDescription} is null or char_length(${t.metaDescription}) <= 160`,
+    ),
+    check(
+      "profiles_keywords_length",
+      sql`${t.keywords} is null or char_length(${t.keywords}) <= 200`,
+    ),
 
     // Everything here is world-readable, which is why there is no email column.
     // Do not add one.

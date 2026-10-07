@@ -16,6 +16,16 @@ export const profileBasicsSchema = z.object({
   ]),
 });
 
+// Crawler-facing overrides for the public page's <head>, mirroring the length
+// CHECKs on `profiles`. Empty strings are trimmed to null on save, which
+// restores the derived default (name/handle title, bio description, banner).
+export const seoSchema = z.object({
+  metaTitle: z.string().max(70, "Use 70 characters or fewer."),
+  metaDescription: z.string().max(160, "Use 160 characters or fewer."),
+  keywords: z.string().max(200, "Use 200 characters or fewer."),
+  searchIndexing: z.boolean(),
+});
+
 // How edits reach the public page, per editor area. The database checks mirror
 // this enum; a missing settings row reads as all-auto.
 export const saveModeSchema = z.enum(["auto", "manual"]);
@@ -74,6 +84,7 @@ export const imageMaxBytes = {
   avatar: 2 * 1024 * 1024,
   banner: 5 * 1024 * 1024,
   link: 5 * 1024 * 1024,
+  ogImage: 5 * 1024 * 1024,
   wallpaperImage: 5 * 1024 * 1024,
   wallpaperVideo: 25 * 1024 * 1024,
 };

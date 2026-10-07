@@ -9,7 +9,7 @@ import { AGE_GATE_COOKIE, isAgeGateCleared } from "@/lib/age-gate";
 import { resolveAppearance } from "@/lib/appearance";
 import { getPublicLinksByProfile } from "@/lib/db/links";
 import { getPublicProfileByUsername } from "@/lib/db/profile";
-import { avatarUrl, bannerUrl } from "@/lib/storage";
+import { avatarUrl, bannerUrl, ogImageUrl } from "@/lib/storage";
 
 export async function generateMetadata({
   params,
@@ -20,18 +20,43 @@ export async function generateMetadata({
     return { title: "Not found" };
   }
 
+  // Each stored override wins; the derived value is the same one the page body
+  // shows, so a profile with no SEO edits reads exactly as it did before.
   const displayName = profile.displayName?.trim() ? profile.displayName : username;
+  const title = profile.metaTitle?.trim() || `${displayName} (@${username})`;
+  const description = profile.metaDescription?.trim() || profile.bio?.trim() || undefined;
+  const image = profile.ogImagePath
+    ? ogImageUrl(profile.ogImagePath)
+    : profile.bannerPath
+      ? bannerUrl(profile.bannerPath)
+      : profile.avatarPath
+        ? avatarUrl(profile.avatarPath)
+        : undefined;
+
   return {
-    title: `${displayName} (@${username})`,
-    description: profile.bio ?? undefined,
+    title,
+    description,
+    keywords: profile.keywords?.trim() || undefined,
+    // Relative values; resolved against `metadataBase` set in the root layout.
+    alternates: { canonical: `/${username}` },
+    robots: { index: profile.searchIndexing, follow: true },
     openGraph: {
-      title: `${displayName} (@${username})`,
-      description: profile.bio ?? undefined,
-      images: profile.bannerPath
-        ? [bannerUrl(profile.bannerPath)]
-        : profile.avatarPath
-          ? [avatarUrl(profile.avatarPath)]
-          : undefined,
+      title,
+      description,
+      url: `/${username}`,
+      siteName: "Rinku",
+      type: "profile",
+      username,
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      // Only summary_large_image when an image exists; a large-image card with
+      // no image renders as a bare summary in scrapers anyway, so an imageless
+      // profile declares the honest type instead.
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: image ? [image] : undefined,
     },
   };
 }

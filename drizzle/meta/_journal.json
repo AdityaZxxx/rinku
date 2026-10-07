@@ -239,6 +239,13 @@
       "when": 1791281198519,
       "tag": "0034_username_history_reserved",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791339010104,
+      "tag": "0035_seo_metadata",
+      "breakpoints": true
     }
   ]
 }

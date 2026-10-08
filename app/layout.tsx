@@ -4,6 +4,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND_NAME, siteUrl } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,12 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  // Canonical links and relative Open Graph URLs resolve against this. Set
-  // NEXT_PUBLIC_SITE_URL in production; the localhost fallback exists only so a
-  // local build does not error on relative metadata fields. `||`, not `??`,
-  // because a blank value in .env must fall back rather than throw in `new URL`.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: "Rinku",
+  // Canonical links and relative Open Graph URLs resolve against this.
+  metadataBase: new URL(siteUrl()),
+  title: BRAND_NAME,
   description: "One link for everything you make and sell.",
 };
 

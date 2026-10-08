@@ -21,6 +21,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { BRAND_NAME } from "@/lib/brand";
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/client";
 
@@ -144,7 +145,7 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
 
       <CardFooter className="justify-center">
         <p className="text-muted-foreground text-sm">
-          New to Rinku?{" "}
+          New to {BRAND_NAME}?{" "}
           <Link href="/signup" className="underline underline-offset-4">
             Create an account
           </Link>

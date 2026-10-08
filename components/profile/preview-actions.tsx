@@ -5,14 +5,14 @@ import Link from "next/link";
 import { CopyIcon, RocketIcon, CheckIcon } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
+import { profileUrl } from "@/lib/brand";
 
 export function PreviewActions({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    const origin = window.location.origin;
     try {
-      await navigator.clipboard.writeText(`${origin}/${username}`);
+      await navigator.clipboard.writeText(profileUrl(username));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {

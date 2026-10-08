@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { siteUrl } from "@/lib/brand";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl } from "@/lib/links/model";
 import { cn } from "@/lib/utils";
@@ -106,7 +107,7 @@ export function ShareLinkMenu({
   const favicon = link.imageUrl === null ? faviconUrl(link.url) : null;
 
   function shareUrl(): string {
-    return new URL(`/go/${link.id}`, window.location.origin).toString();
+    return new URL(`/go/${link.id}`, siteUrl()).toString();
   }
 
   function shareTo(target: ShareTarget) {

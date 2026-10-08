@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ClaimUsernameForm } from "@/components/landing/claim-username-form";
 import { Button } from "@/components/ui/button";
 import { getUserId } from "@/lib/auth";
+import { BRAND_NAME } from "@/lib/brand";
 
 const year = new Date().getFullYear();
 
@@ -14,7 +15,7 @@ export default async function Home() {
       <header className="border-border border-b">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between p-4">
           <Link href="/" className="font-heading text-lg font-semibold">
-            Rinku
+            {BRAND_NAME}
           </Link>
           <nav className="flex items-center gap-3">
             {userId ? (
@@ -49,8 +50,8 @@ export default async function Home() {
             One link for everything you make and sell.
           </h1>
           <p className="text-muted-foreground text-lg text-balance">
-            Rinku is your link-in-bio page. Collect your work, your shop, and your socials
-            in one place you control.
+            {BRAND_NAME} is your link-in-bio page. Collect your work, your shop, and your
+            socials in one place you control.
           </p>
           <div className="flex w-full flex-col items-center gap-3">
             {userId ? (
@@ -68,7 +69,9 @@ export default async function Home() {
 
       <footer className="border-border border-t">
         <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-6 p-4 text-sm sm:flex-row">
-          <p>© {year} Rinku</p>
+          <p>
+            © {year} {BRAND_NAME}
+          </p>
           <nav className="flex items-center gap-3">
             <Link
               href="/terms"

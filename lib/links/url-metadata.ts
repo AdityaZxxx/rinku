@@ -1,3 +1,4 @@
+import { BRAND_NAME } from "@/lib/brand";
 import { log } from "@/lib/log";
 import "server-only";
 
@@ -161,7 +162,7 @@ export async function fetchPageMetadata(url: string): Promise<UrlMetadata | null
   try {
     response = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { "user-agent": "Mozilla/5.0 (compatible; RinkuBot/1.0)" },
+      headers: { "user-agent": `Mozilla/5.0 (compatible; ${BRAND_NAME}Bot/1.0)` },
     });
   } catch (error) {
     log.warn(

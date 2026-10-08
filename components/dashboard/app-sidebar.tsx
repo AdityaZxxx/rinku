@@ -51,6 +51,7 @@ import {
   useSidebar,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { BRAND_NAME } from "@/lib/brand";
 import {
   NAV_SHORTCUTS,
   navShortcutHref,
@@ -124,7 +125,7 @@ export function AppSidebar({
         <div className="flex h-12 items-center gap-2 overflow-hidden rounded-xl px-2.5 transition-[padding] duration-200 ease-linear group-data-[collapsible=icon]:px-1.5">
           <RabbitIcon className="size-5 shrink-0" />
           <span className="text-base font-semibold group-data-[collapsible=icon]:hidden">
-            Rinku
+            {BRAND_NAME}
           </span>
           <Button
             variant="ghost"

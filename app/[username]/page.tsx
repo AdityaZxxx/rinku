@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
 import { VisitBeacon } from "@/components/profile/visit-beacon";
+import { BRAND_NAME } from "@/lib/brand";
 import { getPublicLinksByProfile } from "@/lib/db/links";
 import { getPublicProfileByUsername } from "@/lib/db/profile";
 import { AGE_GATE_COOKIE, isAgeGateCleared } from "@/lib/links/age-gate";
@@ -44,7 +45,7 @@ export async function generateMetadata({
       title,
       description,
       url: `/${username}`,
-      siteName: "Rinku",
+      siteName: BRAND_NAME,
       type: "profile",
       username,
       images: image ? [{ url: image }] : undefined,

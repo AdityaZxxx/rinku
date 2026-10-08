@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ProfilePicker } from "@/components/dashboard/profile-picker";
 import { UnsavedChangesProvider } from "@/components/profile/unsaved-changes-provider";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -34,7 +35,10 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
         <SidebarInset id="main" tabIndex={-1}>
           <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-sm">
             <SidebarTrigger />
-            <ProfilePicker profiles={profiles} />
+            <div className="flex items-center gap-1">
+              <CommandPalette profiles={profiles} />
+              <ProfilePicker profiles={profiles} />
+            </div>
           </header>
           {children}
         </SidebarInset>

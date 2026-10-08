@@ -60,6 +60,7 @@ import {
   appearanceDraftFromProfile,
   type AppearanceDraftFields,
 } from "@/lib/editor-draft";
+import { isEditableTarget } from "@/lib/keyboard";
 import { imageMaxBytes } from "@/lib/profiles";
 import { wallpaperUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -509,6 +510,10 @@ export function AppearanceEditor({
     }
     const handler = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      // Inside a field, ⌘Z means native text undo; only hijack it elsewhere.
+      if (isEditableTarget(event.target)) {
         return;
       }
       event.preventDefault();

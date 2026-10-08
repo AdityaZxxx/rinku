@@ -15,6 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { profileDraftFromProfile, type ProfileDraftFields } from "@/lib/editor-draft";
+import { isEditableTarget } from "@/lib/keyboard";
 import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles";
 import { avatarUrl, bannerUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -159,6 +160,10 @@ export function ProfileEditor({
     }
     const handler = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      // Inside a field, ⌘Z means native text undo; only hijack it elsewhere.
+      if (isEditableTarget(event.target)) {
         return;
       }
       event.preventDefault();

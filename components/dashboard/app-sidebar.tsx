@@ -1,6 +1,6 @@
 "use client";
 
-import type { Route } from "next";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import type { profiles } from "@/lib/db/schema";
 import {
@@ -22,6 +22,7 @@ import {
 import { useTheme } from "next-themes";
 
 import { signOut } from "@/app/actions/auth";
+import { Kbd } from "@/components/dashboard/kbd";
 import {
   GuardedLink,
   useConfirmLeave,
@@ -50,8 +51,24 @@ import {
   useSidebar,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import {
+  NAV_SHORTCUTS,
+  navShortcutHref,
+  type NavSection,
+  type NavShortcut,
+} from "@/lib/shortcuts";
 
 type Profile = typeof profiles.$inferSelect;
+
+const NAV_ICONS: Record<NavSection, ReactNode> = {
+  dashboard: <HouseIcon />,
+  overview: <SquaresFourIcon />,
+  links: <LinkIcon />,
+  profile: <UserCircleIcon />,
+  appearance: <PaletteIcon />,
+  insights: <ChartBarIcon />,
+  settings: <GearIcon />,
+};
 
 export function AppSidebar({
   profiles,
@@ -67,14 +84,39 @@ export function AppSidebar({
   const currentUsername = pathname.split("/")[1];
   const current =
     profiles.find((profile) => profile.username === currentUsername) ?? profiles[0];
-  const editing = current?.username;
-
-  const editPath = (section: string) =>
-    // SAFETY: /:username/<section>, the profile's own edit context; the typed
-    // route union is only knowable for literals.
-    `/${editing}/${section}` as Route;
+  const editing = current?.username ?? "";
 
   const closeMobile = () => setOpenMobile(false);
+
+  const mainNav = NAV_SHORTCUTS.filter((item) => item.section !== "settings");
+  const settingsNav = NAV_SHORTCUTS.find((item) => item.section === "settings");
+
+  function renderNavItem(item: NavShortcut) {
+    const href = navShortcutHref(item.section, editing);
+    return (
+      <SidebarMenuItem key={item.section}>
+        <SidebarMenuButton
+          isActive={pathname === href}
+          aria-keyshortcuts={item.digit}
+          tooltip={{
+            children: (
+              <>
+                {item.label}
+                <Kbd className="border-background/25 bg-background/20 text-background">
+                  {item.digit}
+                </Kbd>
+              </>
+            ),
+          }}
+          onClick={closeMobile}
+          render={<GuardedLink href={href} />}
+        >
+          {NAV_ICONS[item.section]}
+          {item.label}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -100,79 +142,7 @@ export function AppSidebar({
         <nav aria-label="Main" className="flex flex-col gap-2">
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === "/dashboard"}
-                    tooltip="Dashboard"
-                    onClick={closeMobile}
-                    render={<GuardedLink href="/dashboard" />}
-                  >
-                    <HouseIcon />
-                    Dashboard
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/overview`}
-                    tooltip="Overview"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("overview")} />}
-                  >
-                    <SquaresFourIcon />
-                    Overview
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/links`}
-                    tooltip="Links"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("links")} />}
-                  >
-                    <LinkIcon />
-                    Links
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/profile`}
-                    tooltip="Profile"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("profile")} />}
-                  >
-                    <UserCircleIcon />
-                    Profile
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/appearance`}
-                    tooltip="Appearance"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("appearance")} />}
-                  >
-                    <PaletteIcon />
-                    Appearance
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/insights`}
-                    tooltip="Insights"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("insights")} />}
-                  >
-                    <ChartBarIcon />
-                    Insights
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <SidebarMenu>{mainNav.map(renderNavItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -180,19 +150,7 @@ export function AppSidebar({
 
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname === `/${editing}/settings`}
-                    tooltip="Profile settings"
-                    onClick={closeMobile}
-                    render={<GuardedLink href={editPath("settings")} />}
-                  >
-                    <GearIcon />
-                    Settings
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <SidebarMenu>{settingsNav ? renderNavItem(settingsNav) : null}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </nav>

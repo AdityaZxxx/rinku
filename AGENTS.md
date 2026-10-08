@@ -13,6 +13,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Link-in-bio SaaS: one public page per user at `/<username>`. Data lives in
 Supabase (Postgres + storage), reached through Drizzle.
 
+## Keyboard shortcuts
+
+`lib/shortcuts.ts` is the single source of truth for nav digits and cheat-sheet
+rows; the sidebar tooltips and the command palette both read from it. Global
+handlers live in `components/dashboard/command-palette.tsx`. Shortcut-driven
+navigation must go through `useConfirmLeave()` (never a bare `router.push`) so
+unpublished edits still warn, and bare-key shortcuts must bail on
+`isEditableTarget()` / `anyDialogOpen()` from `lib/keyboard.ts`.
+
 ## Server actions
 
 Server actions live in `app/actions/<domain>.ts`, one file per segment they

@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -5,6 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserId } from "@/lib/auth";
 import { getProfileSnapshots } from "@/lib/db/overview";
 import { avatarUrl } from "@/lib/storage";
+
+// Plain `Route` covers only static routes; dynamic ones must be parameterized
+// with their shape for the generated route types to accept them.
+type AttentionHref = Route<`/${string}/links` | `/${string}/profile`>;
 
 export const metadata = { title: "Dashboard" };
 
@@ -87,16 +92,43 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-2 rounded-lg border p-4">
           <h2 className="text-sm font-medium">Needs attention</h2>
           <ul className="text-muted-foreground list-inside list-disc text-sm">
-            {attention.map((profile) => (
-              <li key={profile.id}>
-                {profile.activeLinks === 0 && (
-                  <span>/{profile.username} has no live links. </span>
-                )}
-                {!profile.hasAvatar && <span>/{profile.username} has no avatar. </span>}
-                {!profile.hasBanner && <span>/{profile.username} has no banner. </span>}
-                {!profile.hasBio && <span>/{profile.username} has no bio. </span>}
-              </li>
-            ))}
+            {attention.flatMap((profile) => {
+              const issues: { href: AttentionHref; label: string }[] = [];
+              if (profile.activeLinks === 0) {
+                issues.push({
+                  href: `/${profile.username}/links`,
+                  label: `/${profile.username} has no live links`,
+                });
+              }
+              if (!profile.hasAvatar) {
+                issues.push({
+                  href: `/${profile.username}/profile`,
+                  label: `/${profile.username} has no avatar`,
+                });
+              }
+              if (!profile.hasBanner) {
+                issues.push({
+                  href: `/${profile.username}/profile`,
+                  label: `/${profile.username} has no banner`,
+                });
+              }
+              if (!profile.hasBio) {
+                issues.push({
+                  href: `/${profile.username}/profile`,
+                  label: `/${profile.username} has no bio`,
+                });
+              }
+              return issues.map((issue) => (
+                <li key={`${profile.id}:${issue.label}`}>
+                  <Link
+                    href={issue.href}
+                    className="text-foreground underline-offset-4 hover:underline"
+                  >
+                    {issue.label}
+                  </Link>
+                </li>
+              ));
+            })}
           </ul>
         </div>
       ) : null}

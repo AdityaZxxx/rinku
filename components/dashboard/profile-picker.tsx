@@ -7,7 +7,7 @@ import type { profiles } from "@/lib/db/schema";
 import { CheckIcon, CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
 
 import { GuardedLink } from "@/components/profile/unsaved-changes-provider";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EDIT_SECTIONS } from "@/lib/sections";
+import { avatarUrl } from "@/lib/storage";
 
 type Profile = typeof profiles.$inferSelect;
 
@@ -47,6 +48,9 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
         }
       >
         <Avatar className="size-5 shrink-0">
+          <AvatarImage
+            src={current?.avatarPath ? avatarUrl(current.avatarPath) : undefined}
+          />
           <AvatarFallback className="text-[10px] font-medium">
             {(label ?? "?")[0]?.toUpperCase()}
           </AvatarFallback>
@@ -69,6 +73,9 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
               }
             >
               <Avatar className="size-5 shrink-0">
+                <AvatarImage
+                  src={profile.avatarPath ? avatarUrl(profile.avatarPath) : undefined}
+                />
                 <AvatarFallback className="text-[10px] font-medium">
                   {(profile.displayName ?? profile.username)[0]?.toUpperCase()}
                 </AvatarFallback>

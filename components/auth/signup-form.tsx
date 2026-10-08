@@ -168,6 +168,18 @@ export function SignupForm() {
             </Button>
 
             <GoogleButton disabled={form.state.isSubmitting} />
+
+            <p className="text-muted-foreground text-center text-sm">
+              By continuing, you agree to the{" "}
+              <Link href="/terms" className="underline underline-offset-4">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="underline underline-offset-4">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </FieldGroup>
         </form>
       </CardContent>

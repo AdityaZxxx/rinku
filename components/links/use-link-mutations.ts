@@ -12,9 +12,9 @@ import {
   restoreLink,
   updateLink,
 } from "@/app/actions/links";
-import { parseEmbedUrl } from "@/lib/embeds";
-import { parseMusicUrl } from "@/lib/music";
-import { parseVideoUrl } from "@/lib/video";
+import { parseEmbedUrl } from "@/lib/links/embeds";
+import { parseMusicUrl } from "@/lib/links/music";
+import { parseVideoUrl } from "@/lib/links/video";
 
 type LinkVariant = Link["variant"];
 type PositionUpdate = { id: string; position: number };

@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { imageMaxBytes, seoSchema } from "@/lib/profiles";
-import { ogImageUrl } from "@/lib/storage";
+import { imageMaxBytes, seoSchema } from "@/lib/profiles/schema";
+import { ogImageUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
 const limits = { metaTitle: 70, metaDescription: 160, keywords: 200 } as const;

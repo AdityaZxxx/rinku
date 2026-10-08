@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { EditorArea, SaveMode } from "@/lib/profiles";
+import type { EditorArea, SaveMode } from "@/lib/profiles/schema";
 import { toast } from "sonner";
 
 import { updateSaveMode } from "@/app/actions/profiles";

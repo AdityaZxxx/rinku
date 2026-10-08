@@ -56,7 +56,7 @@ import {
   navShortcutHref,
   type NavSection,
   type NavShortcut,
-} from "@/lib/shortcuts";
+} from "@/lib/dashboard/shortcuts";
 
 type Profile = typeof profiles.$inferSelect;
 

@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { AGE_GATE_COOKIE, isAgeGateCleared, withAgeGateUnlock } from "@/lib/age-gate";
+import {
+  AGE_GATE_COOKIE,
+  isAgeGateCleared,
+  withAgeGateUnlock,
+} from "@/lib/links/age-gate";
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 

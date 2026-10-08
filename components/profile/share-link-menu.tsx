@@ -26,8 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { faviconUrl } from "@/lib/links";
-import { isIconMedia } from "@/lib/media";
+import { isIconMedia } from "@/lib/links/media";
+import { faviconUrl } from "@/lib/links/model";
 import { cn } from "@/lib/utils";
 
 function hostOf(url: string): string {

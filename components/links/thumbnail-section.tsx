@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { isIconMedia } from "@/lib/media";
+import { isIconMedia } from "@/lib/links/media";
 import { useUpdateLink } from "./use-link-mutations";
 
 export function ThumbnailSection({ link }: { link: Link }) {

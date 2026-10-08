@@ -4,7 +4,7 @@ import { and, eq, gte } from "drizzle-orm";
 import { getProfiles } from "@/lib/db/profile";
 import { linkClicks, links, profileVisits, type profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
-import { scheduleStatus } from "@/lib/links";
+import { scheduleStatus } from "@/lib/links/model";
 import "server-only";
 
 const recentMs = 30 * 24 * 60 * 60 * 1000;

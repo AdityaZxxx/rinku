@@ -31,8 +31,13 @@ import {
 } from "@/components/ui/input-group";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { displayUrl, faviconUrl, linkInputSchema, scheduleStatus } from "@/lib/links";
-import { isIconMedia } from "@/lib/media";
+import { isIconMedia } from "@/lib/links/media";
+import {
+  displayUrl,
+  faviconUrl,
+  linkInputSchema,
+  scheduleStatus,
+} from "@/lib/links/model";
 import { cn } from "@/lib/utils";
 import { AgeGateSection } from "./age-gate-section";
 import { SchedulePicker, scheduleSummary } from "./schedule-picker";

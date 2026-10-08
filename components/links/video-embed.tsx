@@ -1,4 +1,4 @@
-import { videoEmbed, type VideoMetadata } from "@/lib/video";
+import { videoEmbed, type VideoMetadata } from "@/lib/links/video";
 
 /** Inline player for a video link at 16:9. */
 export function VideoEmbed({ metadata }: { metadata: VideoMetadata }) {

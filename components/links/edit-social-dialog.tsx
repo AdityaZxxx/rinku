@@ -17,8 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { linkUrlSchema } from "@/lib/links";
-import { platformById } from "@/lib/platforms";
+import { linkUrlSchema } from "@/lib/links/model";
+import { platformById } from "@/lib/links/platforms";
 import { useDeleteLink } from "./use-link-mutations";
 
 export function EditSocialDialog({

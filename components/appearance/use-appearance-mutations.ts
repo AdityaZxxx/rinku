@@ -1,7 +1,7 @@
 "use client";
 
-import type { Appearance } from "@/lib/appearance";
 import type { Profile } from "@/lib/db/schema";
+import type { Appearance } from "@/lib/profiles/appearance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

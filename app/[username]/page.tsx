@@ -5,11 +5,11 @@ import { notFound } from "next/navigation";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
 import { ProfilePreviewContent } from "@/components/profile/profile-preview-content";
 import { VisitBeacon } from "@/components/profile/visit-beacon";
-import { AGE_GATE_COOKIE, isAgeGateCleared } from "@/lib/age-gate";
-import { resolveAppearance } from "@/lib/appearance";
 import { getPublicLinksByProfile } from "@/lib/db/links";
 import { getPublicProfileByUsername } from "@/lib/db/profile";
-import { avatarUrl, bannerUrl, ogImageUrl } from "@/lib/storage";
+import { AGE_GATE_COOKIE, isAgeGateCleared } from "@/lib/links/age-gate";
+import { resolveAppearance } from "@/lib/profiles/appearance";
+import { avatarUrl, bannerUrl, ogImageUrl } from "@/lib/supabase/storage";
 
 export async function generateMetadata({
   params,

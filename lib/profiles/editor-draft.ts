@@ -1,7 +1,7 @@
-import type { Appearance } from "@/lib/appearance";
 import type { AppearanceDraft, Profile, ProfileDraft } from "@/lib/db/schema";
+import type { Appearance } from "@/lib/profiles/appearance";
 
-import { resolveAppearance } from "@/lib/appearance";
+import { resolveAppearance } from "@/lib/profiles/appearance";
 
 /** The Profile section's editable fields (empty string means unset). */
 export interface ProfileDraftFields {

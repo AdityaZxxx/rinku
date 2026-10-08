@@ -2,7 +2,10 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { AppearanceDraftFields, ProfileDraftFields } from "@/lib/editor-draft";
+import type {
+  AppearanceDraftFields,
+  ProfileDraftFields,
+} from "@/lib/profiles/editor-draft";
 
 /**
  * Holds the unpublished Profile/Appearance drafts for one editor route so the

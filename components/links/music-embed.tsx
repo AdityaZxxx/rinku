@@ -1,4 +1,4 @@
-import { musicEmbed, type LinkMetadata } from "@/lib/music";
+import { musicEmbed, type LinkMetadata } from "@/lib/links/music";
 
 /** In-place player for a music link: the reason kind === "music" exists. */
 export function MusicEmbed({ metadata }: { metadata: LinkMetadata }) {

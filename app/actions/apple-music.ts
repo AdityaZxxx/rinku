@@ -2,7 +2,7 @@
 
 import * as z from "zod";
 
-import { searchAppleMusicLibrary, type AppleMusicResult } from "@/lib/apple-music";
+import { searchAppleMusicLibrary, type AppleMusicResult } from "@/lib/links/apple-music";
 import { createClient } from "@/lib/supabase/server";
 
 export async function searchAppleMusic(input: {

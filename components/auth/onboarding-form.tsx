@@ -19,7 +19,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { usernameSchema } from "@/lib/profiles";
+import { usernameSchema } from "@/lib/profiles/schema";
 
 const onboardingSchema = z.object({
   username: usernameSchema,

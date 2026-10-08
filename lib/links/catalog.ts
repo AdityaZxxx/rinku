@@ -1,8 +1,8 @@
-import { parseEmbedUrl } from "@/lib/embeds";
-import { normalizeUrl } from "@/lib/links";
-import { parseMusicUrl } from "@/lib/music";
-import { PLATFORMS } from "@/lib/platforms";
-import { parseVideoUrl } from "@/lib/video";
+import { parseEmbedUrl } from "@/lib/links/embeds";
+import { normalizeUrl } from "@/lib/links/model";
+import { parseMusicUrl } from "@/lib/links/music";
+import { PLATFORMS } from "@/lib/links/platforms";
+import { parseVideoUrl } from "@/lib/links/video";
 
 export interface CatalogItem {
   id: string;

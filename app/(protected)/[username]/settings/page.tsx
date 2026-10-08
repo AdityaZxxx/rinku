@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { EditorArea, SaveMode } from "@/lib/profiles";
+import type { EditorArea, SaveMode } from "@/lib/profiles/schema";
 
 import { ChangeUsernameSection } from "@/components/settings/change-username-section";
 import { DeleteProfileSection } from "@/components/settings/delete-profile-section";

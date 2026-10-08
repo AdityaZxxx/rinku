@@ -4,7 +4,6 @@ import { updateTag } from "next/cache";
 import { and, eq, sql } from "drizzle-orm";
 import * as z from "zod";
 
-import { appearanceSchema } from "@/lib/appearance";
 import { getSaveMode } from "@/lib/db/editor";
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import {
@@ -15,8 +14,9 @@ import {
   type Profile,
 } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
-import { appearanceDraftFromProfile } from "@/lib/editor-draft";
 import { log } from "@/lib/log";
+import { appearanceSchema } from "@/lib/profiles/appearance";
+import { appearanceDraftFromProfile } from "@/lib/profiles/editor-draft";
 import {
   imageExtension,
   imageMaxBytes,
@@ -28,7 +28,7 @@ import {
   videoExtension,
   type EditorArea,
   type ReservedUsername,
-} from "@/lib/profiles";
+} from "@/lib/profiles/schema";
 import { createClient } from "@/lib/supabase/server";
 
 /**

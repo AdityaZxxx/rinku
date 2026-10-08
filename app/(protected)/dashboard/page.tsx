@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserId } from "@/lib/auth";
 import { getProfileSnapshots } from "@/lib/db/overview";
-import { avatarUrl } from "@/lib/storage";
+import { avatarUrl } from "@/lib/supabase/storage";
 
 // Plain `Route` covers only static routes; dynamic ones must be parameterized
 // with their shape for the generated route types to accept them.

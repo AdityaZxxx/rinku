@@ -2,7 +2,7 @@
 
 import * as Ph from "@phosphor-icons/react";
 
-import { iconMediaId, isIconMedia } from "@/lib/media";
+import { iconMediaId, isIconMedia } from "@/lib/links/media";
 
 export const MEDIA_ICON_IDS = Object.keys(Ph)
   .filter((name) => name.endsWith("Icon"))

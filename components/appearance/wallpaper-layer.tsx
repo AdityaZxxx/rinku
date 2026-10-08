@@ -1,5 +1,5 @@
-import { hexWithAlpha, type WallpaperPattern } from "@/lib/appearance";
-import { wallpaperUrl } from "@/lib/storage";
+import { hexWithAlpha, type WallpaperPattern } from "@/lib/profiles/appearance";
+import { wallpaperUrl } from "@/lib/supabase/storage";
 
 export function patternBackground(
   pattern: WallpaperPattern,

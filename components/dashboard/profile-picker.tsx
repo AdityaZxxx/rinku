@@ -18,8 +18,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EDIT_SECTIONS } from "@/lib/sections";
-import { avatarUrl } from "@/lib/storage";
+import { EDIT_SECTIONS } from "@/lib/profiles/sections";
+import { avatarUrl } from "@/lib/supabase/storage";
 
 type Profile = typeof profiles.$inferSelect;
 

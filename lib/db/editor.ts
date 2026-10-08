@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { EditorArea, SaveMode } from "@/lib/profiles";
+import type { EditorArea, SaveMode } from "@/lib/profiles/schema";
 import { eq } from "drizzle-orm";
 
 import {

@@ -9,7 +9,7 @@ import { getUserId } from "@/lib/auth";
 import { getAppearanceDraft, getSaveMode } from "@/lib/db/editor";
 import { getLinksByProfile } from "@/lib/db/links";
 import { getProfileByUsername } from "@/lib/db/profile";
-import { appearanceDraftFromRow } from "@/lib/editor-draft";
+import { appearanceDraftFromRow } from "@/lib/profiles/editor-draft";
 
 export const metadata = { title: "Appearance" };
 

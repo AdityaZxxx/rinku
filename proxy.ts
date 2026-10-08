@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { EDIT_SECTION } from "@/lib/sections";
+import { EDIT_SECTION } from "@/lib/profiles/sections";
 import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/env";
 
 /**

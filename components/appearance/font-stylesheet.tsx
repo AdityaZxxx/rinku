@@ -1,4 +1,8 @@
-import { allFontsStylesheetUrl, fontStylesheetUrl, type FontId } from "@/lib/appearance";
+import {
+  allFontsStylesheetUrl,
+  fontStylesheetUrl,
+  type FontId,
+} from "@/lib/profiles/appearance";
 
 /**
  * Loads only the appearance font(s) a page actually renders. next/font can't

@@ -1,6 +1,6 @@
-import type { EmbedMetadata } from "@/lib/embeds";
-import type { LinkMetadata } from "@/lib/music";
-import type { VideoMetadata } from "@/lib/video";
+import type { EmbedMetadata } from "@/lib/links/embeds";
+import type { LinkMetadata } from "@/lib/links/music";
+import type { VideoMetadata } from "@/lib/links/video";
 import { sql } from "drizzle-orm";
 import {
   boolean,

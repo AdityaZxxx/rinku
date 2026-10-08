@@ -3,14 +3,14 @@ import type { PreviewLink } from "@/components/profile/profile-preview-content";
 
 import { SocialIcon } from "@/components/social-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { platformById } from "@/lib/links/platforms";
 import {
   buttonBodyStyle,
   fontStack,
   mutedFor,
   type ResolvedAppearance,
-} from "@/lib/appearance";
-import { platformById } from "@/lib/platforms";
-import { avatarUrl, bannerUrl } from "@/lib/storage";
+} from "@/lib/profiles/appearance";
+import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
 export type ProfileHeaderVariant =

@@ -1,4 +1,4 @@
-import { embedSpec, type EmbedMetadata } from "@/lib/embeds";
+import { embedSpec, type EmbedMetadata } from "@/lib/links/embeds";
 
 /** Generic iframe for the smaller embed providers (maps, calendar, forms). */
 export function BlockEmbed({ metadata }: { metadata: EmbedMetadata }) {

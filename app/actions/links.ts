@@ -8,7 +8,11 @@ import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import { links, profiles, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
-import { parseEmbedUrl, type EmbedMetadata, embedMetadataSchema } from "@/lib/embeds";
+import {
+  parseEmbedUrl,
+  type EmbedMetadata,
+  embedMetadataSchema,
+} from "@/lib/links/embeds";
 import {
   httpUrlSchema,
   linkInputSchema,
@@ -18,14 +22,18 @@ import {
   linkTitleSchema,
   normalizeUrl,
   positionAfter,
-} from "@/lib/links";
+} from "@/lib/links/model";
+import { linkMetadataSchema, parseMusicUrl, type LinkMetadata } from "@/lib/links/music";
+import { fetchPageMetadata } from "@/lib/links/url-metadata";
+import {
+  parseVideoUrl,
+  type VideoMetadata,
+  videoMetadataSchema,
+} from "@/lib/links/video";
 import { log } from "@/lib/log";
-import { linkMetadataSchema, parseMusicUrl, type LinkMetadata } from "@/lib/music";
-import { imageExtension, imageMaxBytes } from "@/lib/profiles";
-import { linkImageUrl } from "@/lib/storage";
+import { imageExtension, imageMaxBytes } from "@/lib/profiles/schema";
 import { createClient } from "@/lib/supabase/server";
-import { fetchPageMetadata } from "@/lib/url-metadata";
-import { parseVideoUrl, type VideoMetadata, videoMetadataSchema } from "@/lib/video";
+import { linkImageUrl } from "@/lib/supabase/storage";
 
 /** Thumbnails derived server-side when the row carries no image of its own. */
 async function videoThumbnail(url: string, video: VideoMetadata): Promise<string | null> {

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import type { AppearanceDraftFields, ProfileDraftFields } from "@/lib/editor-draft";
+import type {
+  AppearanceDraftFields,
+  ProfileDraftFields,
+} from "@/lib/profiles/editor-draft";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

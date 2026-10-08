@@ -14,10 +14,13 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { profileDraftFromProfile, type ProfileDraftFields } from "@/lib/editor-draft";
-import { isEditableTarget } from "@/lib/keyboard";
-import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles";
-import { avatarUrl, bannerUrl } from "@/lib/storage";
+import { isEditableTarget } from "@/lib/dashboard/keyboard";
+import {
+  profileDraftFromProfile,
+  type ProfileDraftFields,
+} from "@/lib/profiles/editor-draft";
+import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles/schema";
+import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import { useEditorDraft } from "./editor-draft-context";
 import { PublishControls } from "./publish-controls";

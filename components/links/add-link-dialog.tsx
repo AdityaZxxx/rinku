@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { AppleMusicResult } from "@/lib/apple-music";
+import type { AppleMusicResult } from "@/lib/links/apple-music";
 import {
   AppleLogoIcon,
   CalendarIcon,
@@ -42,11 +42,11 @@ import {
 } from "@/components/ui/input-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/catalog";
-import { parseEmbedUrl } from "@/lib/embeds";
-import { linkUrlSchema, normalizeUrl } from "@/lib/links";
-import { parseMusicUrl } from "@/lib/music";
-import { parseVideoUrl } from "@/lib/video";
+import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/links/catalog";
+import { parseEmbedUrl } from "@/lib/links/embeds";
+import { linkUrlSchema, normalizeUrl } from "@/lib/links/model";
+import { parseMusicUrl } from "@/lib/links/music";
+import { parseVideoUrl } from "@/lib/links/video";
 import { useCreateLink } from "./use-link-mutations";
 
 function CategoryIcon({ item }: { item: CatalogItem }) {

@@ -38,15 +38,15 @@ import {
 } from "@/components/ui/dialog";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMac } from "@/hooks/use-is-mac";
-import { anyDialogOpen, isEditableTarget } from "@/lib/keyboard";
-import { EDIT_SECTIONS } from "@/lib/sections";
+import { anyDialogOpen, isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
   EDITOR_SHORTCUTS,
   GENERAL_SHORTCUTS,
   NAV_SHORTCUTS,
   navShortcutHref,
   type NavSection,
-} from "@/lib/shortcuts";
+} from "@/lib/dashboard/shortcuts";
+import { EDIT_SECTIONS } from "@/lib/profiles/sections";
 
 type Profile = typeof profiles.$inferSelect;
 

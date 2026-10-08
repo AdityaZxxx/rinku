@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import type { ReservedUsername } from "@/lib/profiles";
+import type { ReservedUsername } from "@/lib/profiles/schema";
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { usernameSchema } from "@/lib/profiles";
+import { usernameSchema } from "@/lib/profiles/schema";
 import { cn } from "@/lib/utils";
 
 const holdFormatters = new Intl.DateTimeFormat(undefined, {

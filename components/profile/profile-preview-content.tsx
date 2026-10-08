@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
-import type { EmbedMetadata } from "@/lib/embeds";
-import type { LinkMetadata } from "@/lib/music";
-import type { VideoMetadata } from "@/lib/video";
+import type { EmbedMetadata } from "@/lib/links/embeds";
+import type { LinkMetadata } from "@/lib/links/music";
+import type { VideoMetadata } from "@/lib/links/video";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
@@ -17,6 +17,8 @@ import {
   type ProfileHeaderVariant,
 } from "@/components/profile/profile-header";
 import { ShareLinkMenu } from "@/components/profile/share-link-menu";
+import { isIconMedia } from "@/lib/links/media";
+import { faviconUrl, scheduleStatus } from "@/lib/links/model";
 import {
   buttonBodyStyle,
   buttonContourClass,
@@ -24,10 +26,8 @@ import {
   fontStack,
   mutedFor,
   resolveAppearance,
-} from "@/lib/appearance";
-import { faviconUrl, scheduleStatus } from "@/lib/links";
-import { isIconMedia } from "@/lib/media";
-import { gatedThumbUrl } from "@/lib/storage";
+} from "@/lib/profiles/appearance";
+import { gatedThumbUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
 export interface PreviewLink {

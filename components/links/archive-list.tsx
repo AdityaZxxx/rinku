@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { displayUrl, faviconUrl } from "@/lib/links";
+import { displayUrl, faviconUrl } from "@/lib/links/model";
 import { useDeleteLink, useRestoreLink } from "./use-link-mutations";
 
 type ArchivedLink = typeof links.$inferSelect;

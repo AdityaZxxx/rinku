@@ -38,6 +38,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
   buttonContourClass,
   buttonContours,
@@ -55,14 +56,13 @@ import {
   type ButtonUmbra,
   type PresetThemeId,
   type WallpaperPattern,
-} from "@/lib/appearance";
+} from "@/lib/profiles/appearance";
 import {
   appearanceDraftFromProfile,
   type AppearanceDraftFields,
-} from "@/lib/editor-draft";
-import { isEditableTarget } from "@/lib/keyboard";
-import { imageMaxBytes } from "@/lib/profiles";
-import { wallpaperUrl } from "@/lib/storage";
+} from "@/lib/profiles/editor-draft";
+import { imageMaxBytes } from "@/lib/profiles/schema";
+import { wallpaperUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import {
   useRemoveWallpaperMedia,

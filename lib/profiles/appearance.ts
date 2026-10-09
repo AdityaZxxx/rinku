@@ -213,14 +213,6 @@ export const fonts: Array<{ id: FontId; label: string; sample: string; family: s
     { id: "fraunces", label: "Fraunces", sample: "Display serif", family: "Fraunces" },
   ];
 
-const legacyFontIds = {
-  sans: "inter",
-  serif: "merriweather",
-  round: "nunito",
-  mono: "ibm-plex-mono",
-  display: "fraunces",
-} as const;
-
 export function toFontId(value: string | null | undefined): FontId {
   if (!value) {
     return "inter";
@@ -233,9 +225,7 @@ export function toFontId(value: string | null | undefined): FontId {
       return id;
     }
   }
-  // SAFETY: legacyFontIds' values are drawn from fontIds, so a hit narrows
-  // to FontId without a dictionary widening.
-  return legacyFontIds[value as keyof typeof legacyFontIds] ?? "inter";
+  return "inter";
 }
 
 export function fontStack(font: FontId): string {
@@ -585,7 +575,6 @@ export function resolveAppearance(input: {
   themeId?: string | null;
   buttonContour?: string | null;
   buttonVariant?: string | null;
-  buttonStyle?: string | null;
   buttonUmbra?: string | null;
   buttonColor?: string | null;
   buttonTextColor?: string | null;
@@ -599,18 +588,11 @@ export function resolveAppearance(input: {
   wallpaperImagePath?: string | null;
   wallpaperVideoPath?: string | null;
 }): ResolvedAppearance {
-  // Legacy rows predate the variant split: a stored "shadow" style becomes a
-  // filled button with a hard offset umbra.
-  const legacyStyle = input.buttonStyle ?? input.buttonVariant;
-  const variant = toVariant(legacyStyle === "shadow" ? "fill" : legacyStyle);
-  const umbra = legacyStyle === "shadow" ? "hard" : toUmbra(input.buttonUmbra);
-  // Legacy rows predate the fourth contour: "rounded" is now "round".
-  const rawContour = input.buttonContour === "rounded" ? "round" : input.buttonContour;
   const base: Appearance = {
     themeId: toThemeId(input.themeId),
-    buttonContour: toContour(rawContour),
-    buttonVariant: variant,
-    buttonUmbra: umbra,
+    buttonContour: toContour(input.buttonContour),
+    buttonVariant: toVariant(input.buttonVariant),
+    buttonUmbra: toUmbra(input.buttonUmbra),
     buttonColor: toHex(input.buttonColor, "#111111"),
     buttonTextColor: toHex(input.buttonTextColor, "#ffffff"),
     fontId: toFontId(input.fontId),

@@ -379,7 +379,7 @@ export async function updateLink(input: {
         .optional(),
     })
     // Absent bounds leave the row's schedule untouched; the refine rejects a
-    // backwards window the database check would also reject.
+    // reversed window the database check would also reject.
     .and(linkScheduleSchema)
     .and(
       z.object({

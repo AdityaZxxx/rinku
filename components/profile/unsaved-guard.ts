@@ -53,7 +53,7 @@ export function useUnsavedChangesWarning() {
     }
     const handler = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      // Legacy browsers require a truthy returnValue to show the prompt.
+      // Some browsers require a truthy returnValue to show the prompt.
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", handler);

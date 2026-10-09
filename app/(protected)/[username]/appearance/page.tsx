@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AppearanceEditor } from "@/components/appearance/appearance-editor";
 import { EditorDraftProvider } from "@/components/profile/editor-draft-context";
 import { EditorShell } from "@/components/profile/editor-shell";
-import { MobileDock } from "@/components/profile/mobile-dock";
+import { MobilePreviewSheet } from "@/components/profile/mobile-dock";
 import { ProfilePreview } from "@/components/profile/profile-preview";
 import { getUserId } from "@/lib/auth";
 import { getAppearanceDraft, getSaveMode } from "@/lib/db/editor";
@@ -48,7 +48,7 @@ export default async function AppearancePage({
         }
         username={username}
         mobilePreview={
-          <MobileDock
+          <MobilePreviewSheet
             username={username}
             preview={
               <ProfilePreview

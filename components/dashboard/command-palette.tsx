@@ -50,6 +50,18 @@ import { EDIT_SECTIONS } from "@/lib/profiles/sections";
 
 type Profile = typeof profiles.$inferSelect;
 
+/**
+ * Cross-component open signal: the mobile dock's trigger shares this palette
+ * with the header one without lifting the dialog's state out of the component.
+ */
+const openListeners = new Set<() => void>();
+
+export function openCommandPalette() {
+  for (const listener of openListeners) {
+    listener();
+  }
+}
+
 const NAV_ICONS: Record<NavSection, ReactNode> = {
   dashboard: <HouseIcon />,
   overview: <SquaresFourIcon />,
@@ -263,6 +275,14 @@ export function CommandPalette({ profiles: allProfiles }: { profiles: Profile[] 
   }, [open]);
 
   useEffect(() => {
+    const listener = () => setOpen(true);
+    openListeners.add(listener);
+    return () => {
+      openListeners.delete(listener);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open || !active) {
       return;
     }
@@ -321,11 +341,11 @@ export function CommandPalette({ profiles: allProfiles }: { profiles: Profile[] 
         onClick={() => setOpen(true)}
         aria-label="Open command menu"
         aria-keyshortcuts="Meta+K"
-        className="text-muted-foreground h-8 gap-2 rounded-xl px-2.5 font-normal max-md:size-8 max-md:px-0"
+        className="text-muted-foreground h-8 gap-2 rounded-xl px-2.5 font-normal max-lg:hidden"
       >
         <MagnifyingGlassIcon aria-hidden />
-        <span className="max-md:hidden">Search</span>
-        <Kbd className="max-md:hidden">{isMac ? "⌘K" : "Ctrl K"}</Kbd>
+        <span>Search</span>
+        <Kbd>{isMac ? "⌘K" : "Ctrl K"}</Kbd>
       </Button>
 
       <Dialog open={open} onOpenChange={onPaletteOpenChange}>

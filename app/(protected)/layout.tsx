@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ProfilePicker } from "@/components/dashboard/profile-picker";
 import { ShareButton } from "@/components/dashboard/share-page-menu";
+import { MobileDock } from "@/components/profile/mobile-dock";
 import { UnsavedChangesProvider } from "@/components/profile/unsaved-changes-provider";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { getClaims, getUserId } from "@/lib/auth";
@@ -43,6 +44,7 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
             </div>
           </header>
           {children}
+          <MobileDock />
         </SidebarInset>
       </SidebarProvider>
     </UnsavedChangesProvider>

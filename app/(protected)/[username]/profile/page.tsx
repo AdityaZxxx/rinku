@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { EditorDraftProvider } from "@/components/profile/editor-draft-context";
 import { EditorShell } from "@/components/profile/editor-shell";
-import { MobileDock } from "@/components/profile/mobile-dock";
+import { MobilePreviewSheet } from "@/components/profile/mobile-dock";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { ProfilePreview } from "@/components/profile/profile-preview";
 import { getUserId } from "@/lib/auth";
@@ -46,7 +46,7 @@ export default async function ProfilePage({ params }: PageProps<"/[username]/pro
         }
         username={username}
         mobilePreview={
-          <MobileDock
+          <MobilePreviewSheet
             username={username}
             preview={
               <ProfilePreview

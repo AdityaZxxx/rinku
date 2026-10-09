@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import * as z from "zod";
 
@@ -7,6 +6,8 @@ import { getUserId } from "@/lib/auth";
 import { profiles } from "@/lib/db/schema";
 import { withAnonDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
+import { referrerDomain } from "@/lib/profiles/referrer";
+import { visitorHash } from "@/lib/visitor-hash";
 
 const BOT_PATTERN =
   /bot|crawl|spider|slurp|mediapartners|baidu|yandex|sogou|exabot|facebot|ia_archiver|ahrefs|semrush|mj12|dotbot|petal|gptbot|claudebot|ccbot|bytespider|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|pinterest|slackbot|discordbot|telegrambot|whatsapp|headless|phantomjs|selenium/i;
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = z
-    .object({ profileId: z.uuid() })
+    .object({ profileId: z.uuid(), referrer: z.string().max(2048).optional() })
     .safeParse(await request.json().catch(() => null));
   if (!body.success) {
     return new NextResponse(null, { status: 400 });
@@ -44,14 +45,13 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 204 });
   }
 
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-  const visitorHash = createHash("sha256")
-    .update(`${forwarded}:${userAgent}`)
-    .digest("hex");
+  const source = referrerDomain(body.data.referrer);
 
   try {
     await withAnonDb((tx) =>
-      tx.execute(sql`select public.record_profile_visit(${profile.id}, ${visitorHash})`),
+      tx.execute(
+        sql`select public.record_profile_visit(${profile.id}, ${visitorHash(request)}, ${source})`,
+      ),
     );
   } catch (error) {
     log.error("visit", "record_profile_visit failed", String(error));

@@ -5,12 +5,14 @@ import * as z from "zod";
 
 import { ActivityChart } from "@/components/insights/activity-chart";
 import { DateRangePicker } from "@/components/insights/date-range-picker";
+import { buildHighlights, Highlights } from "@/components/insights/highlights";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/lib/auth";
 import { getLinksByProfile } from "@/lib/db/links";
 import { getProfileByUsername } from "@/lib/db/profile";
 import { linkClicks, profileVisits } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { scheduleStatus } from "@/lib/links/model";
 
 export const metadata = { title: "Insights" };
 
@@ -147,7 +149,7 @@ function InsightsFallback() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading insights">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {Array.from({ length: 4 }, (_, i) => (
+        {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className="h-19 rounded-lg border" />
         ))}
       </div>
@@ -176,43 +178,106 @@ async function InsightsStats({
   const rangeEnd = new Date(zonedDayStart(timeZone, addDayStr(toDay, 1)).getTime() - 1);
   const singleDay = fromDay === toDay;
 
-  const [clickDayRows, visitDayRows, totalsByLinkRows, clickTimesRows, visitTimesRows] =
-    await withUserDb(userId, async (tx) =>
-      Promise.all([
-        tx.execute<{ day: string; count: number }>(sql`
-          select to_char(${linkClicks.createdAt} at time zone ${timeZone}, 'YYYY-MM-DD') as day,
-                 count(*)::int as count
-          from link_clicks
-          where ${linkClicks.createdAt} >= ${rangeStart.toISOString()} and ${linkClicks.createdAt} <= ${rangeEnd.toISOString()}
-          group by 1
-        `),
-        tx.execute<{ day: string; count: number }>(sql`
-          select to_char(${profileVisits.createdAt} at time zone ${timeZone}, 'YYYY-MM-DD') as day,
-                 count(*)::int as count
-          from profile_visits
-          where ${profileVisits.createdAt} >= ${rangeStart.toISOString()} and ${profileVisits.createdAt} <= ${rangeEnd.toISOString()}
-          group by 1
-        `),
-        tx.execute<{ link_id: string; count: number }>(sql`
-          select ${linkClicks.linkId} as link_id, count(*)::int as count
-          from link_clicks
-          where ${linkClicks.createdAt} >= ${rangeStart.toISOString()} and ${linkClicks.createdAt} <= ${rangeEnd.toISOString()}
-          group by 1
-        `),
-        singleDay
-          ? tx.execute<{ created_at: Date }>(sql`
-              select ${linkClicks.createdAt} as created_at from link_clicks
-              where ${linkClicks.createdAt} >= ${rangeStart.toISOString()} and ${linkClicks.createdAt} <= ${rangeEnd.toISOString()}
-            `)
-          : Promise.resolve([]),
-        singleDay
-          ? tx.execute<{ created_at: Date }>(sql`
-              select ${profileVisits.createdAt} as created_at from profile_visits
-              where ${profileVisits.createdAt} >= ${rangeStart.toISOString()} and ${profileVisits.createdAt} <= ${rangeEnd.toISOString()}
-            `)
-          : Promise.resolve([]),
-      ]),
-    );
+  const rangeDays =
+    Math.round(
+      (Date.parse(`${toDay}T00:00:00Z`) - Date.parse(`${fromDay}T00:00:00Z`)) /
+        86_400_000,
+    ) + 1;
+  const prevStart = zonedDayStart(timeZone, addDayStr(fromDay, -rangeDays));
+  const prevEnd = new Date(zonedDayStart(timeZone, fromDay).getTime() - 1);
+
+  // RLS scopes rows to the user, not to one of their pages, so every query
+  // filters to this profile explicitly.
+  const visitFilter = sql`${profileVisits.profileId} = ${profileId}`;
+  const clickFilter = sql`exists (
+    select 1 from links
+    where links.id = ${linkClicks.linkId} and links.profile_id = ${profileId}
+  )`;
+
+  const rangeFromIso = rangeStart.toISOString();
+  const rangeToIso = rangeEnd.toISOString();
+  const prevFromIso = prevStart.toISOString();
+  const prevToIso = prevEnd.toISOString();
+
+  const [
+    clickDayRows,
+    visitDayRows,
+    totalsByLinkRows,
+    clickTimesRows,
+    visitTimesRows,
+    uniqueVisitorRows,
+    uniqueClickerRows,
+    prevTotalsRows,
+    referrerRows,
+  ] = await withUserDb(userId, async (tx) =>
+    Promise.all([
+      tx.execute<{ day: string; count: number }>(sql`
+        select to_char(${linkClicks.createdAt} at time zone ${timeZone}, 'YYYY-MM-DD') as day,
+               count(*)::int as count
+        from link_clicks
+        where ${clickFilter}
+          and ${linkClicks.createdAt} >= ${rangeFromIso} and ${linkClicks.createdAt} <= ${rangeToIso}
+        group by 1
+      `),
+      tx.execute<{ day: string; count: number }>(sql`
+        select to_char(${profileVisits.createdAt} at time zone ${timeZone}, 'YYYY-MM-DD') as day,
+               count(*)::int as count
+        from profile_visits
+        where ${visitFilter}
+          and ${profileVisits.createdAt} >= ${rangeFromIso} and ${profileVisits.createdAt} <= ${rangeToIso}
+        group by 1
+      `),
+      tx.execute<{ link_id: string; count: number }>(sql`
+        select ${linkClicks.linkId} as link_id, count(*)::int as count
+        from link_clicks
+        where ${clickFilter}
+          and ${linkClicks.createdAt} >= ${rangeFromIso} and ${linkClicks.createdAt} <= ${rangeToIso}
+        group by 1
+      `),
+      singleDay
+        ? tx.execute<{ created_at: string }>(sql`
+            select ${linkClicks.createdAt} as created_at from link_clicks
+            where ${clickFilter}
+              and ${linkClicks.createdAt} >= ${rangeFromIso} and ${linkClicks.createdAt} <= ${rangeToIso}
+          `)
+        : Promise.resolve([]),
+      singleDay
+        ? tx.execute<{ created_at: string }>(sql`
+            select ${profileVisits.createdAt} as created_at from profile_visits
+            where ${visitFilter}
+              and ${profileVisits.createdAt} >= ${rangeFromIso} and ${profileVisits.createdAt} <= ${rangeToIso}
+          `)
+        : Promise.resolve([]),
+      tx.execute<{ count: number }>(sql`
+        select count(distinct ${profileVisits.visitorHash})::int as count
+        from profile_visits
+        where ${visitFilter}
+          and ${profileVisits.createdAt} >= ${rangeFromIso} and ${profileVisits.createdAt} <= ${rangeToIso}
+      `),
+      tx.execute<{ count: number }>(sql`
+        select count(distinct ${linkClicks.visitorHash})::int as count
+        from link_clicks
+        where ${clickFilter}
+          and ${linkClicks.createdAt} >= ${rangeFromIso} and ${linkClicks.createdAt} <= ${rangeToIso}
+      `),
+      tx.execute<{ visits: number; clicks: number }>(sql`
+        select
+          (select count(*)::int from profile_visits
+            where ${visitFilter}
+              and ${profileVisits.createdAt} >= ${prevFromIso} and ${profileVisits.createdAt} <= ${prevToIso}) as visits,
+          (select count(*)::int from link_clicks
+            where ${clickFilter}
+              and ${linkClicks.createdAt} >= ${prevFromIso} and ${linkClicks.createdAt} <= ${prevToIso}) as clicks
+      `),
+      tx.execute<{ referrer: string | null; count: number }>(sql`
+        select ${profileVisits.referrer} as referrer, count(*)::int as count
+        from profile_visits
+        where ${visitFilter}
+          and ${profileVisits.createdAt} >= ${rangeFromIso} and ${profileVisits.createdAt} <= ${rangeToIso}
+        group by 1
+      `),
+    ]),
+  );
 
   const clicksByDay = new Map<string, number>();
   const visitsByDay = new Map<string, number>();
@@ -231,6 +296,10 @@ async function InsightsStats({
   }
 
   const clickRate = totalVisits > 0 ? Math.round((totalClicks / totalVisits) * 100) : 0;
+  const uniqueVisitors = uniqueVisitorRows[0]?.count ?? 0;
+  const uniqueClickers = uniqueClickerRows[0]?.count ?? 0;
+  const prevVisits = prevTotalsRows[0]?.visits ?? 0;
+  const prevClicks = prevTotalsRows[0]?.clicks ?? 0;
 
   const chartData: { day: string; clicks: number; visits: number }[] = [];
   for (let day = fromDay; day <= toDay; day = addDayStr(day, 1)) {
@@ -248,6 +317,29 @@ async function InsightsStats({
     }))
     .toSorted((a, b) => b.count - a.count);
 
+  const visibleLinks = links.filter(
+    (link) => link.isActive && scheduleStatus(link) === "live",
+  );
+  const highlights = buildHighlights({
+    rangeDays,
+    visits: totalVisits,
+    clicks: totalClicks,
+    prevVisits,
+    prevClicks,
+    topLink: ranked[0] ?? null,
+    visibleLinkCount: visibleLinks.length,
+    deadLinkCount: visibleLinks.filter((link) => !totalsByLink.has(link.id)).length,
+    days: chartData,
+  });
+
+  const hasSourceData = referrerRows.some((row) => row.referrer !== null);
+  const sources = hasSourceData
+    ? referrerRows
+        .map((row) => ({ name: row.referrer ?? "Direct", count: row.count }))
+        .toSorted((a, b) => b.count - a.count)
+        .slice(0, 5)
+    : [];
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -256,28 +348,38 @@ async function InsightsStats({
           <span className="text-muted-foreground text-sm">Profile visits</span>
         </div>
         <div className="flex flex-col gap-1 rounded-lg border p-4">
+          <span className="text-3xl font-semibold tabular-nums">{uniqueVisitors}</span>
+          <span className="text-muted-foreground text-sm">Unique visitors</span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-lg border p-4">
           <span className="text-3xl font-semibold tabular-nums">{totalClicks}</span>
           <span className="text-muted-foreground text-sm">Clicks</span>
         </div>
         <div className="flex flex-col gap-1 rounded-lg border p-4">
-          <span className="text-xl font-semibold tabular-nums">{totalsByLink.size}</span>
-          <span className="text-muted-foreground text-sm">Unique links</span>
+          <span className="text-3xl font-semibold tabular-nums">{uniqueClickers}</span>
+          <span className="text-muted-foreground text-sm">Unique clickers</span>
         </div>
         <div className="col-span-2 flex flex-col gap-1 rounded-lg border p-4 sm:col-span-1">
-          <span className="text-xl font-semibold tabular-nums">{clickRate}%</span>
+          <span className="text-3xl font-semibold tabular-nums">{clickRate}%</span>
           <span className="text-muted-foreground text-sm">Click rate</span>
         </div>
       </div>
+
+      <Highlights items={highlights} />
 
       <ActivityChart
         data={chartData}
         from={fromDay}
         to={toDay}
         clickTimes={
-          singleDay ? clickTimesRows.map((row) => row.created_at.toISOString()) : []
+          singleDay
+            ? clickTimesRows.map((row) => new Date(row.created_at).toISOString())
+            : []
         }
         visitTimes={
-          singleDay ? visitTimesRows.map((row) => row.created_at.toISOString()) : []
+          singleDay
+            ? visitTimesRows.map((row) => new Date(row.created_at).toISOString())
+            : []
         }
       />
 
@@ -306,6 +408,38 @@ async function InsightsStats({
             })}
           </ul>
         </div>
+      ) : null}
+
+      {sources.length > 0 ? (
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-sm font-medium">Top sources</h2>
+            <p className="text-muted-foreground text-xs">
+              Where visits came from. Direct means no referrer was sent.
+            </p>
+          </div>
+          <ul className="flex flex-col divide-y rounded-lg border">
+            {sources.map((row) => {
+              const max = sources[0]?.count ?? 1;
+              return (
+                <li key={row.name} className="flex flex-col gap-2 p-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="truncate text-sm">{row.name}</span>
+                    <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+                      {row.count} visit{row.count === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="bg-muted h-1.5 w-full rounded-full">
+                    <div
+                      className="bg-foreground h-1.5 rounded-full transition-all"
+                      style={{ width: `${(row.count / max) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
     </>
   );

@@ -7,6 +7,7 @@ import {
 } from "@/lib/links/age-gate";
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
+import { visitorHash } from "@/lib/visitor-hash";
 
 const consentPage = (linkId: string, minAge: number) => `<!doctype html>
 <html lang="en">
@@ -91,6 +92,7 @@ export async function GET(
   const supabase = await createClient();
   const { error: recordError } = await supabase.rpc("record_click", {
     link_id: id,
+    visitor_hash: visitorHash(request),
   });
   if (recordError) {
     log.error("go", "record_click failed", recordError.message);
@@ -126,6 +128,7 @@ export async function POST(
   const supabase = await createClient();
   const { error: recordError } = await supabase.rpc("record_click", {
     link_id: id,
+    visitor_hash: visitorHash(request),
   });
   if (recordError) {
     log.error("go", "record_click failed", recordError.message);

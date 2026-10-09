@@ -1,0 +1,1314 @@
+{
+  "id": "106b0540-c0c8-4524-af26-af5e7bacb3c4",
+  "prevId": "dc6932a2-3d04-400a-aff5-4e1e42914f80",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.appearance_drafts": {
+      "name": "appearance_drafts",
+      "schema": "",
+      "columns": {
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "theme_id": {
+          "name": "theme_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'air'"
+        },
+        "button_shape": {
+          "name": "button_shape",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pill'"
+        },
+        "button_style": {
+          "name": "button_style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fill'"
+        },
+        "button_umbra": {
+          "name": "button_umbra",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'soft'"
+        },
+        "button_color": {
+          "name": "button_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#111111'"
+        },
+        "button_text_color": {
+          "name": "button_text_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#ffffff'"
+        },
+        "font_id": {
+          "name": "font_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'inter'"
+        },
+        "title_color": {
+          "name": "title_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#111111'"
+        },
+        "body_color": {
+          "name": "body_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#6e6e6e'"
+        },
+        "wallpaper_kind": {
+          "name": "wallpaper_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fill'"
+        },
+        "wallpaper_color": {
+          "name": "wallpaper_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#ffffff'"
+        },
+        "wallpaper_color_b": {
+          "name": "wallpaper_color_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#f5f3ff'"
+        },
+        "wallpaper_pattern": {
+          "name": "wallpaper_pattern",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'dots'"
+        },
+        "wallpaper_image_path": {
+          "name": "wallpaper_image_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wallpaper_video_path": {
+          "name": "wallpaper_video_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "appearance_drafts_profile_id_fkey": {
+          "name": "appearance_drafts_profile_id_fkey",
+          "tableFrom": "appearance_drafts",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "users read own appearance draft": {
+          "name": "users read own appearance draft",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"appearance_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users insert own appearance draft": {
+          "name": "users insert own appearance draft",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"appearance_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users update own appearance draft": {
+          "name": "users update own appearance draft",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"appearance_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )",
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"appearance_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users delete own appearance draft": {
+          "name": "users delete own appearance draft",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"appearance_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        }
+      },
+      "checkConstraints": {
+        "appearance_drafts_theme_id": {
+          "name": "appearance_drafts_theme_id",
+          "value": "\"appearance_drafts\".\"theme_id\" in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'custom')"
+        },
+        "appearance_drafts_button_shape": {
+          "name": "appearance_drafts_button_shape",
+          "value": "\"appearance_drafts\".\"button_shape\" in ('sharp', 'soft', 'round', 'pill')"
+        },
+        "appearance_drafts_button_style": {
+          "name": "appearance_drafts_button_style",
+          "value": "\"appearance_drafts\".\"button_style\" in ('fill', 'outline', 'soft', 'glass')"
+        },
+        "appearance_drafts_button_umbra": {
+          "name": "appearance_drafts_button_umbra",
+          "value": "\"appearance_drafts\".\"button_umbra\" in ('none', 'soft', 'lift', 'hard')"
+        },
+        "appearance_drafts_font_id": {
+          "name": "appearance_drafts_font_id",
+          "value": "\"appearance_drafts\".\"font_id\" in ('inter', 'noto-sans', 'plus-jakarta-sans', 'work-sans', 'dm-sans', 'karla', 'nunito', 'figtree', 'merriweather', 'playfair-display', 'lora', 'cormorant-garamond', 'source-serif-4', 'ibm-plex-mono', 'space-grotesk', 'fraunces')"
+        },
+        "appearance_drafts_wallpaper_kind": {
+          "name": "appearance_drafts_wallpaper_kind",
+          "value": "\"appearance_drafts\".\"wallpaper_kind\" in ('fill', 'gradient', 'blur', 'pattern', 'image', 'video')"
+        },
+        "appearance_drafts_wallpaper_pattern": {
+          "name": "appearance_drafts_wallpaper_pattern",
+          "value": "\"appearance_drafts\".\"wallpaper_pattern\" in ('dots', 'grid', 'lines', 'waves')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.link_clicks": {
+      "name": "link_clicks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "link_id": {
+          "name": "link_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visitor_hash": {
+          "name": "visitor_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "link_clicks_link_id_created_at_idx": {
+          "name": "link_clicks_link_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "link_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "link_clicks_link_id_fkey": {
+          "name": "link_clicks_link_id_fkey",
+          "tableFrom": "link_clicks",
+          "tableTo": "links",
+          "columnsFrom": [
+            "link_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "users read own link clicks": {
+          "name": "users read own link clicks",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n        select 1 from \"links\"\n          join \"profiles\" on \"profiles\".\"id\" = \"links\".\"profile_id\"\n        where \"links\".\"id\" = \"link_clicks\".\"link_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.links": {
+      "name": "links",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "link_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'custom'"
+        },
+        "platform": {
+          "name": "platform",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "variant": {
+          "name": "variant",
+          "type": "link_variant",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'classic'"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "visible_from": {
+          "name": "visible_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visible_until": {
+          "name": "visible_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_age": {
+          "name": "min_age",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "click_count": {
+          "name": "click_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "links_profile_id_position_idx": {
+          "name": "links_profile_id_position_idx",
+          "columns": [
+            {
+              "expression": "profile_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "links_profile_id_fkey": {
+          "name": "links_profile_id_fkey",
+          "tableFrom": "links",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "active links are public": {
+          "name": "active links are public",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "(\"links\".\"is_active\" and \"links\".\"archived_at\" is null\n          and (\"links\".\"visible_from\" is null or \"links\".\"visible_from\" <= now())\n          and (\"links\".\"visible_until\" is null or \"links\".\"visible_until\" > now())) or exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"links\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        },
+        "users insert own links": {
+          "name": "users insert own links",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"links\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        },
+        "users update own links": {
+          "name": "users update own links",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"links\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )",
+          "withCheck": "exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"links\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        },
+        "users delete own links": {
+          "name": "users delete own links",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"links\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        }
+      },
+      "checkConstraints": {
+        "links_title_length": {
+          "name": "links_title_length",
+          "value": "char_length(\"links\".\"title\") between 1 and 100"
+        },
+        "links_url_length": {
+          "name": "links_url_length",
+          "value": "(\"links\".\"kind\"::text = 'heading' and char_length(\"links\".\"url\") = 0) or (\"links\".\"kind\"::text <> 'heading' and char_length(\"links\".\"url\") between 1 and 2048)"
+        },
+        "links_social_platform": {
+          "name": "links_social_platform",
+          "value": "(\"links\".\"kind\"::text = 'social' and \"links\".\"platform\" is not null) or (\"links\".\"kind\"::text = 'custom' and \"links\".\"platform\" is null) or (\"links\".\"kind\"::text in ('music', 'video', 'embed') and \"links\".\"platform\" is null and \"links\".\"metadata\" is not null) or (\"links\".\"kind\"::text = 'heading' and \"links\".\"platform\" is null and \"links\".\"metadata\" is null)"
+        },
+        "links_visible_window": {
+          "name": "links_visible_window",
+          "value": "\"links\".\"visible_from\" is null or \"links\".\"visible_until\" is null or \"links\".\"visible_from\" <= \"links\".\"visible_until\""
+        },
+        "links_min_age": {
+          "name": "links_min_age",
+          "value": "\"links\".\"min_age\" is null or (\"links\".\"min_age\" between 13 and 99)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.profile_drafts": {
+      "name": "profile_drafts",
+      "schema": "",
+      "columns": {
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "header_style": {
+          "name": "header_style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'classic'"
+        },
+        "avatar_path": {
+          "name": "avatar_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banner_path": {
+          "name": "banner_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profile_drafts_profile_id_fkey": {
+          "name": "profile_drafts_profile_id_fkey",
+          "tableFrom": "profile_drafts",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "users read own profile draft": {
+          "name": "users read own profile draft",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users insert own profile draft": {
+          "name": "users insert own profile draft",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users update own profile draft": {
+          "name": "users update own profile draft",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )",
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users delete own profile draft": {
+          "name": "users delete own profile draft",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_drafts\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        }
+      },
+      "checkConstraints": {
+        "profile_drafts_header_style": {
+          "name": "profile_drafts_header_style",
+          "value": "\"profile_drafts\".\"header_style\" in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement')"
+        },
+        "profile_drafts_display_name_length": {
+          "name": "profile_drafts_display_name_length",
+          "value": "\"profile_drafts\".\"display_name\" is null or char_length(\"profile_drafts\".\"display_name\") <= 80"
+        },
+        "profile_drafts_bio_length": {
+          "name": "profile_drafts_bio_length",
+          "value": "\"profile_drafts\".\"bio\" is null or char_length(\"profile_drafts\".\"bio\") <= 200"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.profile_editor_settings": {
+      "name": "profile_editor_settings",
+      "schema": "",
+      "columns": {
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "links_save_mode": {
+          "name": "links_save_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'auto'"
+        },
+        "profile_save_mode": {
+          "name": "profile_save_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'auto'"
+        },
+        "appearance_save_mode": {
+          "name": "appearance_save_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'auto'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profile_editor_settings_profile_id_fkey": {
+          "name": "profile_editor_settings_profile_id_fkey",
+          "tableFrom": "profile_editor_settings",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "users read own editor settings": {
+          "name": "users read own editor settings",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_editor_settings\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users insert own editor settings": {
+          "name": "users insert own editor settings",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_editor_settings\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users update own editor settings": {
+          "name": "users update own editor settings",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_editor_settings\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )",
+          "withCheck": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_editor_settings\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        },
+        "users delete own editor settings": {
+          "name": "users delete own editor settings",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1 from \"profiles\"\n    where \"profiles\".\"id\" = \"profile_editor_settings\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n  )"
+        }
+      },
+      "checkConstraints": {
+        "profile_editor_settings_links_save_mode": {
+          "name": "profile_editor_settings_links_save_mode",
+          "value": "\"profile_editor_settings\".\"links_save_mode\" in ('auto', 'manual')"
+        },
+        "profile_editor_settings_profile_save_mode": {
+          "name": "profile_editor_settings_profile_save_mode",
+          "value": "\"profile_editor_settings\".\"profile_save_mode\" in ('auto', 'manual')"
+        },
+        "profile_editor_settings_appearance_save_mode": {
+          "name": "profile_editor_settings_appearance_save_mode",
+          "value": "\"profile_editor_settings\".\"appearance_save_mode\" in ('auto', 'manual')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.profile_usernames": {
+      "name": "profile_usernames",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "acquired_at": {
+          "name": "acquired_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "released_at": {
+          "name": "released_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reserved_until": {
+          "name": "reserved_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "profile_usernames_active_key": {
+          "name": "profile_usernames_active_key",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"profile_usernames\".\"released_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "profile_usernames_username_idx": {
+          "name": "profile_usernames_username_idx",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "profile_usernames_profile_id_fkey": {
+          "name": "profile_usernames_profile_id_fkey",
+          "tableFrom": "profile_usernames",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.profile_visits": {
+      "name": "profile_visits",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "profile_id": {
+          "name": "profile_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visitor_hash": {
+          "name": "visitor_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referrer": {
+          "name": "referrer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "profile_visits_profile_id_created_at_idx": {
+          "name": "profile_visits_profile_id_created_at_idx",
+          "columns": [
+            {
+              "expression": "profile_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "profile_visits_profile_id_fkey": {
+          "name": "profile_visits_profile_id_fkey",
+          "tableFrom": "profile_visits",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "profile_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "users read own visits": {
+          "name": "users read own visits",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n        select 1 from \"profiles\"\n        where \"profiles\".\"id\" = \"profile_visits\".\"profile_id\" and \"profiles\".\"user_id\" = (select auth.uid())\n      )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.profiles": {
+      "name": "profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "meta_title": {
+          "name": "meta_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "meta_description": {
+          "name": "meta_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "search_indexing": {
+          "name": "search_indexing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "og_image_path": {
+          "name": "og_image_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_path": {
+          "name": "avatar_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banner_path": {
+          "name": "banner_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "header_style": {
+          "name": "header_style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'classic'"
+        },
+        "theme_id": {
+          "name": "theme_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'air'"
+        },
+        "button_shape": {
+          "name": "button_shape",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pill'"
+        },
+        "button_style": {
+          "name": "button_style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fill'"
+        },
+        "button_umbra": {
+          "name": "button_umbra",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'soft'"
+        },
+        "button_color": {
+          "name": "button_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#111111'"
+        },
+        "button_text_color": {
+          "name": "button_text_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#ffffff'"
+        },
+        "font_id": {
+          "name": "font_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'inter'"
+        },
+        "title_color": {
+          "name": "title_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#111111'"
+        },
+        "body_color": {
+          "name": "body_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#6e6e6e'"
+        },
+        "wallpaper_kind": {
+          "name": "wallpaper_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fill'"
+        },
+        "wallpaper_color": {
+          "name": "wallpaper_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#ffffff'"
+        },
+        "wallpaper_color_b": {
+          "name": "wallpaper_color_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#f5f3ff'"
+        },
+        "wallpaper_pattern": {
+          "name": "wallpaper_pattern",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'dots'"
+        },
+        "wallpaper_image_path": {
+          "name": "wallpaper_image_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wallpaper_video_path": {
+          "name": "wallpaper_video_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "profiles_username_key": {
+          "name": "profiles_username_key",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "profiles_user_id_fkey": {
+          "name": "profiles_user_id_fkey",
+          "tableFrom": "profiles",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "profiles are public": {
+          "name": "profiles are public",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true"
+        },
+        "users insert own profile": {
+          "name": "users insert own profile",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select auth.uid()) = \"profiles\".\"user_id\""
+        },
+        "users update own profile": {
+          "name": "users update own profile",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid()) = \"profiles\".\"user_id\"",
+          "withCheck": "(select auth.uid()) = \"profiles\".\"user_id\""
+        },
+        "users delete own profile": {
+          "name": "users delete own profile",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select auth.uid()) = \"profiles\".\"user_id\""
+        }
+      },
+      "checkConstraints": {
+        "profiles_username_format": {
+          "name": "profiles_username_format",
+          "value": "\"profiles\".\"username\" ~ '^[a-z0-9](?:[a-z0-9_-]{1,28}[a-z0-9])?$'"
+        },
+        "profiles_username_length": {
+          "name": "profiles_username_length",
+          "value": "char_length(\"profiles\".\"username\") between 3 and 30"
+        },
+        "profiles_header_style": {
+          "name": "profiles_header_style",
+          "value": "\"profiles\".\"header_style\" in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement')"
+        },
+        "profiles_theme_id": {
+          "name": "profiles_theme_id",
+          "value": "\"profiles\".\"theme_id\" in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'custom')"
+        },
+        "profiles_button_shape": {
+          "name": "profiles_button_shape",
+          "value": "\"profiles\".\"button_shape\" in ('sharp', 'soft', 'round', 'pill')"
+        },
+        "profiles_button_style": {
+          "name": "profiles_button_style",
+          "value": "\"profiles\".\"button_style\" in ('fill', 'outline', 'soft', 'glass')"
+        },
+        "profiles_button_umbra": {
+          "name": "profiles_button_umbra",
+          "value": "\"profiles\".\"button_umbra\" in ('none', 'soft', 'lift', 'hard')"
+        },
+        "profiles_font_id": {
+          "name": "profiles_font_id",
+          "value": "\"profiles\".\"font_id\" in ('inter', 'noto-sans', 'plus-jakarta-sans', 'work-sans', 'dm-sans', 'karla', 'nunito', 'figtree', 'merriweather', 'playfair-display', 'lora', 'cormorant-garamond', 'source-serif-4', 'ibm-plex-mono', 'space-grotesk', 'fraunces')"
+        },
+        "profiles_wallpaper_kind": {
+          "name": "profiles_wallpaper_kind",
+          "value": "\"profiles\".\"wallpaper_kind\" in ('fill', 'gradient', 'blur', 'pattern', 'image', 'video')"
+        },
+        "profiles_wallpaper_pattern": {
+          "name": "profiles_wallpaper_pattern",
+          "value": "\"profiles\".\"wallpaper_pattern\" in ('dots', 'grid', 'lines', 'waves')"
+        },
+        "profiles_display_name_length": {
+          "name": "profiles_display_name_length",
+          "value": "\"profiles\".\"display_name\" is null or char_length(\"profiles\".\"display_name\") <= 80"
+        },
+        "profiles_bio_length": {
+          "name": "profiles_bio_length",
+          "value": "\"profiles\".\"bio\" is null or char_length(\"profiles\".\"bio\") <= 200"
+        },
+        "profiles_meta_title_length": {
+          "name": "profiles_meta_title_length",
+          "value": "\"profiles\".\"meta_title\" is null or char_length(\"profiles\".\"meta_title\") <= 70"
+        },
+        "profiles_meta_description_length": {
+          "name": "profiles_meta_description_length",
+          "value": "\"profiles\".\"meta_description\" is null or char_length(\"profiles\".\"meta_description\") <= 160"
+        },
+        "profiles_keywords_length": {
+          "name": "profiles_keywords_length",
+          "value": "\"profiles\".\"keywords\" is null or char_length(\"profiles\".\"keywords\") <= 200"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.link_variant": {
+      "name": "link_variant",
+      "schema": "public",
+      "values": [
+        "classic",
+        "featured"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

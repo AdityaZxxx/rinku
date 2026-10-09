@@ -155,13 +155,15 @@ export const links = pgTable(
 );
 
 // The timestamped rows behind the click counter: the denormalized
-// `links.click_count` answers "how many" instantly; this table answers
-// "when" for the insights chart. Both are written by record_click.
+// `links.click_count` answers "how many" instantly; this table answers "when"
+// and "who, pseudonymously" for the insights page. Both are written by
+// record_click.
 export const linkClicks = pgTable(
   "link_clicks",
   {
     id: uuid("id").primaryKey().defaultRandom().notNull(),
     linkId: uuid("link_id").notNull(),
+    visitorHash: text("visitor_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

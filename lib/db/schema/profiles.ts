@@ -210,14 +210,16 @@ export const profileUsernames = pgTable(
 // the custom migration, because Drizzle only emits it for tables that have a
 // policy. A GRANT alone would leave this history readable by anyone.
 
-// Timestamped page views: the owner reads them for the insights page; a
-// SECURITY DEFINER function records them on render.
+// Timestamped page views with the traffic source's domain: the owner reads
+// them for the insights page; a SECURITY DEFINER function records them on
+// render.
 export const profileVisits = pgTable(
   "profile_visits",
   {
     id: uuid("id").primaryKey().defaultRandom().notNull(),
     profileId: uuid("profile_id").notNull(),
     visitorHash: text("visitor_hash"),
+    referrer: text("referrer"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

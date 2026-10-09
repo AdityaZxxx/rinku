@@ -168,6 +168,11 @@
   margin-inline: auto;
 }
 
+.cn-toast[data-sonner-toast][data-styled="true"] {
+  font-size: 0.75rem;
+}
+
 .cn-toast[data-sonner-toast][data-styled="true"] [data-button] {
   border-radius: var(--border-radius);
+  font-size: 0.75rem;
 }

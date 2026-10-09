@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SetupChecklist } from "@/components/overview/setup-checklist";
+import { ShareCard } from "@/components/overview/share-card";
 import { getUserId } from "@/lib/auth";
+import { profileUrl } from "@/lib/brand";
 import { getProfileSnapshots } from "@/lib/db/overview";
 import { getProfileByUsername } from "@/lib/db/profile";
 
@@ -112,9 +114,7 @@ export default async function ProfileOverviewPage({
       ) : null}
 
       {setupComplete && !hiddenNudge ? (
-        <p className="text-muted-foreground text-sm">
-          Everything looks good. Keep adding links and sharing your page.
-        </p>
+        <ShareCard profileId={profile.id} url={profileUrl(profile.username)} />
       ) : null}
     </div>
   );

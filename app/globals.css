@@ -158,3 +158,16 @@
   justify-content: flex-end;
   align-items: center;
 }
+
+/*Toast style override goes here instead on /ui vendored code*/
+.cn-toast {
+  --border-radius: var(--radius-3xl);
+  width: min(var(--width, 356px), calc(100vw - 32px)) !important;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+}
+
+.cn-toast[data-sonner-toast][data-styled="true"] [data-button] {
+  border-radius: var(--border-radius);
+}

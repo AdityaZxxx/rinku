@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { siteUrl } from "@/lib/brand";
+import { copyText } from "@/lib/copy";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl } from "@/lib/links/model";
 import { cn } from "@/lib/utils";
@@ -132,14 +133,13 @@ export function ShareLinkMenu({
   }
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(shareUrl());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-      toast.success("Link copied to clipboard");
-    } catch {
+    if (!(await copyText(shareUrl()))) {
       toast.error("Couldn't copy the link");
+      return;
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+    toast.success("Link copied to clipboard");
   }
 
   return (

@@ -114,7 +114,11 @@ export default async function ProfileOverviewPage({
       ) : null}
 
       {setupComplete && !hiddenNudge ? (
-        <ShareCard profileId={profile.id} url={profileUrl(profile.username)} />
+        <ShareCard
+          profileId={profile.id}
+          username={profile.username}
+          url={profileUrl(profile.username)}
+        />
       ) : null}
     </div>
   );

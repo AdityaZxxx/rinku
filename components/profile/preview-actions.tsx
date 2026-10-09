@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CopyIcon, RocketIcon, CheckIcon } from "@phosphor-icons/react";
+import { CheckIcon, CopyIcon, RocketIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { profileUrl } from "@/lib/brand";
+import { copyText } from "@/lib/copy";
 
 export function PreviewActions({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(profileUrl(username));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
+    if (!(await copyText(profileUrl(username)))) {
+      toast.error("Couldn't copy the link");
+      return;
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+    toast.success("Link copied to clipboard");
   }
 
   return (

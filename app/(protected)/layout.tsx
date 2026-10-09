@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ProfilePicker } from "@/components/dashboard/profile-picker";
+import { ShareButton } from "@/components/dashboard/share-page-menu";
 import { UnsavedChangesProvider } from "@/components/profile/unsaved-changes-provider";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { getClaims, getUserId } from "@/lib/auth";
@@ -36,6 +37,7 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
           <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-sm">
             <SidebarTrigger />
             <div className="flex items-center gap-1">
+              <ShareButton />
               <CommandPalette profiles={profiles} />
               <ProfilePicker profiles={profiles} />
             </div>

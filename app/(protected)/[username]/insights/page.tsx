@@ -5,6 +5,7 @@ import * as z from "zod";
 
 import { ActivityChart } from "@/components/insights/activity-chart";
 import { DateRangePicker } from "@/components/insights/date-range-picker";
+import { LinkGlyph, SourceGlyph } from "@/components/insights/glyphs";
 import { buildHighlights, Highlights } from "@/components/insights/highlights";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserId } from "@/lib/auth";
@@ -172,7 +173,7 @@ async function InsightsStats({
   toDay: string;
 }) {
   const links = await getLinksByProfile(userId, profileId);
-  const titlesById = new Map(links.map((link) => [link.id, link.title]));
+  const linksById = new Map(links.map((link) => [link.id, link]));
 
   const rangeStart = zonedDayStart(timeZone, fromDay);
   const rangeEnd = new Date(zonedDayStart(timeZone, addDayStr(toDay, 1)).getTime() - 1);
@@ -311,10 +312,16 @@ async function InsightsStats({
   }
 
   const ranked = [...totalsByLink.entries()]
-    .map(([linkId, count]) => ({
-      title: titlesById.get(linkId) ?? "Archived link",
-      count,
-    }))
+    .map(([linkId, count]) => {
+      const link = linksById.get(linkId);
+      return {
+        id: linkId,
+        title: link?.title ?? "Archived link",
+        url: link?.url ?? null,
+        imageUrl: link?.imageUrl ?? null,
+        count,
+      };
+    })
     .toSorted((a, b) => b.count - a.count);
 
   const visibleLinks = links.filter(
@@ -335,7 +342,11 @@ async function InsightsStats({
   const hasSourceData = referrerRows.some((row) => row.referrer !== null);
   const sources = hasSourceData
     ? referrerRows
-        .map((row) => ({ name: row.referrer ?? "Direct", count: row.count }))
+        .map((row) => ({
+          domain: row.referrer,
+          name: row.referrer ?? "Direct",
+          count: row.count,
+        }))
         .toSorted((a, b) => b.count - a.count)
         .slice(0, 5)
     : [];
@@ -390,9 +401,12 @@ async function InsightsStats({
             {ranked.map((row) => {
               const max = ranked[0]?.count ?? 1;
               return (
-                <li key={row.title} className="flex flex-col gap-2 p-3">
+                <li key={row.id} className="flex flex-col gap-2 p-3">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="truncate text-sm">{row.title}</span>
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <LinkGlyph url={row.url} imageUrl={row.imageUrl} />
+                      <span className="truncate text-sm">{row.title}</span>
+                    </span>
                     <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
                       {row.count} click{row.count === 1 ? "" : "s"}
                     </span>
@@ -424,7 +438,10 @@ async function InsightsStats({
               return (
                 <li key={row.name} className="flex flex-col gap-2 p-3">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="truncate text-sm">{row.name}</span>
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <SourceGlyph domain={row.domain} />
+                      <span className="truncate text-sm">{row.name}</span>
+                    </span>
                     <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
                       {row.count} visit{row.count === 1 ? "" : "s"}
                     </span>

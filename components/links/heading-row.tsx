@@ -11,7 +11,6 @@ import {
   EyeIcon,
   TextTIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,7 +113,6 @@ export function HeadingRow({
                   isActive: pressed,
                   imageUrl: link.imageUrl,
                 });
-                toast(pressed ? "Heading shown" : "Heading hidden");
               }}
             >
               {link.isActive ? <EyeIcon /> : <EyeClosedIcon />}

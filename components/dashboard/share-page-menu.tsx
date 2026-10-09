@@ -62,7 +62,6 @@ function SharePageMenu({ username }: { username: string }) {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
-    toast.success("Link copied to clipboard");
   }
 
   function shareTo(target: ShareTarget) {

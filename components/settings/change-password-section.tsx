@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
 
 import { changePassword } from "@/app/actions/accounts";
 import { PasswordInput } from "@/components/auth/password-input";
@@ -52,7 +51,6 @@ export function ChangePasswordSection() {
         setError(result.error);
         return;
       }
-      toast("Password updated");
       setOpen(false);
       reset();
     },

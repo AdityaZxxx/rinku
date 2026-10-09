@@ -111,7 +111,6 @@ function ArchivedRow({ link }: { link: ArchivedLink }) {
   async function onRestore() {
     try {
       await restore.mutateAsync(link);
-      toast("Link restored");
     } catch (restoreError) {
       toast.error(
         restoreError instanceof Error

@@ -93,7 +93,6 @@ export function useUploadProfileImage(username: string) {
             : { ...old, bannerPath: result.path, updatedAt: new Date() }
           : old,
       );
-      toast(result.target === "avatar" ? "Photo updated" : "Banner updated");
     },
     onError: (error) => {
       toast.error(

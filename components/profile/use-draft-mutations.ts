@@ -56,7 +56,6 @@ export function usePublishProfileSection(username: string, profileId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKey(username) });
-      toast("Profile published");
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Publishing failed.");
@@ -98,7 +97,6 @@ export function usePublishAppearanceSection(username: string, profileId: string)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKey(username) });
-      toast("Appearance published");
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Publishing failed.");

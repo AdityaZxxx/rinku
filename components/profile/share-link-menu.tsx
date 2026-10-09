@@ -81,7 +81,6 @@ export function ShareLinkMenu({
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
-    toast.success("Link copied to clipboard");
   }
 
   return (

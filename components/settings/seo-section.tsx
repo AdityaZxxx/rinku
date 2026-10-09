@@ -104,7 +104,6 @@ export function SeoSection({
         return;
       }
       setOgImagePath(result.path);
-      toast("Share image updated");
     });
   }
 
@@ -116,7 +115,6 @@ export function SeoSection({
         return;
       }
       setOgImagePath(null);
-      toast("Share image removed");
     });
   }
 

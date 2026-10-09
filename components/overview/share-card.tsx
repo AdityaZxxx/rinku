@@ -64,7 +64,6 @@ export function ShareCard({
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
-    toast.success("Link copied to clipboard");
   }
 
   function onDismiss() {

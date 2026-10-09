@@ -21,7 +21,6 @@ import {
   YoutubeLogoIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
 
 import { searchAppleMusic } from "@/app/actions/apple-music";
 import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links";
@@ -237,7 +236,7 @@ export function AddLinkDialog({
         reset();
         onCreated(created.id);
       } catch (mutationError) {
-        toast.error(
+        setError(
           mutationError instanceof Error
             ? mutationError.message
             : "Adding this failed. Try again.",

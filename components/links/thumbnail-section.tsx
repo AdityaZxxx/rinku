@@ -43,7 +43,6 @@ export function ThumbnailSection({ link }: { link: Link }) {
         return;
       }
       await queryClient.invalidateQueries({ queryKey: ["links", link.profileId] });
-      toast("Thumbnail updated");
     });
   }
 

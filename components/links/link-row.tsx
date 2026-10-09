@@ -16,7 +16,6 @@ import {
   LinkSimpleIcon,
 } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
 import * as z from "zod";
 
 import { ThumbnailSection } from "@/components/links/thumbnail-section";
@@ -406,11 +405,6 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                 visibleFrom: from,
                 visibleUntil: until,
               });
-              if (!from && !until) {
-                toast("Schedule removed");
-              } else {
-                toast("Schedule saved");
-              }
             }}
             trigger={
               <button
@@ -461,11 +455,6 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                 imageUrl: link.imageUrl,
                 minAge,
               });
-              toast(
-                minAge === null
-                  ? "Age restriction removed"
-                  : `Visitors will confirm they are ${minAge}+`,
-              );
             }}
           />
 
@@ -477,7 +466,6 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                   pressed={field.state.value}
                   onPressedChange={(pressed) => {
                     field.handleChange(pressed);
-                    toast(pressed ? "Link shown" : "Link hidden");
                   }}
                 >
                   {field.state.value ? <EyeIcon /> : <EyeClosedIcon />}

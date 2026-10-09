@@ -93,7 +93,6 @@ export function useUploadWallpaper(
             }
           : old,
       );
-      toast(result.target === "wallpaper-video" ? "Video added" : "Image added");
       options?.onDone?.(
         result.target === "wallpaper-video" ? "video" : "image",
         result.path,

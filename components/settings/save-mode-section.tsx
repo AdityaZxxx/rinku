@@ -60,9 +60,7 @@ export function SaveModeSection({
       if ("error" in result) {
         setModesByArea((current) => ({ ...current, [area]: previous }));
         toast.error(result.error);
-        return;
       }
-      toast("Editing mode updated");
     });
   }
 

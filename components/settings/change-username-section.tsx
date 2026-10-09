@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import type { ReservedUsername } from "@/lib/profiles/schema";
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
 
 import {
   checkUsernameAvailability,
@@ -68,11 +67,13 @@ export function ChangeUsernameSection({
   const [checking, setChecking] = useState(false);
   const [checkedValue, setCheckedValue] = useState(username.toLowerCase());
   const [keepOldUsername, setKeepOldUsername] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const form = useForm({
     defaultValues: { username },
     onSubmit: async ({ value }) => {
+      setError(null);
       const candidate = value.username.trim().toLowerCase();
       const result = await renameProfile({
         username,
@@ -80,14 +81,9 @@ export function ChangeUsernameSection({
         keepOldUsername,
       });
       if ("error" in result) {
-        toast.error(result.error);
+        setError(result.error);
         return;
       }
-      toast(
-        keepOldUsername
-          ? "Username updated: your old one is kept for 30 days."
-          : "Username updated",
-      );
       setOpen(false);
       form.reset();
       setCheckedValue(candidate);
@@ -119,6 +115,7 @@ export function ChangeUsernameSection({
               setChecking(false);
               setKeepOldUsername(false);
               setCheckedValue(username.toLowerCase());
+              setError(null);
             }
           }}
         >
@@ -236,6 +233,8 @@ export function ChangeUsernameSection({
                 }}
               />
 
+              {error && <FieldError>{error}</FieldError>}
+
               <DialogFooter>
                 <DialogClose
                   render={
@@ -298,6 +297,7 @@ function UsernameHistory({
   const [reclaiming, setReclaiming] = useState<string | null>(null);
   // The handle awaiting confirmation; non-null means the gate is open.
   const [confirmHandle, setConfirmHandle] = useState<string | null>(null);
+  const [reclaimError, setReclaimError] = useState<string | null>(null);
 
   // Load once, the first time the list is expanded.
   useEffect(() => {
@@ -323,15 +323,15 @@ function UsernameHistory({
   }, [open, entries, profileId]);
 
   async function reclaim(handle: string) {
-    setConfirmHandle(null);
+    setReclaimError(null);
     setReclaiming(handle);
     const result = await reclaimUsername({ currentUsername: username, username: handle });
     setReclaiming(null);
     if ("error" in result) {
-      toast.error(result.error);
+      setReclaimError(result.error);
       return;
     }
-    toast(`Reclaimed @${handle}`);
+    setConfirmHandle(null);
     onReclaim(handle);
   }
 
@@ -399,6 +399,7 @@ function UsernameHistory({
       <AlertDialog
         open={confirmHandle !== null}
         onOpenChange={(next) => {
+          setReclaimError(null);
           if (!next) {
             setConfirmHandle(null);
           }
@@ -415,15 +416,18 @@ function UsernameHistory({
               released. Links and content stay the same.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {reclaimError && <p className="text-destructive text-sm">{reclaimError}</p>}
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={reclaiming !== null}>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              disabled={reclaiming !== null}
               onClick={() => {
                 if (confirmHandle !== null) {
                   void reclaim(confirmHandle);
                 }
               }}
             >
+              {reclaiming !== null && <Spinner />}
               Reclaim username
             </AlertDialogAction>
           </AlertDialogFooter>

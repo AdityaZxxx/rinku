@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EASE_OUT } from "@/lib/links/motion";
 import { cn } from "@/lib/utils";
 import { useUpdateLink } from "./use-link-mutations";
 
@@ -36,7 +37,10 @@ export function HeadingRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: link.id });
+  } = useSortable({
+    id: link.id,
+    transition: { duration: 200, easing: EASE_OUT },
+  });
   const [title, setTitle] = useState(link.title);
   const [lastServerTitle, setLastServerTitle] = useState(link.title);
   if (link.title !== lastServerTitle) {
@@ -75,7 +79,7 @@ export function HeadingRow({
       role="presentation"
       className={cn(
         "flex items-center gap-2 rounded-2xl border border-dashed bg-transparent p-3 cursor-grab active:cursor-grabbing",
-        isDragging && "relative z-10 shadow-lg",
+        isDragging && "opacity-40",
       )}
     >
       <button

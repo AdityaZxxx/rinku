@@ -593,9 +593,7 @@ export async function reorderLinks(input: {
   const parsed = z
     .object({
       profileId: z.uuid(),
-      updates: z
-        .array(z.object({ id: z.uuid(), position: z.number().int().min(0) }))
-        .max(500),
+      updates: z.array(z.object({ id: z.uuid(), position: z.number().int() })).max(500),
     })
     .safeParse(input);
   if (!parsed.success) {

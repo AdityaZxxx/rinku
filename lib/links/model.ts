@@ -115,40 +115,41 @@ export function positionAfter(max: number | null | undefined): number {
 }
 
 /**
- * Midpoint positions for the rows whose spot a reorder changed. Neighbours
- * keep their positions, so no cascade; the dragged row lands between them.
+ * Midpoint position for the dragged row alone: its new neighbours keep their
+ * positions, so no cascade and no churn. Only the dragged row gets an update,
+ * because reading neighbour positions off a stale snapshot while walking the
+ * whole order misplaces rows the drag never touched.
  */
 export function changedPositions(
   current: ReadonlyArray<{ id: string; position: number }>,
   order: readonly string[],
+  movedId: string,
 ): Array<{ id: string; position: number }> {
+  const index = order.indexOf(movedId);
+  if (index === -1) {
+    return [];
+  }
   const positions = new Map(current.map((link) => [link.id, link.position]));
-  const updates: Array<{ id: string; position: number }> = [];
+  const prevId = index > 0 ? order[index - 1] : undefined;
+  const nextId = index < order.length - 1 ? order[index + 1] : undefined;
+  const prev = prevId === undefined ? undefined : positions.get(prevId);
+  const next = nextId === undefined ? undefined : positions.get(nextId);
 
-  order.forEach((id, index) => {
-    const prevId = index > 0 ? order[index - 1] : undefined;
-    const nextId = index < order.length - 1 ? order[index + 1] : undefined;
-    const prev = prevId === undefined ? undefined : positions.get(prevId);
-    const next = nextId === undefined ? undefined : positions.get(nextId);
-
-    let position: number | undefined;
-    if (prev !== undefined && next !== undefined) {
-      const mid = Math.floor((prev + next) / 2);
-      if (mid > prev) {
-        position = mid;
-      }
-    } else if (prev !== undefined) {
-      position = prev + POSITION_GAP;
-    } else if (next !== undefined) {
-      position = next - POSITION_GAP;
-    } else {
-      position = 0;
+  let position: number;
+  if (prev !== undefined && next !== undefined) {
+    const mid = Math.floor((prev + next) / 2);
+    if (mid <= prev) {
+      return [];
     }
+    position = mid;
+  } else if (prev !== undefined) {
+    position = prev + POSITION_GAP;
+  } else if (next !== undefined) {
+    position = next - POSITION_GAP;
+  } else {
+    position = 0;
+  }
 
-    if (position !== undefined && position !== positions.get(id)) {
-      updates.push({ id, position });
-    }
-  });
-
-  return updates;
+  const before = positions.get(movedId);
+  return position === before ? [] : [{ id: movedId, position }];
 }

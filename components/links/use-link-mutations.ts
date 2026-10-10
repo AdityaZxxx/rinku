@@ -42,6 +42,26 @@ function rollback(
   }
 }
 
+export function applyReorderToCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  profileId: string,
+  updates: PositionUpdate[],
+): Link[] | undefined {
+  const key = linksKey(profileId);
+  void queryClient.cancelQueries({ queryKey: key });
+  const previous = queryClient.getQueryData<Link[]>(key);
+  const positions = new Map(updates.map((update) => [update.id, update.position]));
+  queryClient.setQueryData<Link[]>(key, (old) =>
+    (old ?? [])
+      .map((link) => {
+        const position = positions.get(link.id);
+        return position === undefined ? link : Object.assign({}, link, { position });
+      })
+      .toSorted(byPosition),
+  );
+  return previous;
+}
+
 /**
  * Every link action returns an `{ error }` union, which React Query reads as a
  * success. Each mutationFn narrows and throws, which is what makes onError,
@@ -293,29 +313,19 @@ export function useReorderLinks(profileId: string) {
   const key = linksKey(profileId);
 
   return useMutation({
-    mutationFn: async (updates: PositionUpdate[]) => {
+    mutationFn: async ({ updates }: { updates: PositionUpdate[]; previous?: Link[] }) => {
       const result = await reorderLinks({ profileId, updates });
       if ("error" in result) {
         throw new Error(result.error);
       }
       return result;
     },
-    onMutate: async (updates) => {
+    onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<Link[]>(key);
-      const positions = new Map(updates.map((update) => [update.id, update.position]));
-      queryClient.setQueryData<Link[]>(key, (old) =>
-        (old ?? [])
-          .map((link) => {
-            const position = positions.get(link.id);
-            return position === undefined ? link : Object.assign({}, link, { position });
-          })
-          .toSorted(byPosition),
-      );
-      return { previous };
+      return {};
     },
-    onError: (error, _updates, context) => {
-      rollback(queryClient, key, context?.previous);
+    onError: (error, { previous }) => {
+      rollback(queryClient, key, previous);
       toast.error(
         error instanceof Error ? error.message : "Reordering failed. Try again.",
       );

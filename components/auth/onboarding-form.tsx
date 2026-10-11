@@ -19,11 +19,11 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { usernameSchema } from "@/lib/profiles/schema";
+import { profileBasicsSchema, usernameSchema } from "@/lib/profiles/schema";
 
 const onboardingSchema = z.object({
   username: usernameSchema,
-  displayName: z.string().max(80, "Use 80 characters or fewer."),
+  displayName: profileBasicsSchema.shape.displayName,
 });
 
 function claimedUsername(): string {

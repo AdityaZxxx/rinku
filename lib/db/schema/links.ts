@@ -92,7 +92,9 @@ export const links = pgTable(
       name: "links_profile_id_fkey",
     }).onDelete("cascade"),
     index("links_profile_id_position_idx").on(t.profileId, t.position),
-    check("links_title_length", sql`char_length(${t.title}) between 1 and 100`),
+    // btrim keeps the client rule (a title must carry visible content) true at
+    // the database too: char_length alone would accept a string of spaces.
+    check("links_title_length", sql`char_length(btrim(${t.title})) between 1 and 100`),
     check(
       "links_url_length",
       sql`(${t.kind}::text = 'heading' and char_length(${t.url}) = 0) or (${t.kind}::text <> 'heading' and char_length(${t.url}) between 1 and 2048)`,

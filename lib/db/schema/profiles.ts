@@ -119,9 +119,9 @@ export const profiles = pgTable(
     ),
     check(
       "profiles_display_name_length",
-      sql`${t.displayName} is null or char_length(${t.displayName}) <= 80`,
+      sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,
     ),
-    check("profiles_bio_length", sql`${t.bio} is null or char_length(${t.bio}) <= 200`),
+    check("profiles_bio_length", sql`${t.bio} is null or char_length(${t.bio}) <= 150`),
     // Search-result truncation points: ~60 characters for a title, ~160 for a
     // description. Keywords are capped so the meta tag cannot balloon.
     check(

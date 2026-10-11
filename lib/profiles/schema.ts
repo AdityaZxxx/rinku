@@ -12,8 +12,8 @@ const maxChars = (limit: number) =>
     .refine((value) => [...value].length <= limit, `Use ${limit} characters or fewer.`);
 
 export const profileBasicsSchema = z.object({
-  displayName: maxChars(80),
-  bio: maxChars(200),
+  displayName: maxChars(50),
+  bio: maxChars(150),
   headerStyle: z.enum([
     "classic",
     "hero",

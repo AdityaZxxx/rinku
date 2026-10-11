@@ -121,11 +121,11 @@ export const profileDrafts = pgTable(
     ),
     check(
       "profile_drafts_display_name_length",
-      sql`${t.displayName} is null or char_length(${t.displayName}) <= 80`,
+      sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,
     ),
     check(
       "profile_drafts_bio_length",
-      sql`${t.bio} is null or char_length(${t.bio}) <= 200`,
+      sql`${t.bio} is null or char_length(${t.bio}) <= 150`,
     ),
 
     pgPolicy("users read own profile draft", {

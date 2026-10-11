@@ -1,6 +1,6 @@
 {
-  "id": "106b0540-c0c8-4524-af26-af5e7bacb3c4",
-  "prevId": "dc6932a2-3d04-400a-aff5-4e1e42914f80",
+  "id": "ef0a25b8-861c-41cc-9d62-8314451fc4c4",
+  "prevId": "106b0540-c0c8-4524-af26-af5e7bacb3c4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -505,7 +505,7 @@
       "checkConstraints": {
         "links_title_length": {
           "name": "links_title_length",
-          "value": "char_length(\"links\".\"title\") between 1 and 100"
+          "value": "char_length(btrim(\"links\".\"title\")) between 1 and 100"
         },
         "links_url_length": {
           "name": "links_url_length",
@@ -1269,11 +1269,11 @@
         },
         "profiles_display_name_length": {
           "name": "profiles_display_name_length",
-          "value": "\"profiles\".\"display_name\" is null or char_length(\"profiles\".\"display_name\") <= 80"
+          "value": "\"profiles\".\"display_name\" is null or char_length(\"profiles\".\"display_name\") <= 50"
         },
         "profiles_bio_length": {
           "name": "profiles_bio_length",
-          "value": "\"profiles\".\"bio\" is null or char_length(\"profiles\".\"bio\") <= 200"
+          "value": "\"profiles\".\"bio\" is null or char_length(\"profiles\".\"bio\") <= 150"
         },
         "profiles_meta_title_length": {
           "name": "profiles_meta_title_length",

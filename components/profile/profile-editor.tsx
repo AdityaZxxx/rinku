@@ -448,7 +448,7 @@ export function ProfileEditor({
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </span>
                   <span className="text-muted-foreground shrink-0 text-xs">
-                    {field.state.value.length}/200
+                    {[...field.state.value].length}/150
                   </span>
                 </div>
               </Field>

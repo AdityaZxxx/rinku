@@ -38,4 +38,5 @@ The why for each exclusion sits next to it in the configs.
 
 - No em-dashes anywhere in this repo's prose (SKILL.md files, docs, README.md, CHANGELOG.md, ADRs, changesets, code comments). Where a sentence reaches for one, rewrite it instead with a comma, colon, period, parentheses, or a conjunction, whichever the sentence actually wants; never do a blind character substitution.
 - Strict TypeScript, no `any`. `tsc --noEmit` must pass.
-- Comments only allowed for code that cannot be self-explaining; should explain why, not record implementation chatter.
+- Comments only allowed for code that cannot be self-explaining; should explain why, NOT record implementation chatter. See @load-bearing-comments skill.
+- React compiler active and used by the application, NO manual memoization needed.

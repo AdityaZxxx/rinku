@@ -66,7 +66,7 @@ export function EditSocialDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {Platform ? <SocialIcon id={Platform.id} className="size-5" /> : null}
+            <SocialIcon id={link.platform ?? ""} className="size-5" />
             Edit {Platform?.label ?? "social"}
           </DialogTitle>
         </DialogHeader>

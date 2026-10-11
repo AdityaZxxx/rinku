@@ -12,6 +12,7 @@ import {
 
 import { MediaIcon } from "@/components/media-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSrcImageFailure, useFaviconImage } from "@/components/use-image-failure";
 import { isIconMedia } from "@/lib/links/media";
 import { displayUrl, faviconUrl, scheduleStatus } from "@/lib/links/model";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,17 @@ export function LinkRowShell({
   const hidden = !link.isActive;
   const status = scheduleStatus(link);
   const summary = scheduleSummary(link.visibleFrom, link.visibleUntil);
+  // A remote thumbnail is stored as-is, so its origin can die at any time;
+  // the row then falls back to the favicon rather than a broken-image glyph.
+  const remoteThumb =
+    link.imageUrl && !isIconMedia(link.imageUrl) && link.imageUrl !== ""
+      ? link.imageUrl
+      : null;
+  const [thumbBroken, onThumbFailed, thumbFailedRef] = useSrcImageFailure(remoteThumb);
+  // A domain with no favicon gets the renderer's 16x16 placeholder, which
+  // reads as pixelated once the 40px circle upscales it: swap it for the
+  // vector globe below instead. A real favicon comes back at 48x48 or more.
+  const [faviconState, onFaviconLoad, onFaviconError, faviconRef] = useFaviconImage(icon);
 
   return (
     <div
@@ -63,25 +75,30 @@ export function LinkRowShell({
           <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
             <MediaIcon imageUrl={link.imageUrl} className="size-5" />
           </span>
-        ) : link.imageUrl && link.imageUrl !== "" ? (
+        ) : remoteThumb && !thumbBroken ? (
           <Image
             unoptimized
-            src={link.imageUrl}
+            ref={thumbFailedRef}
+            src={remoteThumb}
             alt=""
             width={40}
             height={40}
+            onError={onThumbFailed}
             className={cn(
               "size-10 shrink-0 rounded-full object-cover",
               hidden && "opacity-60 grayscale",
             )}
           />
-        ) : link.imageUrl === null && icon ? (
+        ) : icon && faviconState === "show" ? (
           <Image
             unoptimized
+            ref={faviconRef}
             src={icon}
             alt=""
             width={40}
             height={40}
+            onLoad={onFaviconLoad}
+            onError={onFaviconError}
             className={cn(
               "bg-muted size-10 shrink-0 rounded-full object-contain p-1.5",
               hidden && "opacity-60 grayscale",

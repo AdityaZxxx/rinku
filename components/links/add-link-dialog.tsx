@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/input-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { useSrcImageFailure } from "@/components/use-image-failure";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/links/catalog";
 import { parseEmbedUrl } from "@/lib/links/embeds";
 import { linkUrlSchema, normalizeUrl } from "@/lib/links/model";
@@ -104,6 +105,11 @@ export function AddLinkDialog({
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
   const handleRef = useRef<HTMLInputElement>(null);
+  // A foreign origin's og:image can 404 at any time, so the preview carries
+  // the same failure state as the rows.
+  const [metaImageBroken, onMetaImageFailed, metaImageRef] = useSrcImageFailure(
+    meta?.imageUrl ?? null,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -339,11 +345,13 @@ export function AddLinkDialog({
                 {!selected && isUrl && (
                   <div className="flex flex-col gap-2">
                     <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
-                      {meta?.imageUrl ? (
+                      {meta?.imageUrl && !metaImageBroken ? (
                         // eslint-disable-next-line @next/next/no-img-element -- cross-host og:image preview: the optimizer cache never earns its keep for one-off hosts
                         <img
+                          ref={metaImageRef}
                           src={meta.imageUrl}
                           alt=""
+                          onError={onMetaImageFailed}
                           className="size-10 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
                         />
                       ) : (
@@ -551,12 +559,7 @@ export function AddLinkDialog({
                                     className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
                                   >
                                     {result.imageUrl ? (
-                                      // eslint-disable-next-line @next/next/no-img-element -- transient search preview: next/image adds nothing for a thumbnail shown for a moment
-                                      <img
-                                        src={result.imageUrl}
-                                        alt=""
-                                        className="size-10 rounded-md object-cover"
-                                      />
+                                      <ResultImage src={result.imageUrl} />
                                     ) : (
                                       <span className="bg-muted grid size-10 place-items-center rounded-md">
                                         <MusicNoteIcon className="size-4" />
@@ -617,7 +620,9 @@ export function AddLinkDialog({
                       ))
                     )}
                     {!selected && !isUrl && results.length === 0 && query ? (
-                      <p className="text-muted-foreground px-2 py-4 text-sm">
+                      // A pasted non-URL can be arbitrarily long, so the
+                      // message clamps instead of wrapping into a wall.
+                      <p className="text-muted-foreground line-clamp-2 px-2 py-4 text-sm">
                         No types match “{query}”. Paste a full URL instead.
                       </p>
                     ) : null}
@@ -629,6 +634,32 @@ export function AddLinkDialog({
         </form.Field>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * A transient search-result thumbnail from Apple's CDN. Remote artwork fails
+ * to load like any cross-host image, and a broken glyph inside search
+ * results reads as a defect, so it falls back to the music note.
+ */
+function ResultImage({ src }: { src: string }) {
+  const [broken, onFailed, failedRef] = useSrcImageFailure(src);
+  if (broken) {
+    return (
+      <span className="bg-muted grid size-10 place-items-center rounded-md">
+        <MusicNoteIcon className="size-4" />
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- transient search preview: next/image adds nothing for a thumbnail shown for a moment
+    <img
+      ref={failedRef}
+      src={src}
+      alt=""
+      onError={onFailed}
+      className="size-10 rounded-md object-cover"
+    />
   );
 }
 

@@ -60,6 +60,10 @@ const DROP_ANIMATION = {
 
 const OVERLAY_TRANSITION = `transform 250ms ${EASE_OUT}`;
 
+// The public page renders every active link in one pass, so past this many the
+// owner should know visitors are loading it all at once.
+const LINK_COUNT_WARNING = 100;
+
 export function LinksEditor({
   profileId,
   username,
@@ -184,6 +188,13 @@ export function LinksEditor({
         </div>
       </div>
 
+      {customLinks.length >= LINK_COUNT_WARNING ? (
+        <p className="text-muted-foreground text-sm">
+          Visitors load all {customLinks.length.toLocaleString()} links at once. Past
+          about {LINK_COUNT_WARNING} the page starts to feel slow.
+        </p>
+      ) : null}
+
       <div className="flex items-center gap-2">
         <DndContext
           id="socials-dnd"
@@ -296,8 +307,10 @@ function SocialChip({
       transition: { duration: 200, easing: EASE_OUT },
     });
   const [editing, setEditing] = useState(false);
-  const Platform = platformById(link.platform);
-  if (!Platform) return null;
+  // A platform that left the catalog still has a database row, and the public
+  // header falls back to a globe: the chip must stay visible here too, or the
+  // owner could neither see nor remove the link.
+  const label = platformById(link.platform)?.label ?? "social";
   return (
     <>
       <span
@@ -321,10 +334,10 @@ function SocialChip({
             if (draggingRef.current) return;
             setEditing(true);
           }}
-          aria-label={`Edit ${Platform.label}`}
+          aria-label={`Edit ${label}`}
           className="inline-flex size-9 cursor-grab touch-none items-center justify-center rounded-full active:cursor-grabbing"
         >
-          <SocialIcon id={Platform.id} className="size-4" />
+          <SocialIcon id={link.platform ?? ""} className="size-4" />
         </button>
       </span>
       <EditSocialDialog link={link} open={editing} onOpenChange={setEditing} />
@@ -355,11 +368,9 @@ function HeadingPreview({ link }: { link: LinkData }) {
 }
 
 function SocialChipPreview({ link }: { link: LinkData }) {
-  const Platform = platformById(link.platform);
-  if (!Platform) return null;
   return (
     <span className="border-input bg-card inline-flex size-9 items-center justify-center rounded-full border shadow-lg">
-      <SocialIcon id={Platform.id} className="size-4" />
+      <SocialIcon id={link.platform ?? ""} className="size-4" />
     </span>
   );
 }

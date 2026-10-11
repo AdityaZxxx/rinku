@@ -16,7 +16,12 @@ export function scheduleSummary(
   const fromDate = from ? new Date(from) : null;
   const untilDate = until ? new Date(until) : null;
   if (fromDate && untilDate) {
-    return `${format(fromDate, "MMM d")} – ${format(untilDate, "MMM d, yyyy")}`;
+    // A window across the year boundary reads as if both endpoints share the
+    // printed year, so both carry the year whenever they differ.
+    const sameYear = fromDate.getFullYear() === untilDate.getFullYear();
+    return sameYear
+      ? `${format(fromDate, "MMM d")} – ${format(untilDate, "MMM d, yyyy")}`
+      : `${format(fromDate, "MMM d, yyyy")} – ${format(untilDate, "MMM d, yyyy")}`;
   }
   if (fromDate) {
     return `From ${format(fromDate, "MMM d, yyyy")}`;

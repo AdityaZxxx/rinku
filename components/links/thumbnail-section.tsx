@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useSrcImageFailure } from "@/components/use-image-failure";
 import { isIconMedia } from "@/lib/links/media";
 import { useUpdateLink } from "./use-link-mutations";
 
@@ -60,6 +61,9 @@ export function ThumbnailSection({ link }: { link: Link }) {
   const filtered = MEDIA_ICON_IDS.filter((id) =>
     id.toLowerCase().includes(query.trim().toLowerCase()),
   );
+  // The stored URL keeps serving from its origin, so a dead one falls back to
+  // the placeholder rather than a broken-image glyph; a re-upload clears it.
+  const [thumbBroken, onThumbFailed, thumbFailedRef] = useSrcImageFailure(link.imageUrl);
 
   return (
     <div className="flex flex-col gap-2">
@@ -68,9 +72,15 @@ export function ThumbnailSection({ link }: { link: Link }) {
         <span className="border-input bg-muted inline-flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
           {isIconMedia(link.imageUrl) ? (
             <MediaIcon imageUrl={link.imageUrl} className="size-5" />
-          ) : link.imageUrl ? (
+          ) : link.imageUrl && !thumbBroken ? (
             // eslint-disable-next-line @next/next/no-img-element -- cross-host thumbnail preview: the optimizer cache never earns its keep for one-off hosts
-            <img src={link.imageUrl} alt="" className="size-12 object-cover" />
+            <img
+              ref={thumbFailedRef}
+              src={link.imageUrl}
+              alt=""
+              onError={onThumbFailed}
+              className="size-12 object-cover"
+            />
           ) : (
             <ImageIcon className="text-muted-foreground size-5" />
           )}
@@ -115,7 +125,7 @@ export function ThumbnailSection({ link }: { link: Link }) {
                   </button>
                 ))}
                 {filtered.length === 0 ? (
-                  <p className="text-muted-foreground col-span-6 py-4 text-center text-sm">
+                  <p className="text-muted-foreground col-span-6 line-clamp-2 py-4 text-center text-sm">
                     No icons match “{query}”.
                   </p>
                 ) : null}

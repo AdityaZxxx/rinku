@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useFaviconImage } from "@/components/use-image-failure";
 import { displayUrl, faviconUrl } from "@/lib/links/model";
 import { useDeleteLink, useRestoreLink } from "./use-link-mutations";
 
@@ -137,16 +138,22 @@ function ArchivedRow({ link }: { link: ArchivedLink }) {
   }
 
   const icon = faviconUrl(link.url);
+  // The renderer's 16x16 placeholder for domains with no logo reads as
+  // pixelated in the 40px circle: the vector globe below takes its place.
+  const [faviconState, onFaviconLoad, onFaviconError, faviconRef] = useFaviconImage(icon);
 
   return (
     <div className="bg-card flex items-center gap-2 rounded-2xl border p-3">
-      {icon ? (
+      {icon && faviconState === "show" ? (
         <Image
           unoptimized
+          ref={faviconRef}
           src={icon}
           alt=""
           width={40}
           height={40}
+          onLoad={onFaviconLoad}
+          onError={onFaviconError}
           className="bg-muted size-10 shrink-0 rounded-full object-contain p-1.5"
         />
       ) : (

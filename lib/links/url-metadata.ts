@@ -11,6 +11,20 @@ const CONTENT_PATTERN = /content\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 const TITLE_PATTERN = /<title[^>]*>([^<]*)<\/title>/i;
 const IP_PATTERN = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
+// The title lands in a 100-character column (links_title_length), and the
+// create flow offers no way to edit it first, so a page with a 500-character
+// <title> must come back truncated rather than fail the create outright.
+const MAX_TITLE_CHARS = 100;
+
+function clampTitle(value: string): string {
+  const trimmed = value.trim();
+  const chars = Array.from(trimmed);
+  if (chars.length <= MAX_TITLE_CHARS) {
+    return trimmed;
+  }
+  return chars.slice(0, MAX_TITLE_CHARS - 1).join("") + "…";
+}
+
 export type UrlMetadata = {
   title: string;
   imageUrl: string | null;
@@ -104,8 +118,9 @@ function parseMetadata(html: string, base: string): UrlMetadata | null {
     return null;
   };
 
-  const rawTitle =
-    byKey(["og:title", "twitter:title"]) ?? TITLE_PATTERN.exec(html)?.[1]?.trim() ?? null;
+  const rawTitle = clampTitle(
+    byKey(["og:title", "twitter:title"]) ?? TITLE_PATTERN.exec(html)?.[1]?.trim() ?? "",
+  );
   const rawImage = byKey([
     "og:image",
     "og:image:url",

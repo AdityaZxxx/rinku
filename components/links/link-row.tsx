@@ -144,7 +144,14 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
                       autoComplete="off"
                       placeholder="My website"
                     />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </span>
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {[...field.state.value].length}/100
+                      </span>
+                    </span>
                   </Field>
                 );
               }}

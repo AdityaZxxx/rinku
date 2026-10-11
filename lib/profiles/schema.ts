@@ -2,9 +2,18 @@ import * as z from "zod";
 
 // The same shapes and lengths the database checks, so the client rejects what
 // the server would only reject after a round trip.
+//
+// The database caps lengths in characters, and JS string length counts UTF-16
+// code units, so a bio of emoji would hit the client cap long before the
+// database's. Count code points in both places instead.
+const maxChars = (limit: number) =>
+  z
+    .string()
+    .refine((value) => [...value].length <= limit, `Use ${limit} characters or fewer.`);
+
 export const profileBasicsSchema = z.object({
-  displayName: z.string().max(80, "Use 80 characters or fewer."),
-  bio: z.string().max(200, "Use 200 characters or fewer."),
+  displayName: maxChars(80),
+  bio: maxChars(200),
   headerStyle: z.enum([
     "classic",
     "hero",

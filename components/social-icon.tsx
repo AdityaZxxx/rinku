@@ -2,6 +2,7 @@
 
 import {
   GithubLogoIcon,
+  GlobeIcon,
   InstagramLogoIcon,
   LinkedinLogoIcon,
   TiktokLogoIcon,
@@ -19,9 +20,10 @@ const ICONS = {
 } satisfies Record<string, typeof XLogoIcon>;
 
 export function SocialIcon({ id, className }: { id: string; className?: string }) {
-  // SAFETY: platform ids come from the fixed PLATFORMS list; unknown ids miss
-  // the record and are handled by the fallback below.
-  const Icon = ICONS[id as keyof typeof ICONS];
-  if (!Icon) return null;
+  // A platform that left the catalog still has rows in the database, so an
+  // unknown id falls back to a globe rather than an empty icon button.
+  // SAFETY: an unknown id misses the record and takes the fallback, so the
+  // cast cannot select a wrong icon.
+  const Icon = ICONS[id as keyof typeof ICONS] ?? GlobeIcon;
   return <Icon className={className} />;
 }

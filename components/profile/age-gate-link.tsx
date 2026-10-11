@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useImageFailure } from "@/components/use-image-failure";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,6 +49,11 @@ export function AgeGateLink({
   style?: React.CSSProperties;
 }) {
   const [open, setOpen] = useState(false);
+  // The blurred derivative route can 404 (a pruned object, a stale id), and
+  // the locked row still reads correctly without the thumbnail.
+  const [previewFailed, onPreviewFailed, previewFailedRef] = useImageFailure();
+  const previewImg = previewFailed ? undefined : previewSrc;
+
   return (
     <>
       <button
@@ -56,18 +62,20 @@ export function AgeGateLink({
         className={cn(className, "cursor-pointer")}
         style={style}
       >
-        {presentation === "featured" && previewSrc ? (
+        {presentation === "featured" && previewImg ? (
           <>
             {/* The server sends a blurred, downscaled copy, so stripping CSS
                 cannot recover the thumbnail. */}
             <span className="relative block w-full overflow-hidden">
               {/* The derivative route blurs server-side; minimal CSS softening. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- the derivative arrives already downscaled and blurred; next/image only re-encodes it */}
               <img
-                src={previewSrc}
+                ref={previewFailedRef}
+                src={previewImg}
                 alt=""
                 aria-hidden
                 className="aspect-1200/630 w-full object-cover"
+                onError={onPreviewFailed}
               />
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className="text-background flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium backdrop-blur-xs">
@@ -77,22 +85,26 @@ export function AgeGateLink({
               </span>
             </span>
             <span className="flex items-center gap-2 px-3 py-2.5">
-              <span className="line-clamp-2 min-w-0 flex-1 font-medium">{title}</span>
+              <span className="line-clamp-2 min-w-0 flex-1 leading-relaxed font-medium">
+                {title}
+              </span>
               <LockSimpleIcon className="size-4 shrink-0 opacity-60" aria-hidden />
             </span>
           </>
-        ) : presentation === "classic" && previewSrc ? (
+        ) : presentation === "classic" && previewImg ? (
           <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5">
             {/* Same slot the real thumbnail would occupy, server-blurred. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- the derivative arrives already downscaled and blurred; next/image only re-encodes it */}
             <img
-              src={previewSrc}
+              ref={previewFailedRef}
+              src={previewImg}
               alt=""
               aria-hidden
               className="size-10 shrink-0 rounded-full object-cover"
+              onError={onPreviewFailed}
             />
             <LockSimpleIcon className="size-4 shrink-0 opacity-80" aria-hidden />
-            <span className="truncate font-medium">{title}</span>
+            <span className="truncate leading-relaxed font-medium">{title}</span>
             <span
               className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium opacity-70"
               aria-hidden
@@ -103,7 +115,7 @@ export function AgeGateLink({
         ) : (
           <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5">
             <LockSimpleIcon className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">{title}</span>
+            <span className="truncate leading-relaxed">{title}</span>
             <span
               className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium opacity-70"
               aria-hidden

@@ -7,6 +7,7 @@ import type { VideoMetadata } from "@/lib/links/video";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
+import { Favicon } from "@/components/favicon";
 import { BlockEmbed } from "@/components/links/block-embed";
 import { MusicEmbed } from "@/components/links/music-embed";
 import { VideoEmbed } from "@/components/links/video-embed";
@@ -75,10 +76,9 @@ function LinkContent({ link }: { link: PreviewLink }) {
           unoptimized
         />
       ) : link.imageUrl === null && favicon ? (
-        // eslint-disable-next-line @next/next/no-img-element -- tiny cross-host favicon: next/image would proxy each host and the optimizer cache never earns its keep
-        <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
+        <Favicon url={favicon} className="size-5 shrink-0 rounded-full" />
       ) : null}
-      <span className="line-clamp-2">{link.title}</span>
+      <span className="line-clamp-2 leading-relaxed">{link.title}</span>
       {link.minAge && link.minAge > 0 ? <AgeBadge minAge={link.minAge} /> : null}
     </>
   );
@@ -265,7 +265,7 @@ export function ProfilePreviewContent({
                             href={`/go/${link.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="line-clamp-2 min-w-0 flex-1 font-medium"
+                            className="line-clamp-2 min-w-0 flex-1 leading-relaxed font-medium"
                           >
                             {link.title}
                           </a>
@@ -295,7 +295,7 @@ export function ProfilePreviewContent({
                     {variant === "featured" ? (
                       <>
                         <FeaturedCardImage link={link} muted={muted} />
-                        <span className="line-clamp-2 px-3 py-2.5 font-medium">
+                        <span className="line-clamp-2 px-3 py-2.5 leading-relaxed font-medium">
                           {link.title}
                         </span>
                       </>

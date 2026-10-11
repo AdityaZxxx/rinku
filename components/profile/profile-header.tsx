@@ -10,6 +10,7 @@ import {
   mutedFor,
   type ResolvedAppearance,
 } from "@/lib/profiles/appearance";
+import { profileInitials } from "@/lib/profiles/initials";
 import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
@@ -126,14 +127,14 @@ export function ProfileHeader({
           style={{ borderColor: look.wallpaperColor }}
         >
           <AvatarImage src={avatarPath ? avatarUrl(avatarPath) : undefined} />
-          <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>{profileInitials(displayName, username)}</AvatarFallback>
         </Avatar>
       ) : null}
 
       {variant === "statement" ? (
         <div className="flex w-full flex-col items-center gap-3 py-2 text-center">
           <p
-            className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl"
+            className="line-clamp-4 text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl"
             style={{ color: look.titleColor }}
           >
             {bio?.trim()
@@ -185,8 +186,10 @@ export function ProfileHeader({
       {socialLinks.length > 0 ? (
         <div
           className={cn(
-            "flex items-center gap-2.5",
-            variant === "left" ? "justify-start" : "justify-center",
+            // No flex-wrap pushed icons off both edges of a narrow page: six
+            // platform icons at 50px already overflow a 360px frame.
+            "flex flex-wrap items-center justify-center gap-2.5",
+            variant === "left" && "justify-start",
           )}
         >
           {socialLinks.map((link) => {

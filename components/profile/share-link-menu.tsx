@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
+import { Favicon } from "@/components/favicon";
 import { MediaIcon } from "@/components/media-icon";
 import {
   Dialog,
@@ -120,12 +121,18 @@ export function ShareLinkMenu({
           ) : null}
           <div className="flex items-center gap-3 px-3 py-2.5">
             {favicon ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={favicon} alt="" className="size-5 shrink-0 rounded-full" />
+              <Favicon url={favicon} className="size-5 shrink-0 rounded-full" />
             ) : null}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{link.title}</p>
-              <p className="text-muted-foreground truncate text-xs">{hostOf(link.url)}</p>
+              <p title={link.title} className="truncate text-sm font-medium">
+                {link.title}
+              </p>
+              <p
+                title={hostOf(link.url)}
+                className="text-muted-foreground truncate text-xs"
+              >
+                {hostOf(link.url)}
+              </p>
             </div>
           </div>
         </div>

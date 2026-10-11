@@ -14,11 +14,13 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSrcImageFailure } from "@/components/use-image-failure";
 import { isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
   profileDraftFromProfile,
   type ProfileDraftFields,
 } from "@/lib/profiles/editor-draft";
+import { profileInitials } from "@/lib/profiles/initials";
 import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles/schema";
 import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -220,7 +222,9 @@ export function ProfileEditor({
   const shownBannerPath = manual ? history.present.bannerPath : profile.bannerPath;
   const avatarSrc = shownAvatarPath ? avatarUrl(shownAvatarPath) : null;
   const bannerSrc = shownBannerPath ? bannerUrl(shownBannerPath) : null;
-  const fallback = (profile.displayName ?? username)[0]?.toUpperCase();
+  const fallback = profileInitials(profile.displayName, username);
+  // A banner object pruned from storage keeps the placeholder.
+  const [bannerBroken, onBannerFailed, bannerFailedRef] = useSrcImageFailure(bannerSrc);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6">
@@ -257,14 +261,16 @@ export function ProfileEditor({
                   className="group relative block h-28 w-full overflow-hidden rounded-xl text-left sm:h-32"
                   aria-label="Change banner"
                 >
-                  {bannerSrc ? (
+                  {bannerSrc && !bannerBroken ? (
                     <Image
+                      ref={bannerFailedRef}
                       unoptimized
                       src={bannerSrc}
                       alt=""
                       fill
                       sizes="(max-width: 672px) 100vw, 640px"
                       className="outline-foreground/10 rounded-xl object-cover outline-1"
+                      onError={onBannerFailed}
                     />
                   ) : (
                     <span className="bg-muted flex h-full items-center justify-center rounded-xl">

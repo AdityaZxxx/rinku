@@ -6,8 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
+  removeBanner,
   removeWallpaperMedia,
   updateAppearance,
+  uploadBanner,
   uploadWallpaper,
 } from "@/app/actions/profiles";
 
@@ -143,6 +145,73 @@ export function useRemoveWallpaperMedia(
             }
           : old,
       );
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Removing failed. Try again.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useUploadBanner(
+  username: string,
+  options?: {
+    onDone?: (path: string) => void;
+  },
+) {
+  const queryClient = useQueryClient();
+  const key = profileKey(username);
+
+  return useMutation({
+    mutationFn: async (input: { profileId: string; file: File }) => {
+      const formData = new FormData();
+      formData.set("profileId", input.profileId);
+      formData.set("file", input.file);
+      const result = await uploadBanner(formData);
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.setQueryData<Profile>(key, (old) =>
+        old ? { ...old, bannerPath: result.path, updatedAt: new Date() } : old,
+      );
+      options?.onDone?.(result.path);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Upload failed. Try again.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useRemoveBanner(
+  username: string,
+  options?: {
+    onDone?: () => void;
+  },
+) {
+  const queryClient = useQueryClient();
+  const key = profileKey(username);
+
+  return useMutation({
+    mutationFn: async (input: { profileId: string }) => {
+      const result = await removeBanner(input);
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.setQueryData<Profile>(key, (old) =>
+        old ? { ...old, bannerPath: null, updatedAt: new Date() } : old,
+      );
+      options?.onDone?.();
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Removing failed. Try again.");

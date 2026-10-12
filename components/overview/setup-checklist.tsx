@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 
 // Plain `Route` covers only static routes; dynamic ones must be parameterized
 // with their shape for the generated route types to accept them.
-type ChecklistHref = Route<`/${string}/links` | `/${string}/profile`>;
+type ChecklistHref = Route<
+  `/${string}/links` | `/${string}/profile` | `/${string}/appearance`
+>;
 
 // localStorage is the store for checklist dismissal; these listeners let a
 // dismiss in one mounted checklist re-render it (and any siblings) at once.
@@ -68,7 +70,7 @@ export function SetupChecklist({
       href: `/${username}/links`,
     },
     { done: hasAvatar, label: "Add an avatar", href: `/${username}/profile` },
-    { done: hasBanner, label: "Add a banner", href: `/${username}/profile` },
+    { done: hasBanner, label: "Add a banner", href: `/${username}/appearance` },
     { done: hasBio, label: "Write a bio", href: `/${username}/profile` },
   ];
   const doneCount = items.filter((item) => item.done).length;

@@ -16,7 +16,10 @@ import {
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
 import { appearanceSchema } from "@/lib/profiles/appearance";
-import { appearanceDraftFromProfile } from "@/lib/profiles/editor-draft";
+import {
+  appearanceDraftFromProfile,
+  appearanceDraftFromRow,
+} from "@/lib/profiles/editor-draft";
 import {
   imageExtension,
   imageMaxBytes,
@@ -139,14 +142,6 @@ export async function updateProfile(input: {
   username: string;
   displayName: string;
   bio: string;
-  headerStyle:
-    | "classic"
-    | "hero"
-    | "banner"
-    | "cutout"
-    | "minimal"
-    | "left"
-    | "statement";
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -167,7 +162,6 @@ export async function updateProfile(input: {
       .set({
         displayName: parsed.data.displayName.trim() || null,
         bio: parsed.data.bio.trim() || null,
-        headerStyle: parsed.data.headerStyle,
         updatedAt: new Date(),
       })
       .where(eq(profiles.username, parsed.data.username))
@@ -411,9 +405,7 @@ export async function saveProfileDraft(input: {
   profileId: string;
   displayName: string;
   bio: string;
-  headerStyle: string;
   avatarPath?: string | null;
-  bannerPath?: string | null;
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -427,7 +419,6 @@ export async function saveProfileDraft(input: {
     .extend({
       profileId: z.uuid(),
       avatarPath: z.string().max(512).nullable().optional(),
-      bannerPath: z.string().max(512).nullable().optional(),
     })
     .safeParse(input);
   if (!parsed.success) {
@@ -440,9 +431,6 @@ export async function saveProfileDraft(input: {
   if (parsed.data.avatarPath !== undefined) {
     paths.avatarPath = parsed.data.avatarPath;
   }
-  if (parsed.data.bannerPath !== undefined) {
-    paths.bannerPath = parsed.data.bannerPath;
-  }
 
   try {
     await withUserDb(user.id, (tx) =>
@@ -452,7 +440,6 @@ export async function saveProfileDraft(input: {
           profileId: parsed.data.profileId,
           displayName: parsed.data.displayName.trim() || null,
           bio: parsed.data.bio.trim() || null,
-          headerStyle: parsed.data.headerStyle,
           ...paths,
         })
         .onConflictDoUpdate({
@@ -460,7 +447,6 @@ export async function saveProfileDraft(input: {
           set: {
             displayName: parsed.data.displayName.trim() || null,
             bio: parsed.data.bio.trim() || null,
-            headerStyle: parsed.data.headerStyle,
             ...paths,
             updatedAt: new Date(),
           },
@@ -546,10 +532,10 @@ export async function publishProfileSection(input: {
       if (!draft) {
         return;
       }
-      // Read the old paths first: the objects they point at become obsolete the
-      // moment the draft's paths go live.
+      // Read the old path first: the object it points at becomes obsolete the
+      // moment the draft's path goes live.
       const [live] = await tx
-        .select({ avatarPath: profiles.avatarPath, bannerPath: profiles.bannerPath })
+        .select({ avatarPath: profiles.avatarPath })
         .from(profiles)
         .where(eq(profiles.id, parsed.data.profileId))
         .limit(1);
@@ -559,14 +545,10 @@ export async function publishProfileSection(input: {
       const published: Partial<typeof profiles.$inferInsert> = {
         displayName: draft.displayName,
         bio: draft.bio,
-        headerStyle: draft.headerStyle,
         updatedAt: new Date(),
       };
       if (draft.avatarPath !== null) {
         published.avatarPath = draft.avatarPath;
-      }
-      if (draft.bannerPath !== null) {
-        published.bannerPath = draft.bannerPath;
       }
       await tx
         .update(profiles)
@@ -576,7 +558,7 @@ export async function publishProfileSection(input: {
         .delete(profileDrafts)
         .where(eq(profileDrafts.profileId, parsed.data.profileId));
 
-      // Delete only the objects the draft superseded; anything else on disk is
+      // Delete only the object the draft superseded; anything else on disk is
       // still referenced (an abandoned upload keeps its file for storage
       // cleanup to sweep later).
       const superseded = [
@@ -584,11 +566,6 @@ export async function publishProfileSection(input: {
         live?.avatarPath &&
         live.avatarPath !== draft.avatarPath
           ? { bucket: "avatars", path: live.avatarPath }
-          : null,
-        draft.bannerPath !== null &&
-        live?.bannerPath &&
-        live.bannerPath !== draft.bannerPath
-          ? { bucket: "banners", path: live.bannerPath }
           : null,
       ].filter((entry): entry is { bucket: string; path: string } => entry !== null);
       if (superseded.length > 0) {
@@ -633,10 +610,23 @@ export async function publishAppearanceSection(input: {
       if (!draft) {
         return;
       }
+      // Read the old paths first: the storage objects they point at become
+      // obsolete the moment the draft's paths go live.
+      const [live] = await tx
+        .select({
+          wallpaperImagePath: profiles.wallpaperImagePath,
+          wallpaperVideoPath: profiles.wallpaperVideoPath,
+          bannerPath: profiles.bannerPath,
+        })
+        .from(profiles)
+        .where(eq(profiles.id, parsed.data.profileId))
+        .limit(1);
       await tx
         .update(profiles)
         .set({
           themeId: draft.themeId,
+          headerStyle: draft.headerStyle,
+          bannerPath: draft.bannerPath,
           buttonContour: draft.buttonContour,
           buttonVariant: draft.buttonVariant,
           buttonUmbra: draft.buttonUmbra,
@@ -649,6 +639,11 @@ export async function publishAppearanceSection(input: {
           wallpaperColor: draft.wallpaperColor,
           wallpaperColorB: draft.wallpaperColorB,
           wallpaperPattern: draft.wallpaperPattern,
+          wallpaperPatternSpacing: draft.wallpaperPatternSpacing,
+          wallpaperPatternThickness: draft.wallpaperPatternThickness,
+          linkEntrance: draft.linkEntrance,
+          linkHover: draft.linkHover,
+          pageAlignment: draft.pageAlignment,
           wallpaperImagePath: draft.wallpaperImagePath,
           wallpaperVideoPath: draft.wallpaperVideoPath,
           updatedAt: new Date(),
@@ -657,6 +652,24 @@ export async function publishAppearanceSection(input: {
       await tx
         .delete(appearanceDrafts)
         .where(eq(appearanceDrafts.profileId, parsed.data.profileId));
+
+      // Delete only the media the draft superseded: a replaced file, or a live
+      // file whose staged removal just went public. Anything the draft kept
+      // is still referenced.
+      const superseded = [
+        live?.wallpaperImagePath && draft.wallpaperImagePath !== live.wallpaperImagePath
+          ? { bucket: "wallpapers", path: live.wallpaperImagePath }
+          : null,
+        live?.wallpaperVideoPath && draft.wallpaperVideoPath !== live.wallpaperVideoPath
+          ? { bucket: "wallpapers", path: live.wallpaperVideoPath }
+          : null,
+        live?.bannerPath && draft.bannerPath !== live.bannerPath
+          ? { bucket: "banners", path: live.bannerPath }
+          : null,
+      ].filter((entry): entry is { bucket: string; path: string } => entry !== null);
+      if (superseded.length > 0) {
+        await cleanupSupersededImages(superseded);
+      }
     });
   } catch (error) {
     log.error(
@@ -673,6 +686,8 @@ export async function publishAppearanceSection(input: {
 export async function updateAppearance(input: {
   username: string;
   themeId: string;
+  headerStyle: string;
+  bannerPath: string | null;
   buttonContour: string;
   buttonVariant: string;
   buttonUmbra: string;
@@ -685,6 +700,11 @@ export async function updateAppearance(input: {
   wallpaperColor: string;
   wallpaperColorB: string;
   wallpaperPattern: string;
+  wallpaperPatternSpacing: number;
+  wallpaperPatternThickness: number;
+  linkEntrance: string;
+  linkHover: string;
+  pageAlignment: string;
   wallpaperImagePath: string | null;
   wallpaperVideoPath: string | null;
 }): Promise<{ ok: true } | { error: string }> {
@@ -706,6 +726,8 @@ export async function updateAppearance(input: {
       .update(profiles)
       .set({
         themeId: parsed.data.themeId,
+        headerStyle: parsed.data.headerStyle,
+        bannerPath: parsed.data.bannerPath,
         buttonContour: parsed.data.buttonContour,
         buttonVariant: parsed.data.buttonVariant,
         buttonUmbra: parsed.data.buttonUmbra,
@@ -718,6 +740,11 @@ export async function updateAppearance(input: {
         wallpaperColor: parsed.data.wallpaperColor,
         wallpaperColorB: parsed.data.wallpaperColorB,
         wallpaperPattern: parsed.data.wallpaperPattern,
+        wallpaperPatternSpacing: parsed.data.wallpaperPatternSpacing,
+        wallpaperPatternThickness: parsed.data.wallpaperPatternThickness,
+        linkEntrance: parsed.data.linkEntrance,
+        linkHover: parsed.data.linkHover,
+        pageAlignment: parsed.data.pageAlignment,
         wallpaperImagePath: parsed.data.wallpaperImagePath,
         wallpaperVideoPath: parsed.data.wallpaperVideoPath,
         updatedAt: new Date(),
@@ -852,7 +879,7 @@ export async function reclaimUsername(input: {
 
 export async function uploadProfileImage(
   formData: FormData,
-): Promise<{ path: string; target: "avatar" | "banner" } | { error: string }> {
+): Promise<{ path: string; target: "avatar" } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -865,7 +892,7 @@ export async function uploadProfileImage(
     .object({
       profileId: z.uuid(),
       file: z.instanceof(File),
-      target: z.enum(["avatar", "banner"]),
+      target: z.literal("avatar"),
     })
     .safeParse({
       profileId: formData.get("profileId"),
@@ -875,10 +902,10 @@ export async function uploadProfileImage(
   if (!parsed.success) {
     return { error: "Image upload failed. Try again." };
   }
-  const { profileId, file, target } = parsed.data;
+  const { profileId, file } = parsed.data;
 
   const extension = imageExtension(file.type);
-  const maxBytes = imageMaxBytes[target];
+  const maxBytes = imageMaxBytes.avatar;
   if (file.size === 0) {
     return { error: "That file is empty." };
   }
@@ -893,7 +920,6 @@ export async function uploadProfileImage(
       .select({
         id: profiles.id,
         avatarPath: profiles.avatarPath,
-        bannerPath: profiles.bannerPath,
       })
       .from(profiles)
       .where(and(eq(profiles.id, profileId), eq(profiles.userId, user.id)))
@@ -903,13 +929,13 @@ export async function uploadProfileImage(
     return { error: "Profile not found." };
   }
 
-  const bucket = target === "avatar" ? "avatars" : "banners";
-  const path = `${profileId}/${target}-${Date.now()}.${extension}`;
+  const bucket = "avatars";
+  const path = `${profileId}/avatar-${Date.now()}.${extension}`;
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(path, file, { contentType: file.type });
   if (uploadError) {
-    log.error("profiles", `uploadProfileImage ${target} failed`, uploadError.message);
+    log.error("profiles", "uploadProfileImage avatar failed", uploadError.message);
     return { error: "Image upload failed. Try again." };
   }
 
@@ -918,53 +944,42 @@ export async function uploadProfileImage(
   // photo. Publishing writes the path and deletes the superseded object.
   const manual = (await getSaveMode(user.id, profileId, "profile")) === "manual";
   if (manual) {
-    const column = target === "avatar" ? "avatarPath" : "bannerPath";
     await withUserDb(user.id, (tx) =>
       tx
         .insert(profileDrafts)
-        .values({ profileId, [column]: path })
+        .values({ profileId, avatarPath: path })
         .onConflictDoUpdate({
           target: profileDrafts.profileId,
-          set: { [column]: path, updatedAt: new Date() },
+          set: { avatarPath: path, updatedAt: new Date() },
         }),
     );
-    return { path, target };
+    return { path, target: "avatar" };
   }
 
-  const updated =
-    target === "avatar"
-      ? await withUserDb(user.id, (tx) =>
-          tx
-            .update(profiles)
-            .set({ avatarPath: path, updatedAt: new Date() })
-            .where(eq(profiles.id, profileId))
-            .returning({ id: profiles.id }),
-        )
-      : await withUserDb(user.id, (tx) =>
-          tx
-            .update(profiles)
-            .set({ bannerPath: path, updatedAt: new Date() })
-            .where(eq(profiles.id, profileId))
-            .returning({ id: profiles.id }),
-        );
+  const updated = await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({ avatarPath: path, updatedAt: new Date() })
+      .where(eq(profiles.id, profileId))
+      .returning({ id: profiles.id }),
+  );
   if (updated.length === 0) {
     return { error: "Image upload failed. Try again." };
   }
 
-  const oldPath = target === "avatar" ? profile.avatarPath : profile.bannerPath;
-  if (oldPath) {
-    const { error } = await supabase.storage.from(bucket).remove([oldPath]);
+  if (profile.avatarPath) {
+    const { error } = await supabase.storage.from(bucket).remove([profile.avatarPath]);
     if (error) {
       log.error(
         "profiles",
-        `uploadProfileImage old ${target} cleanup failed`,
+        "uploadProfileImage old avatar cleanup failed",
         error.message,
       );
     }
   }
 
   updateTag(PUBLIC_PROFILE_TAG);
-  return { path, target };
+  return { path, target: "avatar" };
 }
 
 export async function uploadWallpaper(
@@ -1044,8 +1059,20 @@ export async function uploadWallpaper(
     if (!full) {
       return { error: "Profile not found." };
     }
+    // Build on the staged draft when one exists, so an upload never walks
+    // back other pending appearance edits.
+    const [draftRow] = await withUserDb(user.id, (tx) =>
+      tx
+        .select()
+        .from(appearanceDrafts)
+        .where(eq(appearanceDrafts.profileId, profileId))
+        .limit(1),
+    );
+    const base = draftRow
+      ? appearanceDraftFromRow(draftRow)
+      : appearanceDraftFromProfile(full);
     const next = {
-      ...appearanceDraftFromProfile(full),
+      ...base,
       wallpaperKind: isVideo ? "video" : "image",
       themeId: "custom" as const,
       ...(isVideo ? { wallpaperVideoPath: path } : { wallpaperImagePath: path }),
@@ -1140,8 +1167,20 @@ export async function removeWallpaperMedia(input: {
     if (!full) {
       return { error: "Profile not found." };
     }
+    // Build on the staged draft when one exists, so a removal never walks
+    // back other pending appearance edits.
+    const [draftRow] = await withUserDb(user.id, (tx) =>
+      tx
+        .select()
+        .from(appearanceDrafts)
+        .where(eq(appearanceDrafts.profileId, parsed.data.profileId))
+        .limit(1),
+    );
+    const base = draftRow
+      ? appearanceDraftFromRow(draftRow)
+      : appearanceDraftFromProfile(full);
     const next = {
-      ...appearanceDraftFromProfile(full),
+      ...base,
       themeId: "custom" as const,
       wallpaperKind: "fill" as const,
       ...(isVideo ? { wallpaperVideoPath: null } : { wallpaperImagePath: null }),
@@ -1174,6 +1213,190 @@ export async function removeWallpaperMedia(input: {
   );
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
+}
+
+/**
+ * Uploads the banner: the media the "banner" header recipe renders. Staged on
+ * the appearance draft in manual mode; a live swap deletes the replaced object
+ * immediately.
+ */
+export async function uploadBanner(
+  formData: FormData,
+): Promise<{ path: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z
+    .object({
+      profileId: z.uuid(),
+      file: z.instanceof(File),
+    })
+    .safeParse({
+      profileId: formData.get("profileId"),
+      file: formData.get("file"),
+    });
+  if (!parsed.success) {
+    return { error: "Image upload failed. Try again." };
+  }
+  const { profileId, file } = parsed.data;
+
+  const extension = imageExtension(file.type);
+  const maxBytes = imageMaxBytes.banner;
+  if (file.size === 0) {
+    return { error: "That file is empty." };
+  }
+  if (extension === null || file.size > maxBytes) {
+    return {
+      error: `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
+    };
+  }
+
+  const [profile] = await withUserDb(user.id, (tx) =>
+    tx
+      .select({ id: profiles.id, bannerPath: profiles.bannerPath })
+      .from(profiles)
+      .where(and(eq(profiles.id, profileId), eq(profiles.userId, user.id)))
+      .limit(1),
+  );
+  if (!profile) {
+    return { error: "Profile not found." };
+  }
+
+  const path = `${profileId}/banner-${Date.now()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from("banners")
+    .upload(path, file, { contentType: file.type });
+  if (uploadError) {
+    log.error("profiles", "uploadBanner failed", uploadError.message);
+    return { error: "Image upload failed. Try again." };
+  }
+
+  // Manual mode stages the path on the appearance draft; the live banner and
+  // `profiles` row are untouched until publish.
+  const manual = (await getSaveMode(user.id, profileId, "appearance")) === "manual";
+  if (manual) {
+    await stageBannerOnAppearanceDraft(user.id, profileId, path);
+    return { path };
+  }
+
+  const updated = await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({ bannerPath: path, updatedAt: new Date() })
+      .where(eq(profiles.id, profileId))
+      .returning({ id: profiles.id }),
+  );
+  if (updated.length === 0) {
+    return { error: "Image upload failed. Try again." };
+  }
+
+  if (profile.bannerPath) {
+    const { error } = await supabase.storage.from("banners").remove([profile.bannerPath]);
+    if (error) {
+      log.error("profiles", "uploadBanner old cleanup failed", error.message);
+    }
+  }
+
+  updateTag(PUBLIC_PROFILE_TAG);
+  return { path };
+}
+
+/**
+ * Removes the banner. Manual mode stages the removal on the appearance draft
+ * and keeps the live object, so a discard restores it; publish clears the live
+ * path and deletes the file.
+ */
+export async function removeBanner(input: {
+  profileId: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = z.object({ profileId: z.uuid() }).safeParse(input);
+  if (!parsed.success) {
+    return { error: "Removing failed. Try again." };
+  }
+
+  const [profile] = await withUserDb(user.id, (tx) =>
+    tx
+      .select({ id: profiles.id, bannerPath: profiles.bannerPath })
+      .from(profiles)
+      .where(and(eq(profiles.id, parsed.data.profileId), eq(profiles.userId, user.id)))
+      .limit(1),
+  );
+  if (!profile) {
+    return { error: "Profile not found." };
+  }
+
+  const manual =
+    (await getSaveMode(user.id, parsed.data.profileId, "appearance")) === "manual";
+  if (manual) {
+    await stageBannerOnAppearanceDraft(user.id, parsed.data.profileId, null);
+    return { ok: true };
+  }
+
+  if (profile.bannerPath) {
+    const { error } = await supabase.storage.from("banners").remove([profile.bannerPath]);
+    if (error) {
+      log.error("profiles", "removeBanner cleanup failed", error.message);
+    }
+  }
+  await withUserDb(user.id, (tx) =>
+    tx
+      .update(profiles)
+      .set({ bannerPath: null, updatedAt: new Date() })
+      .where(eq(profiles.id, parsed.data.profileId)),
+  );
+  updateTag(PUBLIC_PROFILE_TAG);
+  return { ok: true };
+}
+
+/**
+ * Writes one banner path onto the appearance draft, building on the staged
+ * draft when one exists so a media change never walks back other pending
+ * appearance edits.
+ */
+async function stageBannerOnAppearanceDraft(
+  userId: string,
+  profileId: string,
+  bannerPath: string | null,
+): Promise<void> {
+  const [full] = await withUserDb(userId, (tx) =>
+    tx.select().from(profiles).where(eq(profiles.id, profileId)).limit(1),
+  );
+  if (!full) {
+    return;
+  }
+  const [draftRow] = await withUserDb(userId, (tx) =>
+    tx
+      .select()
+      .from(appearanceDrafts)
+      .where(eq(appearanceDrafts.profileId, profileId))
+      .limit(1),
+  );
+  const base = draftRow
+    ? appearanceDraftFromRow(draftRow)
+    : appearanceDraftFromProfile(full);
+  const next = { ...base, bannerPath };
+  await withUserDb(userId, (tx) =>
+    tx
+      .insert(appearanceDrafts)
+      .values({ profileId, ...next })
+      .onConflictDoUpdate({
+        target: appearanceDrafts.profileId,
+        set: { ...next, updatedAt: new Date() },
+      }),
+  );
 }
 
 export async function createProfile(input: {

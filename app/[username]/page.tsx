@@ -93,6 +93,8 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
         color={look.wallpaperColor}
         colorB={look.wallpaperColorB}
         pattern={look.pattern}
+        patternSpacing={look.wallpaperPatternSpacing}
+        patternThickness={look.wallpaperPatternThickness}
         imagePath={look.wallpaperImagePath}
         videoPath={look.wallpaperVideoPath}
         titleColor={look.titleColor}

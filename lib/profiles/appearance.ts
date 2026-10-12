@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import * as z from "zod";
 
+import { headerStyleIds, type HeaderStyleId } from "@/lib/profiles/schema";
+
 export const hexColor = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex color like #1a2b3c.");
@@ -12,6 +14,16 @@ export const presetThemeIds = [
   "mint",
   "sky",
   "sunset",
+  "ink",
+  "paper",
+  "candy",
+  "forest",
+  "ocean",
+  "lavender",
+  "coral",
+  "midnight",
+  "sand",
+  "berry",
 ] as const;
 
 export type PresetThemeId = (typeof presetThemeIds)[number];
@@ -336,6 +348,49 @@ export const wallpaperPatterns: Array<{ id: WallpaperPattern; label: string }> =
   { id: "waves", label: "Waves" },
 ];
 
+// Pattern tuning: tile spacing and stroke weight, each on a 1-4 scale. The
+// defaults reproduce the hardcoded SVG dimensions these knobs replace, so
+// existing pattern pages render exactly as they did before the sliders.
+export const patternSpacingRange = { min: 1, max: 4 } as const;
+export const patternSpacingDefault = 2;
+export const patternThicknessRange = { min: 1, max: 4 } as const;
+export const patternThicknessDefault = 2;
+
+/** How the link list arrives on the page. */
+export const linkEntranceIds = ["none", "fade", "rise", "pop", "slide"] as const;
+
+export type LinkEntrance = (typeof linkEntranceIds)[number];
+
+export const linkEntrances: Array<{ id: LinkEntrance; label: string }> = [
+  { id: "none", label: "None" },
+  { id: "fade", label: "Fade" },
+  { id: "rise", label: "Rise" },
+  { id: "pop", label: "Pop" },
+  { id: "slide", label: "Slide" },
+];
+
+/** What a link does when a visitor points at it. */
+export const linkHoverIds = ["none", "lift", "scale", "glow"] as const;
+
+export type LinkHover = (typeof linkHoverIds)[number];
+
+export const linkHovers: Array<{ id: LinkHover; label: string }> = [
+  { id: "none", label: "None" },
+  { id: "lift", label: "Lift" },
+  { id: "scale", label: "Scale" },
+  { id: "glow", label: "Glow" },
+];
+
+/** Which way the page's content reads. */
+export const pageAlignmentIds = ["center", "left"] as const;
+
+export type PageAlignment = (typeof pageAlignmentIds)[number];
+
+export const pageAlignments: Array<{ id: PageAlignment; label: string }> = [
+  { id: "center", label: "Center" },
+  { id: "left", label: "Left" },
+];
+
 export function hexWithAlpha(hex: string, alpha: string): string {
   return `${hex}${alpha}`;
 }
@@ -346,6 +401,8 @@ export function mutedFor(bodyColor: string): string {
 
 export const appearanceSchema = z.object({
   themeId: z.enum(themeIds),
+  headerStyle: z.enum(headerStyleIds),
+  bannerPath: z.string().max(512).nullable(),
   buttonContour: z.enum(buttonContourIds),
   buttonVariant: z.enum(buttonVariantIds),
   buttonUmbra: z.enum(buttonUmbraIds),
@@ -358,6 +415,19 @@ export const appearanceSchema = z.object({
   wallpaperColor: hexColor,
   wallpaperColorB: hexColor,
   wallpaperPattern: z.enum(wallpaperPatternIds),
+  wallpaperPatternSpacing: z
+    .number()
+    .int()
+    .min(patternSpacingRange.min)
+    .max(patternSpacingRange.max),
+  wallpaperPatternThickness: z
+    .number()
+    .int()
+    .min(patternThicknessRange.min)
+    .max(patternThicknessRange.max),
+  linkEntrance: z.enum(linkEntranceIds),
+  linkHover: z.enum(linkHoverIds),
+  pageAlignment: z.enum(pageAlignmentIds),
   wallpaperImagePath: z.string().max(512).nullable(),
   wallpaperVideoPath: z.string().max(512).nullable(),
 });
@@ -379,6 +449,13 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#ffffff",
     wallpaperColorB: "#f5f3ff",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -396,6 +473,13 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#101010",
     wallpaperColorB: "#262626",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -413,6 +497,13 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#faf6ee",
     wallpaperColorB: "#efe6d8",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -430,6 +521,13 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#d9f2e6",
     wallpaperColorB: "#bfe6d4",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -447,6 +545,13 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#e0f2ff",
     wallpaperColorB: "#f5f3ff",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -464,6 +569,253 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     wallpaperColor: "#ff9a7a",
     wallpaperColorB: "#7a5cff",
     wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  ink: {
+    themeId: "ink",
+    buttonContour: "sharp",
+    buttonVariant: "outline",
+    buttonUmbra: "none",
+    buttonColor: "#fafafa",
+    buttonTextColor: "#fafafa",
+    fontId: "ibm-plex-mono",
+    titleColor: "#fafafa",
+    bodyColor: "#a1a1aa",
+    wallpaperKind: "pattern",
+    wallpaperColor: "#0a0a0a",
+    wallpaperColorB: "#52525b",
+    wallpaperPattern: "grid",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: 1,
+    linkEntrance: "slide",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  paper: {
+    themeId: "paper",
+    buttonContour: "soft",
+    buttonVariant: "fill",
+    buttonUmbra: "soft",
+    buttonColor: "#2b2620",
+    buttonTextColor: "#f6f4ef",
+    fontId: "playfair-display",
+    titleColor: "#2b2620",
+    bodyColor: "#77716a",
+    wallpaperKind: "fill",
+    wallpaperColor: "#f6f4ef",
+    wallpaperColorB: "#e8e2d5",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "fade",
+    linkHover: "lift",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  candy: {
+    themeId: "candy",
+    buttonContour: "pill",
+    buttonVariant: "fill",
+    buttonUmbra: "soft",
+    buttonColor: "#ec4899",
+    buttonTextColor: "#ffffff",
+    fontId: "figtree",
+    titleColor: "#9d174d",
+    bodyColor: "#c05c96",
+    wallpaperKind: "gradient",
+    wallpaperColor: "#ffd1e8",
+    wallpaperColorB: "#fff4fa",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "pop",
+    linkHover: "scale",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  forest: {
+    themeId: "forest",
+    buttonContour: "round",
+    buttonVariant: "fill",
+    buttonUmbra: "soft",
+    buttonColor: "#e9f4ec",
+    buttonTextColor: "#14261c",
+    fontId: "fraunces",
+    titleColor: "#e9f4ec",
+    bodyColor: "#a3bda9",
+    wallpaperKind: "fill",
+    wallpaperColor: "#14261c",
+    wallpaperColorB: "#1f3a2b",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "fade",
+    linkHover: "lift",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  ocean: {
+    themeId: "ocean",
+    buttonContour: "pill",
+    buttonVariant: "glass",
+    buttonUmbra: "soft",
+    buttonColor: "#38bdf8",
+    buttonTextColor: "#f0f9ff",
+    fontId: "space-grotesk",
+    titleColor: "#e0f2fe",
+    bodyColor: "#93b8d4",
+    wallpaperKind: "gradient",
+    wallpaperColor: "#0a2540",
+    wallpaperColorB: "#104567",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "rise",
+    linkHover: "glow",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  lavender: {
+    themeId: "lavender",
+    buttonContour: "pill",
+    buttonVariant: "outline",
+    buttonUmbra: "soft",
+    buttonColor: "#6d5bd0",
+    buttonTextColor: "#ffffff",
+    fontId: "dm-sans",
+    titleColor: "#40348c",
+    bodyColor: "#8078b5",
+    wallpaperKind: "fill",
+    wallpaperColor: "#ebe7f9",
+    wallpaperColorB: "#dcd5f5",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "fade",
+    linkHover: "none",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  coral: {
+    themeId: "coral",
+    buttonContour: "soft",
+    buttonVariant: "fill",
+    buttonUmbra: "soft",
+    buttonColor: "#c2410c",
+    buttonTextColor: "#fff7ed",
+    fontId: "karla",
+    titleColor: "#7c2d12",
+    bodyColor: "#b0765b",
+    wallpaperKind: "gradient",
+    wallpaperColor: "#ffb199",
+    wallpaperColorB: "#ffd8c2",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "rise",
+    linkHover: "scale",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  midnight: {
+    themeId: "midnight",
+    buttonContour: "pill",
+    buttonVariant: "glass",
+    buttonUmbra: "soft",
+    buttonColor: "#a5b4fc",
+    buttonTextColor: "#eef2ff",
+    fontId: "inter",
+    titleColor: "#eef2ff",
+    bodyColor: "#9aa3bf",
+    wallpaperKind: "pattern",
+    wallpaperColor: "#0b0b13",
+    wallpaperColorB: "#6d5bd0",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "fade",
+    linkHover: "glow",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  sand: {
+    themeId: "sand",
+    buttonContour: "sharp",
+    buttonVariant: "fill",
+    buttonUmbra: "none",
+    buttonColor: "#6b4f36",
+    buttonTextColor: "#f3ead9",
+    fontId: "work-sans",
+    titleColor: "#43352a",
+    bodyColor: "#8d7c69",
+    wallpaperKind: "fill",
+    wallpaperColor: "#e9dcc8",
+    wallpaperColorB: "#dccbb0",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "none",
+    linkHover: "lift",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
+    wallpaperImagePath: null,
+    wallpaperVideoPath: null,
+  },
+  berry: {
+    themeId: "berry",
+    buttonContour: "round",
+    buttonVariant: "fill",
+    buttonUmbra: "hard",
+    buttonColor: "#facc15",
+    buttonTextColor: "#2e1065",
+    fontId: "lora",
+    titleColor: "#f5e3ff",
+    bodyColor: "#b9a5e4",
+    wallpaperKind: "fill",
+    wallpaperColor: "#2e1065",
+    wallpaperColorB: "#3b187a",
+    wallpaperPattern: "dots",
+    wallpaperPatternSpacing: patternSpacingDefault,
+    wallpaperPatternThickness: patternThicknessDefault,
+    linkEntrance: "pop",
+    linkHover: "glow",
+    pageAlignment: "center",
+    headerStyle: "classic",
+    bannerPath: null,
     wallpaperImagePath: null,
     wallpaperVideoPath: null,
   },
@@ -496,6 +848,41 @@ export const presetThemes: Array<{
     swatch: "linear-gradient(180deg, #ff9a7a, #7a5cff)",
     values: themePresetValues.sunset,
   },
+  { id: "ink", label: "Ink", swatch: "#0a0a0a", values: themePresetValues.ink },
+  { id: "paper", label: "Paper", swatch: "#f6f4ef", values: themePresetValues.paper },
+  {
+    id: "candy",
+    label: "Candy",
+    swatch: "linear-gradient(180deg, #ffd1e8, #fff4fa)",
+    values: themePresetValues.candy,
+  },
+  { id: "forest", label: "Forest", swatch: "#14261c", values: themePresetValues.forest },
+  {
+    id: "ocean",
+    label: "Ocean",
+    swatch: "linear-gradient(180deg, #0a2540, #104567)",
+    values: themePresetValues.ocean,
+  },
+  {
+    id: "lavender",
+    label: "Lavender",
+    swatch: "#ebe7f9",
+    values: themePresetValues.lavender,
+  },
+  {
+    id: "coral",
+    label: "Coral",
+    swatch: "linear-gradient(180deg, #ffb199, #ffd8c2)",
+    values: themePresetValues.coral,
+  },
+  {
+    id: "midnight",
+    label: "Midnight",
+    swatch: "#0b0b13",
+    values: themePresetValues.midnight,
+  },
+  { id: "sand", label: "Sand", swatch: "#e9dcc8", values: themePresetValues.sand },
+  { id: "berry", label: "Berry", swatch: "#2e1065", values: themePresetValues.berry },
 ];
 
 function toContour(value: string | null | undefined): ButtonContour {
@@ -540,6 +927,63 @@ function toPattern(value: string | null | undefined): WallpaperPattern {
   return "dots";
 }
 
+function toEntrance(value: string | null | undefined): LinkEntrance {
+  if (
+    value === "none" ||
+    value === "fade" ||
+    value === "rise" ||
+    value === "pop" ||
+    value === "slide"
+  ) {
+    return value;
+  }
+  return "none";
+}
+
+function toHover(value: string | null | undefined): LinkHover {
+  if (value === "none" || value === "lift" || value === "scale" || value === "glow") {
+    return value;
+  }
+  return "none";
+}
+
+function toAlignment(value: string | null | undefined): PageAlignment {
+  if (value === "center" || value === "left") {
+    return value;
+  }
+  return "center";
+}
+
+function toHeaderStyle(value: string | null | undefined): HeaderStyleId {
+  // SAFETY: headerStyleIds and HeaderStyleId derive from the same const
+  // tuple, so an includes() hit means the value is a member; the DB CHECK
+  // and appearanceSchema keep the invariant at rest.
+  for (const id of headerStyleIds) {
+    if (value === id) {
+      return value;
+    }
+  }
+  return "classic";
+}
+
+function toInt(
+  value: number | null | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isInteger(value) ||
+    value < min ||
+    value > max
+  ) {
+    return fallback;
+  }
+  return value;
+}
+
 function toHex(value: string | null | undefined, fallback: string): string {
   if (value && /^#[0-9a-fA-F]{6}$/.test(value)) {
     return value;
@@ -547,17 +991,13 @@ function toHex(value: string | null | undefined, fallback: string): string {
   return fallback;
 }
 
+const presetThemeIdSet = new Set<string>(presetThemeIds);
+
 function toThemeId(value: string | null | undefined): ThemeId {
-  if (
-    value === "air" ||
-    value === "charcoal" ||
-    value === "cream" ||
-    value === "mint" ||
-    value === "sky" ||
-    value === "sunset" ||
-    value === "custom"
-  ) {
-    return value;
+  if (value === "custom" || presetThemeIdSet.has(value ?? "")) {
+    // SAFETY: membership in presetThemeIdSet is exactly the PresetThemeId
+    // union, and the "custom" literal is checked before the fallthrough.
+    return value as ThemeId;
   }
   return "custom";
 }
@@ -573,6 +1013,8 @@ export interface ResolvedAppearance extends Appearance {
 
 export function resolveAppearance(input: {
   themeId?: string | null;
+  headerStyle?: string | null;
+  bannerPath?: string | null;
   buttonContour?: string | null;
   buttonVariant?: string | null;
   buttonUmbra?: string | null;
@@ -585,11 +1027,18 @@ export function resolveAppearance(input: {
   wallpaperColor?: string | null;
   wallpaperColorB?: string | null;
   wallpaperPattern?: string | null;
+  wallpaperPatternSpacing?: number | null;
+  wallpaperPatternThickness?: number | null;
+  linkEntrance?: string | null;
+  linkHover?: string | null;
+  pageAlignment?: string | null;
   wallpaperImagePath?: string | null;
   wallpaperVideoPath?: string | null;
 }): ResolvedAppearance {
   const base: Appearance = {
     themeId: toThemeId(input.themeId),
+    headerStyle: toHeaderStyle(input.headerStyle),
+    bannerPath: input.bannerPath ?? null,
     buttonContour: toContour(input.buttonContour),
     buttonVariant: toVariant(input.buttonVariant),
     buttonUmbra: toUmbra(input.buttonUmbra),
@@ -602,6 +1051,21 @@ export function resolveAppearance(input: {
     wallpaperColor: toHex(input.wallpaperColor, "#ffffff"),
     wallpaperColorB: toHex(input.wallpaperColorB, "#f5f3ff"),
     wallpaperPattern: toPattern(input.wallpaperPattern),
+    wallpaperPatternSpacing: toInt(
+      input.wallpaperPatternSpacing,
+      patternSpacingDefault,
+      patternSpacingRange.min,
+      patternSpacingRange.max,
+    ),
+    wallpaperPatternThickness: toInt(
+      input.wallpaperPatternThickness,
+      patternThicknessDefault,
+      patternThicknessRange.min,
+      patternThicknessRange.max,
+    ),
+    linkEntrance: toEntrance(input.linkEntrance),
+    linkHover: toHover(input.linkHover),
+    pageAlignment: toAlignment(input.pageAlignment),
     wallpaperImagePath: input.wallpaperImagePath ?? null,
     wallpaperVideoPath: input.wallpaperVideoPath ?? null,
   };

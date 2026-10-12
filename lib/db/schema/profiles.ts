@@ -4,6 +4,7 @@ import {
   check,
   foreignKey,
   index,
+  integer,
   pgPolicy,
   pgTable,
   text,
@@ -63,6 +64,13 @@ export const profiles = pgTable(
     wallpaperColor: text("wallpaper_color").notNull().default("#ffffff"),
     wallpaperColorB: text("wallpaper_color_b").notNull().default("#f5f3ff"),
     wallpaperPattern: text("wallpaper_pattern").notNull().default("dots"),
+    wallpaperPatternSpacing: integer("wallpaper_pattern_spacing").notNull().default(2),
+    wallpaperPatternThickness: integer("wallpaper_pattern_thickness")
+      .notNull()
+      .default(2),
+    linkEntrance: text("link_entrance").notNull().default("none"),
+    linkHover: text("link_hover").notNull().default("none"),
+    pageAlignment: text("page_alignment").notNull().default("center"),
     wallpaperImagePath: text("wallpaper_image_path"),
     wallpaperVideoPath: text("wallpaper_video_path"),
 
@@ -87,11 +95,11 @@ export const profiles = pgTable(
     check("profiles_username_length", sql`char_length(${t.username}) between 3 and 30`),
     check(
       "profiles_header_style",
-      sql`${t.headerStyle} in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement')`,
+      sql`${t.headerStyle} in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'statement')`,
     ),
     check(
       "profiles_theme_id",
-      sql`${t.themeId} in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'custom')`,
+      sql`${t.themeId} in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'ink', 'paper', 'candy', 'forest', 'ocean', 'lavender', 'coral', 'midnight', 'sand', 'berry', 'custom')`,
     ),
     check(
       "profiles_button_shape",
@@ -117,6 +125,23 @@ export const profiles = pgTable(
       "profiles_wallpaper_pattern",
       sql`${t.wallpaperPattern} in ('dots', 'grid', 'lines', 'waves')`,
     ),
+    check(
+      "profiles_wallpaper_pattern_spacing",
+      sql`${t.wallpaperPatternSpacing} between 1 and 4`,
+    ),
+    check(
+      "profiles_wallpaper_pattern_thickness",
+      sql`${t.wallpaperPatternThickness} between 1 and 4`,
+    ),
+    check(
+      "profiles_link_entrance",
+      sql`${t.linkEntrance} in ('none', 'fade', 'rise', 'pop', 'slide')`,
+    ),
+    check(
+      "profiles_link_hover",
+      sql`${t.linkHover} in ('none', 'lift', 'scale', 'glow')`,
+    ),
+    check("profiles_page_alignment", sql`${t.pageAlignment} in ('center', 'left')`),
     check(
       "profiles_display_name_length",
       sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,

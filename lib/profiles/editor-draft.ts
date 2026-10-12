@@ -7,9 +7,7 @@ import { resolveAppearance } from "@/lib/profiles/appearance";
 export interface ProfileDraftFields {
   displayName: string;
   bio: string;
-  headerStyle: string;
   avatarPath: string | null;
-  bannerPath: string | null;
 }
 
 /** The Appearance section's editable fields, matching `appearanceSchema`. */
@@ -19,9 +17,7 @@ export function profileDraftFromProfile(profile: Profile): ProfileDraftFields {
   return {
     displayName: profile.displayName ?? "",
     bio: profile.bio ?? "",
-    headerStyle: profile.headerStyle,
     avatarPath: profile.avatarPath,
-    bannerPath: profile.bannerPath,
   };
 }
 
@@ -29,9 +25,7 @@ export function profileDraftFromRow(row: ProfileDraft): ProfileDraftFields {
   return {
     displayName: row.displayName ?? "",
     bio: row.bio ?? "",
-    headerStyle: row.headerStyle,
     avatarPath: row.avatarPath,
-    bannerPath: row.bannerPath,
   };
 }
 
@@ -39,6 +33,8 @@ export function appearanceDraftFromProfile(profile: Profile): AppearanceDraftFie
   const resolved = resolveAppearance(profile);
   return {
     themeId: resolved.themeId,
+    headerStyle: resolved.headerStyle,
+    bannerPath: resolved.bannerPath,
     buttonContour: resolved.buttonContour,
     buttonVariant: resolved.buttonVariant,
     buttonUmbra: resolved.buttonUmbra,
@@ -51,6 +47,11 @@ export function appearanceDraftFromProfile(profile: Profile): AppearanceDraftFie
     wallpaperColor: resolved.wallpaperColor,
     wallpaperColorB: resolved.wallpaperColorB,
     wallpaperPattern: resolved.wallpaperPattern,
+    wallpaperPatternSpacing: resolved.wallpaperPatternSpacing,
+    wallpaperPatternThickness: resolved.wallpaperPatternThickness,
+    linkEntrance: resolved.linkEntrance,
+    linkHover: resolved.linkHover,
+    pageAlignment: resolved.pageAlignment,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };
@@ -60,6 +61,8 @@ export function appearanceDraftFromRow(row: AppearanceDraft): AppearanceDraftFie
   const resolved = resolveAppearance(row);
   return {
     themeId: resolved.themeId,
+    headerStyle: resolved.headerStyle,
+    bannerPath: resolved.bannerPath,
     buttonContour: resolved.buttonContour,
     buttonVariant: resolved.buttonVariant,
     buttonUmbra: resolved.buttonUmbra,
@@ -72,6 +75,11 @@ export function appearanceDraftFromRow(row: AppearanceDraft): AppearanceDraftFie
     wallpaperColor: resolved.wallpaperColor,
     wallpaperColorB: resolved.wallpaperColorB,
     wallpaperPattern: resolved.wallpaperPattern,
+    wallpaperPatternSpacing: resolved.wallpaperPatternSpacing,
+    wallpaperPatternThickness: resolved.wallpaperPatternThickness,
+    linkEntrance: resolved.linkEntrance,
+    linkHover: resolved.linkHover,
+    pageAlignment: resolved.pageAlignment,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };

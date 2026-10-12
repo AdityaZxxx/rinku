@@ -14,16 +14,22 @@ const maxChars = (limit: number) =>
 export const profileBasicsSchema = z.object({
   displayName: maxChars(50),
   bio: maxChars(150),
-  headerStyle: z.enum([
-    "classic",
-    "hero",
-    "banner",
-    "cutout",
-    "minimal",
-    "left",
-    "statement",
-  ]),
 });
+
+// How the header composes avatar, text, and media. The setting lives in the
+// Appearance section; the column keeps its historical home on `profiles`.
+// Each layout is a complete recipe: the banner image, for instance, renders
+// only in the "banner" recipe, so what a visitor sees is predictable.
+export const headerStyleIds = [
+  "classic",
+  "hero",
+  "banner",
+  "cutout",
+  "minimal",
+  "statement",
+] as const;
+
+export type HeaderStyleId = (typeof headerStyleIds)[number];
 
 // Crawler-facing overrides for the public page's <head>, mirroring the length
 // CHECKs on `profiles`. Empty strings are trimmed to null on save, which

@@ -267,6 +267,34 @@
       "when": 1791687516951,
       "tag": "0037_lame_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791708245676,
+      "tag": "0038_cultured_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791764691217,
+      "tag": "0039_nifty_mentallo",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791771278677,
+      "tag": "0040_silly_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791779001779,
+      "tag": "0041_nice_sauron",
+      "breakpoints": true
     }
   ]
 }

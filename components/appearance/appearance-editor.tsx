@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
@@ -47,6 +48,11 @@ import {
   buttonVariants,
   fontStack,
   fonts,
+  linkEntrances,
+  linkHovers,
+  pageAlignments,
+  patternSpacingRange,
+  patternThicknessRange,
   presetThemes,
   resolveAppearance,
   themePresetValues,
@@ -54,6 +60,9 @@ import {
   wallpaperPatterns,
   type Appearance,
   type ButtonUmbra,
+  type LinkEntrance,
+  type LinkHover,
+  type PageAlignment,
   type PresetThemeId,
   type WallpaperPattern,
 } from "@/lib/profiles/appearance";
@@ -61,19 +70,68 @@ import {
   appearanceDraftFromProfile,
   type AppearanceDraftFields,
 } from "@/lib/profiles/editor-draft";
-import { imageMaxBytes } from "@/lib/profiles/schema";
-import { wallpaperUrl } from "@/lib/supabase/storage";
+import { headerStyleIds, imageMaxBytes } from "@/lib/profiles/schema";
+import { wallpaperUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 import {
+  useRemoveBanner,
   useRemoveWallpaperMedia,
   useUpdateAppearance,
+  useUploadBanner,
   useUploadWallpaper,
 } from "./use-appearance-mutations";
+
+/** The four-step spacing scale, as read on the slider's value chip. */
+function spacingLabel(value: number): string {
+  switch (value) {
+    case 1:
+      return "Tight";
+    case 2:
+      return "Regular";
+    case 3:
+      return "Loose";
+    case 4:
+      return "Wide";
+    default:
+      return String(value);
+  }
+}
+
+/** The four-step thickness scale, as read on the slider's value chip. */
+function thicknessLabel(value: number): string {
+  switch (value) {
+    case 1:
+      return "Fine";
+    case 2:
+      return "Regular";
+    case 3:
+      return "Bold";
+    case 4:
+      return "Heavy";
+    default:
+      return String(value);
+  }
+}
+
+function isBareSliderValue(next: number | readonly number[]): next is number {
+  return !Array.isArray(next);
+}
+
+/**
+ * Base UI reports single-thumb pointer moves as a bare number, but keyboard
+ * steps in the shape of the `value` prop (here a one-entry array), so unwrap
+ * either shape to the thumb's value.
+ */
+function singleThumbValue(next: number | readonly number[]): number | undefined {
+  return isBareSliderValue(next) ? next : next[0];
+}
 
 function appearanceFromProfile(profile: Profile): Appearance {
   const resolved = resolveAppearance(profile);
   return {
     themeId: resolved.themeId,
+    headerStyle: resolved.headerStyle,
+    bannerPath: resolved.bannerPath,
     buttonContour: resolved.buttonContour,
     buttonVariant: resolved.buttonVariant,
     buttonUmbra: resolved.buttonUmbra,
@@ -86,6 +144,11 @@ function appearanceFromProfile(profile: Profile): Appearance {
     wallpaperColor: resolved.wallpaperColor,
     wallpaperColorB: resolved.wallpaperColorB,
     wallpaperPattern: resolved.wallpaperPattern,
+    wallpaperPatternSpacing: resolved.wallpaperPatternSpacing,
+    wallpaperPatternThickness: resolved.wallpaperPatternThickness,
+    linkEntrance: resolved.linkEntrance,
+    linkHover: resolved.linkHover,
+    pageAlignment: resolved.pageAlignment,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };
@@ -135,6 +198,9 @@ function WallpaperKindTile({
   checked,
   color,
   colorB,
+  pattern,
+  spacing,
+  thickness,
   onSelect,
 }: {
   kind: "fill" | "gradient" | "blur" | "pattern" | "image" | "video";
@@ -142,6 +208,9 @@ function WallpaperKindTile({
   checked: boolean;
   color: string;
   colorB: string;
+  pattern?: WallpaperPattern;
+  spacing?: number;
+  thickness?: number;
   onSelect: () => void;
 }) {
   if (kind === "image" || kind === "video") {
@@ -170,7 +239,14 @@ function WallpaperKindTile({
       checked={checked}
       onSelect={onSelect}
     >
-      <KindMock kind={kind} color={color} colorB={colorB} />
+      <KindMock
+        kind={kind}
+        color={color}
+        colorB={colorB}
+        pattern={pattern}
+        spacing={spacing}
+        thickness={thickness}
+      />
     </OptionTile>
   );
 }
@@ -240,11 +316,15 @@ function KindMock({
   color,
   colorB,
   pattern = "dots",
+  spacing,
+  thickness,
 }: {
   kind: string;
   color: string;
   colorB: string;
   pattern?: WallpaperPattern;
+  spacing?: number;
+  thickness?: number;
 }) {
   if (kind === "gradient") {
     return (
@@ -280,7 +360,9 @@ function KindMock({
       <TileMock>
         <span
           className="h-9 w-full rounded-md border"
-          style={{ background: patternBackground(pattern, color, colorB) }}
+          style={{
+            background: patternBackground(pattern, color, colorB, spacing, thickness),
+          }}
         />
       </TileMock>
     );
@@ -310,6 +392,119 @@ function KindMock({
   );
 }
 
+/** The six header recipes, each mocked with its signature composition. */
+function HeaderMock({ value }: { value: string }) {
+  if (value === "statement") {
+    return (
+      <TileMock>
+        <span className="flex h-9 w-full flex-col justify-center gap-1">
+          <span className="bg-foreground/30 h-1.5 w-full rounded-full" />
+          <span className="bg-foreground/30 h-1.5 w-4/5 rounded-full" />
+          <span className="bg-foreground/20 h-1 w-1/2 rounded-full" />
+        </span>
+      </TileMock>
+    );
+  }
+  if (value === "banner") {
+    return (
+      <TileMock>
+        <span className="flex h-9 w-full flex-col items-center">
+          <span className="bg-foreground/15 relative h-5 w-full rounded-md" />
+          <span className="bg-foreground/30 border-background -mt-1.5 size-3 rounded-full border-2" />
+          <span className="bg-foreground/20 h-1 w-1/2 rounded-full" />
+        </span>
+      </TileMock>
+    );
+  }
+  if (value === "minimal") {
+    return (
+      <TileMock>
+        <span className="flex h-9 w-full flex-col items-center justify-center gap-1">
+          <span className="bg-foreground/30 h-1 w-1/2 rounded-full" />
+          <span className="bg-foreground/20 h-1 w-2/3 rounded-full" />
+        </span>
+      </TileMock>
+    );
+  }
+  if (value === "cutout") {
+    return (
+      <TileMock>
+        <span className="flex h-9 w-full flex-col items-center justify-center gap-1">
+          <span className="bg-foreground/15 h-5 w-4/5 rounded-lg" />
+          <span className="bg-foreground/20 h-1 w-1/2 rounded-full" />
+        </span>
+      </TileMock>
+    );
+  }
+  if (value === "hero") {
+    return (
+      <TileMock>
+        <span className="flex h-9 w-full flex-col gap-1">
+          <span className="bg-foreground/15 h-6 w-full rounded-md" />
+          <span className="bg-foreground/20 h-1 w-1/2 self-center rounded-full" />
+        </span>
+      </TileMock>
+    );
+  }
+  return (
+    <TileMock>
+      <span className="flex h-9 w-full flex-col items-center justify-center gap-1">
+        <span className="bg-foreground/30 size-3.5 rounded-full" />
+        <span className="bg-foreground/20 h-1 w-1/2 rounded-full" />
+      </span>
+    </TileMock>
+  );
+}
+
+function AlignmentMock({ alignment }: { alignment: PageAlignment }) {
+  return (
+    <TileMock>
+      <span
+        className={cn(
+          "flex w-full flex-col gap-1",
+          alignment === "left" ? "items-start" : "items-center",
+        )}
+      >
+        <span className="bg-foreground/70 h-1.5 w-2/3 rounded-full" />
+        <span className="bg-foreground/30 h-1.5 w-1/2 rounded-full" />
+        <span className="bg-foreground/20 h-1.5 w-1/3 rounded-full" />
+      </span>
+    </TileMock>
+  );
+}
+
+/** Each entrance mocked as its end-of-motion state, readable at a glance. */
+function EntranceMock({ id }: { id: LinkEntrance }) {
+  return (
+    <TileMock>
+      <span
+        className={cn(
+          "bg-foreground/60 h-2 w-3/4 rounded-full",
+          id === "fade" && "opacity-40",
+          id === "rise" && "translate-y-1",
+          id === "pop" && "scale-90",
+          id === "slide" && "-translate-x-1.5",
+        )}
+      />
+    </TileMock>
+  );
+}
+
+function HoverMock({ id }: { id: LinkHover }) {
+  return (
+    <TileMock>
+      <span
+        className={cn(
+          "bg-foreground/60 h-2 w-3/4 rounded-full transition",
+          id === "lift" && "shadow-md -translate-y-0.5",
+          id === "scale" && "scale-105",
+          id === "glow" && "ring-foreground/25 ring-2",
+        )}
+      />
+    </TileMock>
+  );
+}
+
 function ColorField({
   label,
   value,
@@ -328,6 +523,48 @@ function ColorField({
         <span className="text-muted-foreground text-xs uppercase">{value}</span>
       </div>
       <ColorPicker value={value} onChange={onPreview} onCommit={onCommit} label={label} />
+    </div>
+  );
+}
+
+function SliderField({
+  label,
+  labelledBy,
+  value,
+  min,
+  max,
+  display,
+  onChange,
+}: {
+  label: string;
+  labelledBy: string;
+  value: number;
+  min: number;
+  max: number;
+  display: (value: number) => string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border px-3 py-2">
+      <span id={labelledBy} className="shrink-0 text-sm font-medium">
+        {label}
+      </span>
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        aria-labelledby={labelledBy}
+        onValueChange={(next) => {
+          const nextValue = singleThumbValue(next);
+          if (nextValue !== undefined) {
+            onChange(nextValue);
+          }
+        }}
+        className="min-w-0 flex-1"
+      />
+      <span className="text-muted-foreground w-16 shrink-0 text-right text-xs">
+        {display(value)}
+      </span>
     </div>
   );
 }
@@ -351,6 +588,7 @@ export function AppearanceEditor({
   const { setAppearanceDraft } = useEditorDraft() ?? {};
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { profile } = useProfileQuery(username, initialProfile);
@@ -436,7 +674,16 @@ export function AppearanceEditor({
     if (commitTimer.current) {
       clearTimeout(commitTimer.current);
     }
-    const next = themePresetValues[id];
+    // A theme restyles the page; it does not delete uploaded media or walk the
+    // header back. Keeping both means the image/video tiles still find their
+    // files when the user returns, and the header choice survives the switch.
+    const next: Appearance = {
+      ...themePresetValues[id],
+      headerStyle: values.headerStyle,
+      bannerPath: values.bannerPath,
+      wallpaperImagePath: values.wallpaperImagePath,
+      wallpaperVideoPath: values.wallpaperVideoPath,
+    };
     applyValues(next);
   }
 
@@ -503,6 +750,39 @@ export function AppearanceEditor({
       });
     },
   });
+
+  // Banner media follows the wallpaper pattern: the action carries the server
+  // side effect, and the resulting path folds into the draft so the preview
+  // reflects it. It never flips themeId: a theme does not own the banner.
+  const uploadBannerMedia = useUploadBanner(username, {
+    onDone: (path) => {
+      const prev = history.present;
+      applyValues({ ...prev, bannerPath: path });
+    },
+  });
+  const removeBannerMedia = useRemoveBanner(username, {
+    onDone: () => {
+      const prev = history.present;
+      applyValues({ ...prev, bannerPath: null });
+    },
+  });
+
+  function onPickBannerFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) {
+      return;
+    }
+    const maxBytes = imageMaxBytes.banner;
+    if (file.size === 0 || !file.type.startsWith("image/") || file.size > maxBytes) {
+      toast.error(
+        `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
+      );
+      return;
+    }
+    uploadBannerMedia.mutate({ profileId: profile.id, file });
+  }
 
   useEffect(() => {
     if (!manual) {
@@ -620,7 +900,7 @@ export function AppearanceEditor({
           <div
             role="radiogroup"
             aria-labelledby="theme-label"
-            className="grid grid-cols-3 gap-2"
+            className="grid grid-cols-4 gap-2"
           >
             {presetThemes.map((theme) => (
               <OptionTile
@@ -657,6 +937,170 @@ export function AppearanceEditor({
 
       <div className="bg-card flex flex-col gap-6 rounded-2xl border p-4 sm:p-5">
         <Field>
+          <FieldLabel id="header-style-label">Header</FieldLabel>
+          <div
+            role="radiogroup"
+            aria-labelledby="header-style-label"
+            className="grid grid-cols-3 gap-2"
+          >
+            {headerStyleIds.map((value) => (
+              <OptionTile
+                key={value}
+                name="header-style"
+                value={value}
+                label={value}
+                checked={values.headerStyle === value}
+                onSelect={() => tweak({ headerStyle: value })}
+              >
+                <HeaderMock value={value} />
+              </OptionTile>
+            ))}
+          </div>
+        </Field>
+
+        {values.headerStyle === "banner" ? (
+          <div className="flex items-center gap-3 rounded-xl border px-3 py-2">
+            {values.bannerPath ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={bannerUrl(values.bannerPath)}
+                  alt=""
+                  className="size-12 shrink-0 rounded-lg object-cover"
+                />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium">Banner image</span>
+                  <span className="text-muted-foreground text-xs">
+                    Fades into the page behind your photo.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="text-muted-foreground hover:text-foreground text-xs underline"
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  aria-label="Remove banner image"
+                  onClick={() =>
+                    removeBannerMedia.mutate({
+                      profileId: profile.id,
+                    })
+                  }
+                  className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-full"
+                >
+                  {removeBannerMedia.isPending ? (
+                    <Spinner />
+                  ) : (
+                    <XIcon className="size-4" />
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg">
+                  {uploadBannerMedia.isPending ? (
+                    <Spinner />
+                  ) : (
+                    <ImageIcon className="text-muted-foreground size-5" />
+                  )}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium">Banner image</span>
+                  <span className="text-muted-foreground text-xs">
+                    No banner yet: choose one to upload.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="text-xs font-medium underline"
+                >
+                  Choose file
+                </button>
+              </>
+            )}
+          </div>
+        ) : null}
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          className="hidden"
+          onChange={onPickBannerFile}
+        />
+
+        <Field>
+          <FieldLabel id="alignment-label">Page alignment</FieldLabel>
+          <div
+            role="radiogroup"
+            aria-labelledby="alignment-label"
+            className="grid grid-cols-2 gap-2"
+          >
+            {pageAlignments.map((alignment) => (
+              <OptionTile
+                key={alignment.id}
+                name="page-alignment"
+                value={alignment.id}
+                label={alignment.label}
+                checked={values.pageAlignment === alignment.id}
+                onSelect={() => tweak({ pageAlignment: alignment.id })}
+              >
+                <AlignmentMock alignment={alignment.id} />
+              </OptionTile>
+            ))}
+          </div>
+        </Field>
+
+        <Field>
+          <FieldLabel id="entrance-label">Link entrance</FieldLabel>
+          <div
+            role="radiogroup"
+            aria-labelledby="entrance-label"
+            className="grid grid-cols-5 gap-2"
+          >
+            {linkEntrances.map((entrance) => (
+              <OptionTile
+                key={entrance.id}
+                name="link-entrance"
+                value={entrance.id}
+                label={entrance.label}
+                checked={values.linkEntrance === entrance.id}
+                onSelect={() => tweak({ linkEntrance: entrance.id })}
+              >
+                <EntranceMock id={entrance.id} />
+              </OptionTile>
+            ))}
+          </div>
+        </Field>
+
+        <Field>
+          <FieldLabel id="hover-label">Hover effect</FieldLabel>
+          <div
+            role="radiogroup"
+            aria-labelledby="hover-label"
+            className="grid grid-cols-4 gap-2"
+          >
+            {linkHovers.map((hover) => (
+              <OptionTile
+                key={hover.id}
+                name="link-hover"
+                value={hover.id}
+                label={hover.label}
+                checked={values.linkHover === hover.id}
+                onSelect={() => tweak({ linkHover: hover.id })}
+              >
+                <HoverMock id={hover.id} />
+              </OptionTile>
+            ))}
+          </div>
+        </Field>
+      </div>
+
+      <div className="bg-card flex flex-col gap-6 rounded-2xl border p-4 sm:p-5">
+        <Field>
           <FieldLabel id="wallpaper-label">Page background</FieldLabel>
           <div
             role="radiogroup"
@@ -671,6 +1115,9 @@ export function AppearanceEditor({
                 checked={values.wallpaperKind === kind.id}
                 color={values.wallpaperColor}
                 colorB={values.wallpaperColorB}
+                pattern={values.wallpaperPattern}
+                spacing={values.wallpaperPatternSpacing}
+                thickness={values.wallpaperPatternThickness}
                 onSelect={() => {
                   if (kind.id === "image") {
                     setUploadDialog("image");
@@ -711,32 +1158,60 @@ export function AppearanceEditor({
         </div>
 
         {values.wallpaperKind === "pattern" ? (
-          <Field>
-            <FieldLabel id="pattern-label">Pattern</FieldLabel>
-            <div
-              role="radiogroup"
-              aria-labelledby="pattern-label"
-              className="grid grid-cols-4 gap-2"
-            >
-              {wallpaperPatterns.map((pattern) => (
-                <OptionTile
-                  key={pattern.id}
-                  name="wallpaper-pattern"
-                  value={pattern.id}
-                  label={pattern.label}
-                  checked={values.wallpaperPattern === pattern.id}
-                  onSelect={() => tweak({ wallpaperPattern: pattern.id })}
-                >
-                  <KindMock
-                    kind="pattern"
-                    color={values.wallpaperColor}
-                    colorB={values.wallpaperColorB}
-                    pattern={pattern.id}
-                  />
-                </OptionTile>
-              ))}
+          <>
+            <Field>
+              <FieldLabel id="pattern-label">Pattern</FieldLabel>
+              <div
+                role="radiogroup"
+                aria-labelledby="pattern-label"
+                className="grid grid-cols-4 gap-2"
+              >
+                {wallpaperPatterns.map((pattern) => (
+                  <OptionTile
+                    key={pattern.id}
+                    name="wallpaper-pattern"
+                    value={pattern.id}
+                    label={pattern.label}
+                    checked={values.wallpaperPattern === pattern.id}
+                    onSelect={() => tweak({ wallpaperPattern: pattern.id })}
+                  >
+                    <KindMock
+                      kind="pattern"
+                      color={values.wallpaperColor}
+                      colorB={values.wallpaperColorB}
+                      pattern={pattern.id}
+                      spacing={values.wallpaperPatternSpacing}
+                      thickness={values.wallpaperPatternThickness}
+                    />
+                  </OptionTile>
+                ))}
+              </div>
+            </Field>
+            <div className="grid gap-2">
+              <SliderField
+                label="Spacing"
+                labelledBy="pattern-spacing-label"
+                value={values.wallpaperPatternSpacing}
+                min={patternSpacingRange.min}
+                max={patternSpacingRange.max}
+                display={(value) => spacingLabel(value)}
+                onChange={(wallpaperPatternSpacing) =>
+                  tweak({ wallpaperPatternSpacing }, "wallpaperPatternSpacing")
+                }
+              />
+              <SliderField
+                label="Thickness"
+                labelledBy="pattern-thickness-label"
+                value={values.wallpaperPatternThickness}
+                min={patternThicknessRange.min}
+                max={patternThicknessRange.max}
+                display={(value) => thicknessLabel(value)}
+                onChange={(wallpaperPatternThickness) =>
+                  tweak({ wallpaperPatternThickness }, "wallpaperPatternThickness")
+                }
+              />
             </div>
-          </Field>
+          </>
         ) : null}
 
         {values.wallpaperKind === "image" ? (

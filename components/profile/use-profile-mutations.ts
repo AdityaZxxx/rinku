@@ -15,18 +15,7 @@ export function useUpdateProfile(username: string) {
   const key = profileKey(username);
 
   return useMutation({
-    mutationFn: async (input: {
-      displayName: string;
-      bio: string;
-      headerStyle:
-        | "classic"
-        | "hero"
-        | "banner"
-        | "cutout"
-        | "minimal"
-        | "left"
-        | "statement";
-    }) => {
+    mutationFn: async (input: { displayName: string; bio: string }) => {
       const result = await updateProfile({ username, ...input });
       if ("error" in result) {
         throw new Error(result.error);
@@ -42,7 +31,6 @@ export function useUpdateProfile(username: string) {
               ...old,
               displayName: input.displayName.trim() || null,
               bio: input.bio.trim() || null,
-              headerStyle: input.headerStyle,
               updatedAt: new Date(),
             }
           : old,
@@ -70,15 +58,11 @@ export function useUploadProfileImage(username: string) {
   const key = profileKey(username);
 
   return useMutation({
-    mutationFn: async (input: {
-      profileId: string;
-      file: File;
-      target: "avatar" | "banner";
-    }) => {
+    mutationFn: async (input: { profileId: string; file: File }) => {
       const formData = new FormData();
       formData.set("profileId", input.profileId);
       formData.set("file", input.file);
-      formData.set("target", input.target);
+      formData.set("target", "avatar");
       const result = await uploadProfileImage(formData);
       if ("error" in result) {
         throw new Error(result.error);
@@ -87,11 +71,7 @@ export function useUploadProfileImage(username: string) {
     },
     onSuccess: (result) => {
       queryClient.setQueryData<Profile>(key, (old) =>
-        old
-          ? result.target === "avatar"
-            ? { ...old, avatarPath: result.path, updatedAt: new Date() }
-            : { ...old, bannerPath: result.path, updatedAt: new Date() }
-          : old,
+        old ? { ...old, avatarPath: result.path, updatedAt: new Date() } : old,
       );
     },
     onError: (error) => {

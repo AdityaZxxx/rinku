@@ -1,29 +1,39 @@
-import { hexWithAlpha, type WallpaperPattern } from "@/lib/profiles/appearance";
+import {
+  hexWithAlpha,
+  patternSpacingDefault,
+  patternThicknessDefault,
+  type WallpaperPattern,
+} from "@/lib/profiles/appearance";
 import { wallpaperUrl } from "@/lib/supabase/storage";
 
 export function patternBackground(
   pattern: WallpaperPattern,
   base: string,
   ink: string,
+  spacing: number = patternSpacingDefault,
+  thickness: number = patternThicknessDefault,
 ): string {
+  // Tile dimensions scale with spacing; stroke widths with thickness, so the
+  // two knobs stay independent.
+  const scale = spacing / patternSpacingDefault;
   const line = hexWithAlpha(ink, "26");
   const soft = hexWithAlpha(ink, "14");
   switch (pattern) {
     case "grid":
       return `url("data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'><path d='M36 0H0v36' fill='none' stroke='${line}' stroke-width='1.5'/></svg>`,
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${36 * scale}' height='${36 * scale}'><path d='M${36 * scale} 0H0v${36 * scale}' fill='none' stroke='${line}' stroke-width='${thickness * 0.75}'/></svg>`,
       )}"), ${base}`;
     case "lines":
       return `url("data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path d='M-6 6L6 -6M0 24L24 0M18 30L30 18' stroke='${line}' stroke-width='2'/></svg>`,
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${24 * scale}' height='${24 * scale}'><path d='M${-6 * scale} ${6 * scale}L${6 * scale} ${-6 * scale}M0 ${24 * scale}L${24 * scale} 0M${18 * scale} ${30 * scale}L${30 * scale} ${18 * scale}' stroke='${line}' stroke-width='${thickness}'/></svg>`,
       )}"), ${base}`;
     case "waves":
       return `url("data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' width='72' height='24'><path d='M0 12Q18 2 36 12T72 12' fill='none' stroke='${soft}' stroke-width='2'/></svg>`,
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${72 * scale}' height='${24 * scale}'><path d='M0 ${12 * scale}Q${18 * scale} ${2 * scale} ${36 * scale} ${12 * scale}T${72 * scale} ${12 * scale}' fill='none' stroke='${soft}' stroke-width='${thickness}'/></svg>`,
       )}"), ${base}`;
     default:
       return `url("data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26'><circle cx='3' cy='3' r='2.4' fill='${line}'/></svg>`,
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${26 * scale}' height='${26 * scale}'><circle cx='${3 * scale}' cy='${3 * scale}' r='${thickness * 1.2}' fill='${line}'/></svg>`,
       )}"), ${base}`;
   }
 }
@@ -33,6 +43,8 @@ export function WallpaperLayer({
   color,
   colorB,
   pattern,
+  patternSpacing,
+  patternThickness,
   imagePath,
   videoPath,
   titleColor,
@@ -41,6 +53,8 @@ export function WallpaperLayer({
   color: string;
   colorB: string;
   pattern: WallpaperPattern;
+  patternSpacing: number;
+  patternThickness: number;
   imagePath: string | null;
   videoPath: string | null;
   titleColor: string;
@@ -111,7 +125,15 @@ export function WallpaperLayer({
       <div
         aria-hidden="true"
         className="absolute inset-y-0 left-1/2 w-full max-w-md -translate-x-1/2"
-        style={{ background: patternBackground(pattern, color, colorB) }}
+        style={{
+          background: patternBackground(
+            pattern,
+            color,
+            colorB,
+            patternSpacing,
+            patternThickness,
+          ),
+        }}
       />
     );
   }

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   foreignKey,
+  integer,
   pgPolicy,
   pgTable,
   text,
@@ -99,13 +100,11 @@ export const profileDrafts = pgTable(
     profileId: uuid("profile_id").primaryKey(),
     displayName: text("display_name"),
     bio: text("bio"),
-    headerStyle: text("header_style").notNull().default("classic"),
 
-    // Staged photo/banner. Uploaded to storage immediately (a file has to live
+    // Staged photo. Uploaded to storage immediately (a file has to live
     // somewhere), but not written onto `profiles` until publish. The live
     // object survives until then and can be discarded.
     avatarPath: text("avatar_path"),
-    bannerPath: text("banner_path"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -115,10 +114,6 @@ export const profileDrafts = pgTable(
       name: "profile_drafts_profile_id_fkey",
     }).onDelete("cascade"),
 
-    check(
-      "profile_drafts_header_style",
-      sql`${t.headerStyle} in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'left', 'statement')`,
-    ),
     check(
       "profile_drafts_display_name_length",
       sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,
@@ -163,6 +158,11 @@ export const appearanceDrafts = pgTable(
     profileId: uuid("profile_id").primaryKey(),
 
     themeId: text("theme_id").notNull().default("air"),
+    // The header setting is owned by the Appearance section, so its staged
+    // value lives here, not in `profile_drafts`. The banner rides along: it
+    // is what the "banner" header recipe renders, so it is appearance media.
+    headerStyle: text("header_style").notNull().default("classic"),
+    bannerPath: text("banner_path"),
     buttonContour: text("button_shape").notNull().default("pill"),
     buttonVariant: text("button_style").notNull().default("fill"),
     buttonUmbra: text("button_umbra").notNull().default("soft"),
@@ -175,6 +175,13 @@ export const appearanceDrafts = pgTable(
     wallpaperColor: text("wallpaper_color").notNull().default("#ffffff"),
     wallpaperColorB: text("wallpaper_color_b").notNull().default("#f5f3ff"),
     wallpaperPattern: text("wallpaper_pattern").notNull().default("dots"),
+    wallpaperPatternSpacing: integer("wallpaper_pattern_spacing").notNull().default(2),
+    wallpaperPatternThickness: integer("wallpaper_pattern_thickness")
+      .notNull()
+      .default(2),
+    linkEntrance: text("link_entrance").notNull().default("none"),
+    linkHover: text("link_hover").notNull().default("none"),
+    pageAlignment: text("page_alignment").notNull().default("center"),
     wallpaperImagePath: text("wallpaper_image_path"),
     wallpaperVideoPath: text("wallpaper_video_path"),
 
@@ -189,7 +196,11 @@ export const appearanceDrafts = pgTable(
 
     check(
       "appearance_drafts_theme_id",
-      sql`${t.themeId} in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'custom')`,
+      sql`${t.themeId} in ('air', 'charcoal', 'cream', 'mint', 'sky', 'sunset', 'ink', 'paper', 'candy', 'forest', 'ocean', 'lavender', 'coral', 'midnight', 'sand', 'berry', 'custom')`,
+    ),
+    check(
+      "appearance_drafts_header_style",
+      sql`${t.headerStyle} in ('classic', 'hero', 'banner', 'cutout', 'minimal', 'statement')`,
     ),
     check(
       "appearance_drafts_button_shape",
@@ -214,6 +225,26 @@ export const appearanceDrafts = pgTable(
     check(
       "appearance_drafts_wallpaper_pattern",
       sql`${t.wallpaperPattern} in ('dots', 'grid', 'lines', 'waves')`,
+    ),
+    check(
+      "appearance_drafts_wallpaper_pattern_spacing",
+      sql`${t.wallpaperPatternSpacing} between 1 and 4`,
+    ),
+    check(
+      "appearance_drafts_wallpaper_pattern_thickness",
+      sql`${t.wallpaperPatternThickness} between 1 and 4`,
+    ),
+    check(
+      "appearance_drafts_link_entrance",
+      sql`${t.linkEntrance} in ('none', 'fade', 'rise', 'pop', 'slide')`,
+    ),
+    check(
+      "appearance_drafts_link_hover",
+      sql`${t.linkHover} in ('none', 'lift', 'scale', 'glow')`,
+    ),
+    check(
+      "appearance_drafts_page_alignment",
+      sql`${t.pageAlignment} in ('center', 'left')`,
     ),
 
     pgPolicy("users read own appearance draft", {

@@ -20,7 +20,6 @@ export type ProfileHeaderVariant =
   | "banner"
   | "cutout"
   | "minimal"
-  | "left"
   | "statement";
 
 export function ProfileHeader({
@@ -46,6 +45,7 @@ export function ProfileHeader({
 }) {
   const muted = mutedFor(look.bodyColor);
   const fontFamily = fontStack(look.font);
+  const left = look.pageAlignment === "left";
   const socialStyle = buttonBodyStyle({
     color: look.buttonColor,
     textColor: look.buttonTextColor,
@@ -53,34 +53,36 @@ export function ProfileHeader({
     umbra: look.umbra,
     edge: look.titleColor,
   });
+  // Each layout is a complete recipe, Linktree-style: the avatar is identity
+  // and never replaced, and the banner is media that renders only in the
+  // "banner" recipe, fading into the wallpaper so the page stays composed.
+  const bannerSrc = bannerPath ? bannerUrl(bannerPath) : null;
   return (
     <div
       className={cn(
         "flex w-full flex-col gap-4 px-6 pt-6 pb-6",
-        variant === "left" ? "items-start" : "items-center",
+        left ? "items-start" : "items-center",
       )}
       style={{ fontFamily }}
     >
-      {variant === "banner" ? (
+      {variant === "banner" && bannerSrc ? (
         <div
-          className="relative -mx-6 h-28 w-[calc(100%+3rem)]"
+          className="relative -mx-6 -mt-6 h-44 w-[calc(100%+3rem)]"
           style={{ backgroundColor: muted }}
         >
-          {bannerPath ? (
-            <Image
-              src={bannerUrl(bannerPath)}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="448px"
-            />
-          ) : null}
+          <Image src={bannerSrc} alt="" fill className="object-cover" sizes="448px" />
+          <div
+            className="absolute inset-x-0 bottom-0 h-16"
+            style={{
+              background: `linear-gradient(to bottom, transparent, ${look.wallpaperColor})`,
+            }}
+          />
         </div>
       ) : null}
 
       {variant === "hero" ? (
         <div
-          className="relative -mx-6 h-80 w-[calc(100%+3rem)]"
+          className="relative -mx-6 -mt-6 h-80 w-[calc(100%+3rem)]"
           style={{ backgroundColor: muted }}
         >
           {avatarPath ? (
@@ -118,10 +120,7 @@ export function ProfileHeader({
         </div>
       ) : null}
 
-      {variant !== "minimal" &&
-      variant !== "statement" &&
-      variant !== "hero" &&
-      variant !== "cutout" ? (
+      {variant === "classic" || variant === "banner" ? (
         <Avatar
           className={cn("size-18 border-4", variant === "banner" && "-mt-12")}
           style={{ borderColor: look.wallpaperColor }}
@@ -132,7 +131,12 @@ export function ProfileHeader({
       ) : null}
 
       {variant === "statement" ? (
-        <div className="flex w-full flex-col items-center gap-3 py-2 text-center">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-3 py-2",
+            left ? "items-start text-left" : "items-center text-center",
+          )}
+        >
           <p
             className="line-clamp-4 text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl"
             style={{ color: look.titleColor }}
@@ -154,7 +158,7 @@ export function ProfileHeader({
         <div
           className={cn(
             "flex flex-col gap-1",
-            variant === "left" ? "items-start" : "items-center text-center",
+            left ? "items-start text-left" : "items-center text-center",
             variant === "hero" && "-mt-2",
           )}
         >
@@ -167,14 +171,9 @@ export function ProfileHeader({
           <p className="text-sm" style={{ color: muted }}>
             @{username}
           </p>
-          {bio?.trim() && variant !== "left" ? (
-            <p className="max-w-prose text-sm" style={{ color: look.bodyColor }}>
-              {bio}
-            </p>
-          ) : null}
-          {bio?.trim() && variant === "left" ? (
+          {bio?.trim() ? (
             <p
-              className="max-w-prose text-sm whitespace-pre-line"
+              className={cn("max-w-prose text-sm", left && "whitespace-pre-line")}
               style={{ color: look.bodyColor }}
             >
               {bio}
@@ -188,8 +187,8 @@ export function ProfileHeader({
           className={cn(
             // No flex-wrap pushed icons off both edges of a narrow page: six
             // platform icons at 50px already overflow a 360px frame.
-            "flex flex-wrap items-center justify-center gap-2.5",
-            variant === "left" && "justify-start",
+            "flex flex-wrap items-center gap-2.5",
+            left ? "justify-start" : "justify-center",
           )}
         >
           {socialLinks.map((link) => {

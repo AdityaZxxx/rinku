@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/db/schema";
@@ -27,6 +28,8 @@ import {
   fontStack,
   mutedFor,
   resolveAppearance,
+  type LinkEntrance,
+  type LinkHover,
 } from "@/lib/profiles/appearance";
 import { gatedThumbUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -56,6 +59,56 @@ export interface PreviewLink {
 
 function isGated(link: PreviewLink): boolean {
   return link.minAge != null && link.minAge > 0 && link.url === "";
+}
+
+/**
+ * One motion per entrance. Fade reads slowest (opacity only carries no
+ * distance), pop is the playful one and earns the overshoot curve, rise and
+ * slide share the standard reveal. These are landing-page first-impressions,
+ * the one tier allowed past the 300ms UI bar.
+ */
+const entranceMotion = {
+  fade: { duration: "450ms", easing: "var(--ease-out)" },
+  rise: { duration: "380ms", easing: "var(--ease-out)" },
+  pop: { duration: "320ms", easing: "var(--ease-pop)" },
+  slide: { duration: "380ms", easing: "var(--ease-out)" },
+} as const;
+
+/**
+ * Staggered entrance style for one link row. Under prefers-reduced-motion the
+ * keyframes in globals.css degrade to an opacity-only fade while this stagger
+ * keeps the list legible.
+ */
+function entranceStyle(entrance: LinkEntrance, index: number): CSSProperties {
+  if (entrance === "none") {
+    return {};
+  }
+  const motion = entranceMotion[entrance];
+  return {
+    animationName: `rinku-entrance-${entrance}`,
+    animationDuration: motion.duration,
+    animationDelay: `${index * 60}ms`,
+    animationTimingFunction: motion.easing,
+    animationFillMode: "backwards",
+  };
+}
+
+/**
+ * Visitor-pointing personality for a link. The shadow effects carry `!`
+ * because the resting umbra shadow is an inline style, and an ordinary class
+ * can never supersede one; the transform effects need no marker.
+ */
+function hoverClass(hover: LinkHover): string {
+  switch (hover) {
+    case "lift":
+      return "pointer-fine:hover:-translate-y-0.5 pointer-fine:hover:shadow-md!";
+    case "scale":
+      return "pointer-fine:hover:scale-[1.02]";
+    case "glow":
+      return "pointer-fine:hover:shadow-[0_4px_24px_-6px_var(--link-glow)]!";
+    default:
+      return "";
+  }
 }
 
 function LinkContent({ link }: { link: PreviewLink }) {
@@ -138,6 +191,13 @@ export function ProfilePreviewContent({
   });
   const muted = mutedFor(look.bodyColor);
   const fontFamily = fontStack(look.font);
+  const left = look.pageAlignment === "left";
+  const hover = hoverClass(look.linkHover);
+  // Marks entrance rows for the reduced-motion carve-out in globals.css.
+  const entranceClass = look.linkEntrance === "none" ? "" : "rinku-entrance";
+  // SAFETY: React's CSSProperties rejects custom-property keys; this only
+  // feeds the CSS variable that the glow hover class reads.
+  const glowVar = { "--link-glow": look.buttonColor } as CSSProperties;
 
   // SAFETY: headerStyle is constrained to this union by the database
   // CHECK and the zod schema, so the persisted value narrows safely.
@@ -146,7 +206,7 @@ export function ProfilePreviewContent({
   return (
     <div
       className="relative flex min-h-full w-full flex-1 flex-col"
-      style={{ fontFamily }}
+      style={{ fontFamily, ...glowVar }}
     >
       <FontStylesheet font={look.font} />
       {bare ? null : (
@@ -155,6 +215,8 @@ export function ProfilePreviewContent({
           color={look.wallpaperColor}
           colorB={look.wallpaperColorB}
           pattern={look.pattern}
+          patternSpacing={look.wallpaperPatternSpacing}
+          patternThickness={look.wallpaperPatternThickness}
           imagePath={look.wallpaperImagePath}
           videoPath={look.wallpaperVideoPath}
           titleColor={look.titleColor}
@@ -178,17 +240,23 @@ export function ProfilePreviewContent({
         <div className="flex w-full flex-col px-6 pb-8">
           <div className="mt-2 flex w-full flex-col gap-3">
             {customLinks.length === 0 ? (
-              <p className="text-center text-sm" style={{ color: muted }}>
+              <p
+                className={cn("text-sm", left ? "text-left" : "text-center")}
+                style={{ color: muted }}
+              >
                 {socialLinks.length === 0 ? "No links yet." : null}
               </p>
             ) : (
-              customLinks.map((link) => {
+              customLinks.map((link, index) => {
                 if (link.kind === "heading") {
                   return (
                     <h2
                       key={link.id}
-                      className="mt-4 text-sm font-semibold tracking-wide"
-                      style={{ color: muted }}
+                      className={cn(
+                        "mt-4 text-sm font-semibold tracking-wide",
+                        entranceClass,
+                      )}
+                      style={{ color: muted, ...entranceStyle(look.linkEntrance, index) }}
                     >
                       {link.title}
                     </h2>
@@ -202,12 +270,16 @@ export function ProfilePreviewContent({
                     ? (link.metadata?.style ?? link.gatedStyle ?? "embed")
                     : null;
                 const classicClass = cn(
-                  "flex w-full items-center border text-sm font-medium transition hover:brightness-95",
+                  "flex w-full items-center border text-sm font-medium transition-[transform,box-shadow,filter] ease-[ease] duration-150 hover:brightness-95",
                   contour,
+                  hover,
+                  entranceClass,
                 );
                 const featuredClass = cn(
-                  "flex w-full flex-col overflow-hidden border text-left text-sm transition hover:brightness-95",
+                  "flex w-full flex-col overflow-hidden border text-left text-sm transition-[transform,box-shadow,filter] ease-[ease] duration-150 hover:brightness-95",
                   featuredContour,
+                  hover,
+                  entranceClass,
                 );
                 if (isGated(link)) {
                   const gatedVariant = style ?? link.variant;
@@ -221,13 +293,17 @@ export function ProfilePreviewContent({
                       presentation={asCard ? "featured" : "classic"}
                       previewSrc={link.hasPreview ? gatedThumbUrl(link.id) : undefined}
                       className={asCard && link.hasPreview ? featuredClass : classicClass}
-                      style={bodyStyle}
+                      style={{ ...bodyStyle, ...entranceStyle(look.linkEntrance, index) }}
                     />
                   );
                 }
                 if (style === "embed" && link.metadata) {
                   return (
-                    <div key={link.id} className="w-full">
+                    <div
+                      key={link.id}
+                      className={cn("w-full", entranceClass)}
+                      style={entranceStyle(look.linkEntrance, index)}
+                    >
                       {link.kind === "video" ? (
                         // SAFETY: kind === "video" implies VideoMetadata shape.
                         <VideoEmbed metadata={link.metadata as VideoMetadata} />
@@ -248,7 +324,7 @@ export function ProfilePreviewContent({
                   <div
                     key={link.id}
                     className={variant === "featured" ? featuredClass : classicClass}
-                    style={bodyStyle}
+                    style={{ ...bodyStyle, ...entranceStyle(look.linkEntrance, index) }}
                   >
                     {variant === "featured" ? (
                       <>
@@ -278,7 +354,10 @@ export function ProfilePreviewContent({
                           href={`/go/${link.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5"
+                          className={cn(
+                            "flex min-w-0 flex-1 items-center gap-2 px-4 py-2.5",
+                            left ? "justify-start" : "justify-center",
+                          )}
                         >
                           <LinkContent link={link} />
                         </a>
@@ -290,7 +369,7 @@ export function ProfilePreviewContent({
                   <div
                     key={link.id}
                     className={variant === "featured" ? featuredClass : classicClass}
-                    style={bodyStyle}
+                    style={{ ...bodyStyle, ...entranceStyle(look.linkEntrance, index) }}
                   >
                     {variant === "featured" ? (
                       <>
@@ -300,7 +379,12 @@ export function ProfilePreviewContent({
                         </span>
                       </>
                     ) : (
-                      <span className="flex flex-1 items-center justify-center gap-2 px-4 py-2.5">
+                      <span
+                        className={cn(
+                          "flex flex-1 items-center gap-2 px-4 py-2.5",
+                          left ? "justify-start" : "justify-center",
+                        )}
+                      >
                         <LinkContent link={link} />
                       </span>
                     )}
@@ -311,7 +395,10 @@ export function ProfilePreviewContent({
           </div>
         </div>
         <footer
-          className="relative mt-auto flex justify-center gap-3 pt-8 pb-6 text-xs"
+          className={cn(
+            "relative mt-auto flex gap-3 pt-8 pb-6 text-xs",
+            left ? "justify-start" : "justify-center",
+          )}
           style={{ color: muted }}
         >
           <Link href="/terms" className="transition hover:opacity-70">

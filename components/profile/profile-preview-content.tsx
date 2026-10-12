@@ -394,19 +394,18 @@ export function ProfilePreviewContent({
             )}
           </div>
         </div>
-        <footer
-          className={cn(
-            "relative mt-auto flex gap-3 pt-8 pb-6 text-xs",
-            left ? "justify-start" : "justify-center",
-          )}
-          style={{ color: muted }}
-        >
-          <Link href="/terms" className="transition hover:opacity-70">
-            Terms
-          </Link>
-          <Link href="/privacy" className="transition hover:opacity-70">
-            Privacy
-          </Link>
+        <footer className="relative mt-auto flex justify-center pt-8 pb-6 text-xs">
+          {/* Platform chrome, not themed content: the pill carries its own
+              contrast and stays centered no matter the page's colors or
+              alignment. */}
+          <span className="inline-flex items-center gap-3 rounded-full bg-black/55 px-3.5 py-1.5 text-white backdrop-blur-sm">
+            <Link href="/terms" className="transition hover:opacity-70">
+              Terms
+            </Link>
+            <Link href="/privacy" className="transition hover:opacity-70">
+              Privacy
+            </Link>
+          </span>
         </footer>
       </div>
     </div>

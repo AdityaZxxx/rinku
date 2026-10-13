@@ -17,10 +17,13 @@ because a raw connection bypasses RLS.
 - `lib/db/` - Per-aggregate query modules (`profile.ts`, `links.ts`,
   `account.ts`, `overview.ts`, `editor.ts`), the RLS context in
   `with-user.ts`, and `public-cache.ts` for public page caching.
-- `lib/<domain>/` - Pure domain logic: `lib/profiles` (appearance, presets,
-  drafts, sections), `lib/links` (model, platforms, embeds, media, music,
-  age gate), `lib/dashboard` (shortcuts, keyboard), `lib/supabase`
-  (client, server, storage), `lib/auth.ts` (session helpers).
+- `lib/<domain>/` - Pure domain logic: `lib/profiles` (`appearance.ts` owns
+  the appearance schema and resolution; the `appearance-buttons/fonts/options/colors`
+  siblings own the option catalogs it composes; plus `schema`,
+  `appearance-presets`, `editor-draft`, `sections`, `storage-cleanup`),
+  `lib/links` (model, platforms, embeds, media, music, age gate),
+  `lib/dashboard` (shortcuts, keyboard), `lib/supabase` (client, server,
+  storage), `lib/auth.ts` (session helpers).
 - `app/actions/` - Server actions, one file per segment they mutate:
   `profiles.ts` (profile row) with `profiles/username.ts`, `profiles/seo.ts`,
   `profiles/drafts.ts`, `profiles/appearance.ts`, `profiles/editor-settings.ts`,
@@ -50,5 +53,5 @@ because a raw connection bypasses RLS.
 ## Guardrails
 
 - `bun run check`: lint, format, typecheck, db:check, version check.
-- `.oxlintrc.json` caps non-vendor files at 500 lines; current oversized
-  files sit in a shrinking allowlist in that file.
+- `.oxlintrc.json` caps non-vendor files at 500 lines, with no exceptions:
+  an oversized file fails lint instead of earning an exemption.

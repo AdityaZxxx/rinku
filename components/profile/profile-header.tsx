@@ -4,12 +4,10 @@ import type { PreviewLink } from "@/components/profile/profile-preview-content";
 import { SocialIcon } from "@/components/social-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { platformById } from "@/lib/links/platforms";
-import {
-  buttonBodyStyle,
-  fontStack,
-  mutedFor,
-  type ResolvedAppearance,
-} from "@/lib/profiles/appearance";
+import { type ResolvedAppearance } from "@/lib/profiles/appearance";
+import { buttonBodyStyle } from "@/lib/profiles/appearance-buttons";
+import { mutedFor } from "@/lib/profiles/appearance-colors";
+import { fontStack } from "@/lib/profiles/appearance-fonts";
 import { profileInitials } from "@/lib/profiles/initials";
 import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";

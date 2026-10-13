@@ -2,7 +2,7 @@ import {
   allFontsStylesheetUrl,
   fontStylesheetUrl,
   type FontId,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-fonts";
 
 /**
  * Loads only the appearance font(s) a page actually renders. next/font can't

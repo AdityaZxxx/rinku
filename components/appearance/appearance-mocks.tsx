@@ -4,19 +4,21 @@ import type { CSSProperties, ReactNode } from "react";
 import { ImageIcon, VideoCameraIcon } from "@phosphor-icons/react";
 
 import { patternBackground } from "@/components/appearance/wallpaper-layer";
+import { type Appearance } from "@/lib/profiles/appearance";
 import {
   buttonBodyStyle,
   buttonContourClass,
-  hexWithAlpha,
-  type Appearance,
   type ButtonContour,
   type ButtonUmbra,
   type ButtonVariant,
+} from "@/lib/profiles/appearance-buttons";
+import { hexWithAlpha } from "@/lib/profiles/appearance-colors";
+import {
   type LinkEntrance,
   type LinkHover,
   type PageAlignment,
   type WallpaperPattern,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-options";
 import { cn } from "@/lib/utils";
 
 export function OptionTile({

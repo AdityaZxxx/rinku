@@ -57,23 +57,26 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
+  resolveAppearance,
+  type Appearance,
+  type PresetThemeId,
+} from "@/lib/profiles/appearance";
+import {
   buttonBodyStyle,
   buttonContours,
   buttonUmbrae,
   buttonVariants,
-  fontStack,
-  fonts,
+} from "@/lib/profiles/appearance-buttons";
+import { fontStack, fonts } from "@/lib/profiles/appearance-fonts";
+import {
   linkEntrances,
   linkHovers,
   pageAlignments,
   patternSpacingRange,
   patternThicknessRange,
-  resolveAppearance,
   wallpaperKinds,
   wallpaperPatterns,
-  type Appearance,
-  type PresetThemeId,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-options";
 import { presetThemes, themePresetValues } from "@/lib/profiles/appearance-presets";
 import {
   appearanceDraftFromProfile,

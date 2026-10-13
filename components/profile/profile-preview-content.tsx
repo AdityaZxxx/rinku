@@ -21,17 +21,19 @@ import {
 import { ShareLinkMenu } from "@/components/profile/share-link-menu";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl, scheduleStatus } from "@/lib/links/model";
+import { resolveAppearance } from "@/lib/profiles/appearance";
 import {
   buttonBodyStyle,
   buttonContourClass,
-  entranceMotion,
   featuredContourClass,
-  fontStack,
-  mutedFor,
-  resolveAppearance,
+} from "@/lib/profiles/appearance-buttons";
+import { mutedFor } from "@/lib/profiles/appearance-colors";
+import { fontStack } from "@/lib/profiles/appearance-fonts";
+import {
+  entranceMotion,
   type LinkEntrance,
   type LinkHover,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-options";
 import { gatedThumbUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 

@@ -1,9 +1,9 @@
+import { hexWithAlpha } from "@/lib/profiles/appearance-colors";
 import {
-  hexWithAlpha,
   patternSpacingDefault,
   patternThicknessDefault,
   type WallpaperPattern,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-options";
 import { wallpaperUrl } from "@/lib/supabase/storage";
 
 export function patternBackground(

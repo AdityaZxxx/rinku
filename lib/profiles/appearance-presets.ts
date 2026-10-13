@@ -1,9 +1,8 @@
+import { type Appearance, type PresetThemeId } from "@/lib/profiles/appearance";
 import {
   patternSpacingDefault,
   patternThicknessDefault,
-  type Appearance,
-  type PresetThemeId,
-} from "@/lib/profiles/appearance";
+} from "@/lib/profiles/appearance-options";
 
 export const themePresetValues: Record<PresetThemeId, Appearance> = {
   air: {

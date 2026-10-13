@@ -131,22 +131,6 @@
       "rules": {
         "no-restricted-imports": "off"
       }
-    },
-    {
-      // Oversized files already in the tree. Extract parts from each, then
-      // delete its entry here; do not add new entries.
-      "files": [
-        "app/actions/links.ts",
-        "app/actions/profiles.ts",
-        "app/actions/profiles/media.ts",
-        "components/appearance/appearance-editor.tsx",
-        "components/appearance/appearance-mocks.tsx",
-        "components/links/add-link-dialog.tsx",
-        "lib/profiles/appearance.ts"
-      ],
-      "rules": {
-        "max-lines": "off"
-      }
     }
   ]
 }

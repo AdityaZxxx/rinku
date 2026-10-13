@@ -45,3 +45,4 @@ The why for each exclusion sits next to it in the configs.
 - Strict TypeScript, no `any`. `tsc --noEmit` must pass.
 - Comments only allowed for code that cannot be self-explaining; should explain why, NOT record implementation chatter. See @load-bearing-comments skill.
 - React compiler active and used by the application, NO manual memoization needed.
+- New project, no backward compatibility: when a new implementation supersedes an old one, delete the old code. Never keep `legacy`/`deprecated` aliases, `v2`-style duplicates, or shims whose only job is preserving the old shape.

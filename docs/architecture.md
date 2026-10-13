@@ -22,8 +22,11 @@ because a raw connection bypasses RLS.
   age gate), `lib/dashboard` (shortcuts, keyboard), `lib/supabase`
   (client, server, storage), `lib/auth.ts` (session helpers).
 - `app/actions/` - Server actions, one file per segment they mutate:
-  `profiles.ts`, `profiles/media.ts`, `links.ts`, `accounts.ts`,
-  `apple-music.ts`, `auth.ts`.
+  `profiles.ts` (profile row) with `profiles/username.ts`, `profiles/seo.ts`,
+  `profiles/drafts.ts`, `profiles/appearance.ts`, `profiles/editor-settings.ts`,
+  and `profiles/media/avatar.ts` + `profiles/media/appearance.ts`;
+  `links.ts` (reads, create, update) with `links/media.ts`, `links/archive.ts`,
+  `links/order.ts`; plus `accounts.ts`, `apple-music.ts`, `auth.ts`.
 - `components/<domain>/` - Feature components mirroring the routes they
   serve: `appearance`, `links`, `profile`, `insights`, `overview`,
   `settings`, `dashboard`, `auth`, plus `landing` and `legal` for the

@@ -5,13 +5,13 @@ import type { Appearance } from "@/lib/profiles/appearance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { updateAppearance } from "@/app/actions/profiles";
 import {
   removeBanner,
   removeWallpaperMedia,
-  updateAppearance,
   uploadBanner,
   uploadWallpaper,
-} from "@/app/actions/profiles";
+} from "@/app/actions/profiles/media";
 
 function profileKey(username: string) {
   return ["profile", username] as const;

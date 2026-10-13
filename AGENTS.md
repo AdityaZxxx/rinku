@@ -24,8 +24,8 @@ unpublished edits still warn, and bare-key shortcuts must bail on
 
 ## Server actions
 
-Server actions live in `app/actions/<domain>.ts`, one file per segment they
-mutate, each starting with `"use server"`.
+Server actions live in `app/actions/<domain>[/<sub>].ts`, one file per segment
+they mutate, each starting with `"use server"`.
 
 ## Vendored directories
 

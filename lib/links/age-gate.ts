@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import * as z from "zod";
 
+import { minAgeSchema } from "./model";
+
 /**
  * Age-gate unlock proof, kept entirely client-side: a session cookie holding
  * one entry per unlocked link. Each entry binds the link id to the min_age in
@@ -14,9 +16,7 @@ type GateEntry = { linkId: string; minAge: number };
 
 const gatePayloadSchema = z.object({
   v: z.literal(1),
-  entries: z.array(
-    z.object({ linkId: z.uuid(), minAge: z.number().int().min(13).max(99) }),
-  ),
+  entries: z.array(z.object({ linkId: z.uuid(), minAge: minAgeSchema })),
 });
 
 // Keep the cookie comfortably under per-cookie limits even on long sessions.

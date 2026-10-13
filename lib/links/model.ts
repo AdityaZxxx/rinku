@@ -36,6 +36,10 @@ export const linkTitleSchema = maxChars(100).refine(
 
 export const linkVariantSchema = z.enum(["classic", "featured"]);
 
+// The age-gate bound, mirroring the links_min_age check so the client,
+// the action payload, and the gate cookie all reject the same values.
+export const minAgeSchema = z.number().int().min(13).max(99);
+
 // Optional visibility window: null means no bound. The refine mirrors the
 // links_visible_window check so the client rejects what the database would.
 export const linkScheduleSchema = z

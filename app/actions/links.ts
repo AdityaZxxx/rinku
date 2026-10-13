@@ -1,12 +1,12 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { and, eq, max } from "drizzle-orm";
+import { eq, max } from "drizzle-orm";
 import * as z from "zod";
 
 import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
-import { links, profiles, type Link } from "@/lib/db/schema";
+import { links, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import {
   parseEmbedUrl,
@@ -20,6 +20,7 @@ import {
   linkUrlSchema,
   linkVariantSchema,
   linkTitleSchema,
+  minAgeSchema,
   normalizeUrl,
   positionAfter,
 } from "@/lib/links/model";
@@ -31,9 +32,7 @@ import {
   videoMetadataSchema,
 } from "@/lib/links/video";
 import { log } from "@/lib/log";
-import { imageExtension, imageMaxBytes } from "@/lib/profiles/schema";
 import { createClient } from "@/lib/supabase/server";
-import { linkImageUrl } from "@/lib/supabase/storage";
 
 /** Thumbnails derived server-side when the row carries no image of its own. */
 async function videoThumbnail(url: string, video: VideoMetadata): Promise<string | null> {
@@ -66,8 +65,6 @@ const createLinkSchema = z.object({
   imageUrl: httpUrlSchema.nullable().optional(),
   platform: z.string().min(1).max(50).nullable().optional(),
 });
-
-const linkIdSchema = z.object({ id: z.uuid() });
 
 export async function getLinks(profileId: string): Promise<Link[] | { error: string }> {
   const supabase = await createClient();
@@ -274,72 +271,6 @@ export async function createSectionHeading(input: {
   return created;
 }
 
-export async function uploadLinkImage(
-  formData: FormData,
-): Promise<{ url: string } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Your session expired. Sign in again to continue." };
-  }
-
-  const parsed = z
-    .object({ linkId: z.uuid(), file: z.instanceof(File) })
-    .safeParse({ linkId: formData.get("linkId"), file: formData.get("file") });
-  if (!parsed.success) {
-    return { error: "Image upload failed. Try again." };
-  }
-  const { linkId, file } = parsed.data;
-
-  const extension = imageExtension(file.type);
-  const maxBytes = imageMaxBytes.link;
-  if (file.size === 0) {
-    return { error: "That file is empty." };
-  }
-  if (extension === null || file.size > maxBytes) {
-    return {
-      error: `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
-    };
-  }
-
-  const [owned] = await withUserDb(user.id, (tx) =>
-    tx
-      .select({ profileId: links.profileId })
-      .from(links)
-      .innerJoin(profiles, eq(profiles.id, links.profileId))
-      .where(and(eq(links.id, linkId), eq(profiles.userId, user.id)))
-      .limit(1),
-  );
-  if (!owned) {
-    return { error: "Link not found." };
-  }
-
-  const path = `${owned.profileId}/link-${linkId}-${Date.now()}.${extension}`;
-  const { error: uploadError } = await supabase.storage
-    .from("link-images")
-    .upload(path, file, { contentType: file.type });
-  if (uploadError) {
-    log.error("links", "uploadLinkImage failed", uploadError.message);
-    return { error: "Image upload failed. Try again." };
-  }
-
-  const url = linkImageUrl(path);
-  const updated = await withUserDb(user.id, (tx) =>
-    tx
-      .update(links)
-      .set({ imageUrl: url, updatedAt: new Date() })
-      .where(eq(links.id, linkId))
-      .returning({ id: links.id }),
-  );
-  if (updated.length === 0) {
-    return { error: "Image upload failed. Try again." };
-  }
-  updateTag(PUBLIC_PROFILE_TAG);
-  return { url };
-}
-
 export async function updateLink(input: {
   id: string;
   title: string;
@@ -383,7 +314,7 @@ export async function updateLink(input: {
     .and(linkScheduleSchema)
     .and(
       z.object({
-        minAge: z.number().int().min(13).max(99).nullable().optional(),
+        minAge: minAgeSchema.nullable().optional(),
       }),
     )
     .safeParse(input);
@@ -487,144 +418,4 @@ export async function updateLink(input: {
   }
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true, kind: row.kind, platform: row.platform, metadata: row.metadata };
-}
-
-export async function archiveLink(input: {
-  id: string;
-}): Promise<{ ok: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Your session expired. Sign in again to continue." };
-  }
-
-  if (!linkIdSchema.safeParse(input).success) {
-    return { error: "This link could not be archived." };
-  }
-
-  const archived = await withUserDb(user.id, (tx) =>
-    tx
-      .update(links)
-      .set({ archivedAt: new Date(), updatedAt: new Date() })
-      .where(eq(links.id, input.id))
-      .returning({ id: links.id }),
-  );
-  if (archived.length === 0) {
-    return { error: "This link could not be archived." };
-  }
-  updateTag(PUBLIC_PROFILE_TAG);
-  return { ok: true };
-}
-
-/**
- * Undo for an archive: the row keeps its old id and position, which the sparse
- * position column preserves through the archive. Nothing shifts.
- */
-export async function restoreLink(input: {
-  id: string;
-}): Promise<{ ok: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Your session expired. Sign in again to continue." };
-  }
-
-  if (!linkIdSchema.safeParse(input).success) {
-    return { error: "This link could not be restored." };
-  }
-
-  const restored = await withUserDb(user.id, (tx) =>
-    tx
-      .update(links)
-      .set({ archivedAt: null, updatedAt: new Date() })
-      .where(eq(links.id, input.id))
-      .returning({ id: links.id }),
-  );
-  if (restored.length === 0) {
-    return { error: "This link could not be restored." };
-  }
-  updateTag(PUBLIC_PROFILE_TAG);
-  return { ok: true };
-}
-
-// Permanent delete stays reachable only through the archive: the editor's own
-// remove is the reversible archive.
-export async function deleteLink(input: {
-  id: string;
-}): Promise<{ ok: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Your session expired. Sign in again to continue." };
-  }
-
-  if (!linkIdSchema.safeParse(input).success) {
-    return { error: "This link could not be deleted." };
-  }
-
-  const deleted = await withUserDb(user.id, (tx) =>
-    tx.delete(links).where(eq(links.id, input.id)).returning({ id: links.id }),
-  );
-  if (deleted.length === 0) {
-    return { error: "This link could not be deleted." };
-  }
-  updateTag(PUBLIC_PROFILE_TAG);
-  return { ok: true };
-}
-
-export async function reorderLinks(input: {
-  profileId: string;
-  updates: Array<{ id: string; position: number }>;
-}): Promise<{ ok: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Your session expired. Sign in again to continue." };
-  }
-
-  const parsed = z
-    .object({
-      profileId: z.uuid(),
-      updates: z.array(z.object({ id: z.uuid(), position: z.number().int() })).max(500),
-    })
-    .safeParse(input);
-  if (!parsed.success) {
-    return { error: "Reordering failed. Try again." };
-  }
-
-  try {
-    await withUserDb(user.id, async (tx) => {
-      // One statement per moved row rather than a single unnest-with-array-params
-      // query: drizzle expands JS arrays in sql`` into `($1, $2)::uuid[]`,
-      // which Postgres cannot cast. Runs in parallel; only rows that actually
-      // moved are updated, so the batch is small.
-      await Promise.all(
-        parsed.data.updates.map((update) =>
-          tx
-            .update(links)
-            .set({ position: update.position })
-            .where(
-              and(eq(links.id, update.id), eq(links.profileId, parsed.data.profileId)),
-            ),
-        ),
-      );
-    });
-  } catch (error) {
-    log.error(
-      "links",
-      "reorderLinks failed",
-      error instanceof Error ? error.message : String(error),
-    );
-    return { error: "Reordering failed. Try again." };
-  }
-  updateTag(PUBLIC_PROFILE_TAG);
-  return { ok: true };
 }

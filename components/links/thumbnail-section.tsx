@@ -6,7 +6,7 @@ import { ImageIcon } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { uploadLinkImage } from "@/app/actions/links";
+import { uploadLinkImage } from "@/app/actions/links/media";
 import { MediaIcon, MEDIA_ICON_IDS } from "@/components/media-icon";
 import { Button } from "@/components/ui/button";
 import {

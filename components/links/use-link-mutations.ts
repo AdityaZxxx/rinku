@@ -4,14 +4,9 @@ import type { Link } from "@/lib/db/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  archiveLink,
-  createLink,
-  deleteLink,
-  reorderLinks,
-  restoreLink,
-  updateLink,
-} from "@/app/actions/links";
+import { createLink, updateLink } from "@/app/actions/links";
+import { archiveLink, deleteLink, restoreLink } from "@/app/actions/links/archive";
+import { reorderLinks } from "@/app/actions/links/order";
 import { parseEmbedUrl } from "@/lib/links/embeds";
 import { parseMusicUrl } from "@/lib/links/music";
 import { parseVideoUrl } from "@/lib/links/video";

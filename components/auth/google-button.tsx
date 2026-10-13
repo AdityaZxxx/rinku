@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GoogleLogoIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -24,12 +25,19 @@ export function GoogleButton({ disabled }: { disabled?: boolean }) {
     if (error) {
       log.error("auth", "signInWithOAuth failed", error.message);
       setPending(false);
+      toast.error(
+        "Unable to sign in with Google. Try again, or use your email and password.",
+      );
       return;
     }
 
     if (data.url) {
       window.location.assign(data.url);
+      return;
     }
+
+    // No URL and no error leaves nowhere to go: the spinner must not outlive the attempt.
+    setPending(false);
   }
 
   return (

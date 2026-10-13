@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "@tanstack/react-form";
 import * as z from "zod";
 
+import { focusFirstInvalidField } from "@/components/auth/focus-first-invalid";
 import { GoogleButton } from "@/components/auth/google-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,14 @@ const signupSchema = z.object({
 export function SignupForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
+  const confirmationHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     validators: { onSubmit: signupSchema },
+    onSubmitInvalid: ({ formApi }) => {
+      focusFirstInvalidField(formApi, ["email", "password"]);
+    },
     onSubmit: async ({ value }) => {
       setFormError(null);
 
@@ -74,12 +78,25 @@ export function SignupForm() {
     },
   });
 
+  // The card swap is otherwise silent, so focus moves to its heading for screen readers.
+  useEffect(() => {
+    if (awaitingConfirmation) {
+      confirmationHeadingRef.current?.focus();
+    }
+  }, [awaitingConfirmation]);
+
   if (awaitingConfirmation) {
     return (
       <Card className="w-full sm:max-w-sm">
         <CardHeader>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
+          <h1
+            ref={confirmationHeadingRef}
+            tabIndex={-1}
+            className="font-heading text-base font-medium"
+          >
+            Check your email
+          </h1>
+          <CardDescription className="break-words">
             A confirmation link is on its way to {awaitingConfirmation}. Open it to finish
             setting up your account.
           </CardDescription>
@@ -101,7 +118,7 @@ export function SignupForm() {
   return (
     <Card className="w-full sm:max-w-sm">
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
+        <h1 className="font-heading text-base font-medium">Create an account</h1>
         <CardDescription>Your page is ready as soon as you add a link.</CardDescription>
       </CardHeader>
 
@@ -131,10 +148,16 @@ export function SignupForm() {
                       onBlur={field.handleBlur}
                       onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={isInvalid ? `${field.name}-error` : undefined}
                       autoComplete="email"
                       placeholder="you@example.com"
                     />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
                   </Field>
                 );
               }}
@@ -154,9 +177,15 @@ export function SignupForm() {
                       onChange={field.handleChange}
                       onBlur={field.handleBlur}
                       invalid={isInvalid}
+                      describedBy={isInvalid ? `${field.name}-error` : undefined}
                       autoComplete="new-password"
                     />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
                   </Field>
                 );
               }}

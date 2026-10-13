@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import * as z from "zod";
 
+import { focusFirstInvalidField } from "@/components/auth/focus-first-invalid";
 import { GoogleButton } from "@/components/auth/google-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,16 @@ const loginSchema = z.object({
 export function LoginForm({ next, oauthError }: { next: Route; oauthError?: string }) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  // `isSubmitting` ends when the request resolves, but the navigation it starts
+  // is still in flight: without the transition the button re-enables mid-redirect.
+  const [isNavigating, startNavigation] = useTransition();
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     validators: { onSubmit: loginSchema },
+    onSubmitInvalid: ({ formApi }) => {
+      focusFirstInvalidField(formApi, ["email", "password"]);
+    },
     onSubmit: async ({ value }) => {
       setFormError(null);
 
@@ -51,15 +57,17 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
         return;
       }
 
-      router.push(next);
-      router.refresh();
+      startNavigation(() => {
+        router.push(next);
+        router.refresh();
+      });
     },
   });
 
   return (
     <Card className="w-full sm:max-w-sm">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+        <h1 className="font-heading text-base font-medium">Sign in</h1>
         <CardDescription>Manage your links and see who clicks them.</CardDescription>
       </CardHeader>
 
@@ -90,10 +98,16 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
                       onBlur={field.handleBlur}
                       onChange={(event) => field.handleChange(event.target.value)}
                       aria-invalid={isInvalid}
+                      aria-describedby={isInvalid ? `${field.name}-error` : undefined}
                       autoComplete="email"
                       placeholder="you@example.com"
                     />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
                   </Field>
                 );
               }}
@@ -105,7 +119,15 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <div className="flex items-center justify-between">
+                      <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                      <Link
+                        href="/login/forgot"
+                        className="text-sm underline underline-offset-4"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                     <PasswordInput
                       id={field.name}
                       name={field.name}
@@ -113,20 +135,30 @@ export function LoginForm({ next, oauthError }: { next: Route; oauthError?: stri
                       onChange={field.handleChange}
                       onBlur={field.handleBlur}
                       invalid={isInvalid}
+                      describedBy={isInvalid ? `${field.name}-error` : undefined}
                       autoComplete="current-password"
                     />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {isInvalid && (
+                      <FieldError
+                        id={`${field.name}-error`}
+                        errors={field.state.meta.errors}
+                      />
+                    )}
                   </Field>
                 );
               }}
             />
 
-            <Button type="submit" className="w-full" disabled={form.state.isSubmitting}>
-              {form.state.isSubmitting && <Spinner />}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.state.isSubmitting || isNavigating}
+            >
+              {(form.state.isSubmitting || isNavigating) && <Spinner />}
               Sign in
             </Button>
 
-            <GoogleButton disabled={form.state.isSubmitting} />
+            <GoogleButton disabled={form.state.isSubmitting || isNavigating} />
 
             <p className="text-muted-foreground text-center text-sm">
               By continuing, you agree to the{" "}

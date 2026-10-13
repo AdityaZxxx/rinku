@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { log } from "@/lib/log";
+import { safeNextPath } from "@/lib/next-path";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -22,7 +23,10 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       log.error("auth", "exchangeCodeForSession failed", error.message);
-      return redirectWithError(origin, error.message);
+      return redirectWithError(
+        origin,
+        "That sign-in link is no longer valid. Sign in with your email and password to continue.",
+      );
     }
   } else if (tokenHash && type) {
     // SAFETY: Supabase types this as a union but sends it as a query parameter,
@@ -47,15 +51,31 @@ export async function GET(request: NextRequest) {
     });
     if (error) {
       log.error("auth", "verifyOtp failed", error.message);
-      return redirectWithError(origin, error.message);
+      return redirectWithError(
+        origin,
+        "That confirmation link is no longer valid. Sign in with your email and password to continue.",
+      );
     }
   } else if (oauthError) {
-    return redirectWithError(origin, oauthError);
+    log.error("auth", "OAuth provider redirected with an error", oauthError);
+    return redirectWithError(origin, friendlyOauthError(oauthError));
   } else {
     return redirectWithError(origin, "That sign-in link is not valid.");
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`);
+  // Recovery links carry `next` to land where the new password is set, not the dashboard.
+  return NextResponse.redirect(`${origin}${safeNextPath(searchParams.get("next"))}`);
+}
+
+/**
+ * Provider strings are codes or developer text a user cannot act on: map them to
+ * copy that names a way forward. The caller logs the original.
+ */
+function friendlyOauthError(raw: string): string {
+  if (/access[_-]?denied/i.test(raw)) {
+    return "Google sign-in was cancelled. Try again, or use your email and password.";
+  }
+  return "Unable to sign in with Google. Try again, or use your email and password.";
 }
 
 /**

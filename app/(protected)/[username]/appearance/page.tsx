@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AppearanceEditor } from "@/components/appearance/appearance-editor";
+import { AppearanceScrubProvider } from "@/components/appearance/appearance-scrub-context";
 import { EditorDraftProvider } from "@/components/profile/editor-draft-context";
 import { EditorShell } from "@/components/profile/editor-shell";
 import { MobilePreviewSheet } from "@/components/profile/mobile-dock";
@@ -37,37 +38,39 @@ export default async function AppearancePage({
 
   return (
     <EditorDraftProvider initialAppearanceDraft={initialDraft}>
-      <EditorShell
-        preview={
-          <ProfilePreview
-            username={username}
-            profileId={profile.id}
-            initialProfile={profile}
-            initialLinks={initialLinks}
-          />
-        }
-        username={username}
-        mobilePreview={
-          <MobilePreviewSheet
-            username={username}
-            preview={
-              <ProfilePreview
-                username={username}
-                profileId={profile.id}
-                initialProfile={profile}
-                initialLinks={initialLinks}
-              />
-            }
-          />
-        }
-      >
-        <AppearanceEditor
+      <AppearanceScrubProvider>
+        <EditorShell
+          preview={
+            <ProfilePreview
+              username={username}
+              profileId={profile.id}
+              initialProfile={profile}
+              initialLinks={initialLinks}
+            />
+          }
           username={username}
-          initialProfile={profile}
-          mode={mode}
-          initialDraft={initialDraft}
-        />
-      </EditorShell>
+          mobilePreview={
+            <MobilePreviewSheet
+              username={username}
+              preview={
+                <ProfilePreview
+                  username={username}
+                  profileId={profile.id}
+                  initialProfile={profile}
+                  initialLinks={initialLinks}
+                />
+              }
+            />
+          }
+        >
+          <AppearanceEditor
+            username={username}
+            initialProfile={profile}
+            mode={mode}
+            initialDraft={initialDraft}
+          />
+        </EditorShell>
+      </AppearanceScrubProvider>
     </EditorDraftProvider>
   );
 }

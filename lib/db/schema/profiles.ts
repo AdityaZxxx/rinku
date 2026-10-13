@@ -55,6 +55,7 @@ export const profiles = pgTable(
     buttonContour: text("button_shape").notNull().default("pill"),
     buttonVariant: text("button_style").notNull().default("fill"),
     buttonUmbra: text("button_umbra").notNull().default("soft"),
+    buttonUmbraColor: text("button_umbra_color").notNull().default("#111111"),
     buttonColor: text("button_color").notNull().default("#111111"),
     buttonTextColor: text("button_text_color").notNull().default("#ffffff"),
     fontId: text("font_id").notNull().default("inter"),

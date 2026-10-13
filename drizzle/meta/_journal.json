@@ -295,6 +295,13 @@
       "when": 1791779001779,
       "tag": "0041_nice_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791801896654,
+      "tag": "0042_absurd_talos",
+      "breakpoints": true
     }
   ]
 }

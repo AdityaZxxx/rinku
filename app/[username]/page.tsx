@@ -97,7 +97,6 @@ export default async function PublicProfilePage({ params }: PageProps<"/[usernam
         patternThickness={look.wallpaperPatternThickness}
         imagePath={look.wallpaperImagePath}
         videoPath={look.wallpaperVideoPath}
-        titleColor={look.titleColor}
       />
       <ProfilePreviewContent profile={profile} links={gatedLinks} interactive bare />
       <VisitBeacon username={username} profileId={profile.id} />

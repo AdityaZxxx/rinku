@@ -24,6 +24,7 @@ import { faviconUrl, scheduleStatus } from "@/lib/links/model";
 import {
   buttonBodyStyle,
   buttonContourClass,
+  entranceMotion,
   featuredContourClass,
   fontStack,
   mutedFor,
@@ -60,19 +61,6 @@ export interface PreviewLink {
 function isGated(link: PreviewLink): boolean {
   return link.minAge != null && link.minAge > 0 && link.url === "";
 }
-
-/**
- * One motion per entrance. Fade reads slowest (opacity only carries no
- * distance), pop is the playful one and earns the overshoot curve, rise and
- * slide share the standard reveal. These are landing-page first-impressions,
- * the one tier allowed past the 300ms UI bar.
- */
-const entranceMotion = {
-  fade: { duration: "450ms", easing: "var(--ease-out)" },
-  rise: { duration: "380ms", easing: "var(--ease-out)" },
-  pop: { duration: "320ms", easing: "var(--ease-pop)" },
-  slide: { duration: "380ms", easing: "var(--ease-out)" },
-} as const;
 
 /**
  * Staggered entrance style for one link row. Under prefers-reduced-motion the
@@ -187,7 +175,7 @@ export function ProfilePreviewContent({
     textColor: look.buttonTextColor,
     variant: look.variant,
     umbra: look.umbra,
-    edge: look.titleColor,
+    edge: look.buttonUmbraColor,
   });
   const muted = mutedFor(look.bodyColor);
   const fontFamily = fontStack(look.font);
@@ -219,7 +207,6 @@ export function ProfilePreviewContent({
           patternThickness={look.wallpaperPatternThickness}
           imagePath={look.wallpaperImagePath}
           videoPath={look.wallpaperVideoPath}
-          titleColor={look.titleColor}
         />
       )}
       <div

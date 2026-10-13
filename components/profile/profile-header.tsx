@@ -51,7 +51,7 @@ export function ProfileHeader({
     textColor: look.buttonTextColor,
     variant: look.variant,
     umbra: look.umbra,
-    edge: look.titleColor,
+    edge: look.buttonUmbraColor,
   });
   // Each layout is a complete recipe, Linktree-style: the avatar is identity
   // and never replaced, and the banner is media that renders only in the

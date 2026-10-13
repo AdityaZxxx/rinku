@@ -47,7 +47,6 @@ export function WallpaperLayer({
   patternThickness,
   imagePath,
   videoPath,
-  titleColor,
 }: {
   kind: string;
   color: string;
@@ -57,7 +56,6 @@ export function WallpaperLayer({
   patternThickness: number;
   imagePath: string | null;
   videoPath: string | null;
-  titleColor: string;
 }) {
   if (kind === "video" && videoPath) {
     return (
@@ -109,13 +107,15 @@ export function WallpaperLayer({
         className="absolute inset-y-0 left-1/2 w-full max-w-md -translate-x-1/2"
         style={{ backgroundColor: color }}
       >
+        {/* Both blooms come from the accent the editor exposes, so no other
+            color field can silently retint the background. */}
         <div
           className="absolute -top-24 -left-24 size-80 rounded-full blur-3xl"
           style={{ backgroundColor: colorB, opacity: 0.85 }}
         />
         <div
           className="absolute -right-24 -bottom-24 size-80 rounded-full blur-3xl"
-          style={{ backgroundColor: titleColor, opacity: 0.28 }}
+          style={{ backgroundColor: colorB, opacity: 0.4 }}
         />
       </div>
     );

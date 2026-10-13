@@ -89,15 +89,21 @@ export const buttonUmbrae: Array<{ id: ButtonUmbra; label: string }> = [
   { id: "hard", label: "Hard" },
 ];
 
+/**
+ * The box shadow one umbra paints, tinted by the picked umbra color: hard
+ * uses it as its solid offset edge, soft and lift wash their ambient shadows
+ * with it. A tint rather than fixed black keeps every umbra readable on dark
+ * wallpapers, where a pure black shadow vanishes.
+ */
 export function buttonUmbraBoxShadow(
   umbra: ButtonUmbra,
   edge: string,
 ): string | undefined {
   switch (umbra) {
     case "soft":
-      return "0 8px 24px rgb(0 0 0 / 0.12)";
+      return `0 8px 24px ${hexWithAlpha(edge, "1f")}`;
     case "lift":
-      return "0 2px 6px rgb(0 0 0 / 0.12), 0 16px 32px rgb(0 0 0 / 0.16)";
+      return `0 2px 6px ${hexWithAlpha(edge, "1f")}, 0 16px 32px ${hexWithAlpha(edge, "29")}`;
     case "hard":
       return `4px 4px 0 ${edge}`;
     default:
@@ -110,6 +116,7 @@ export interface ButtonTokens {
   textColor: string;
   variant: ButtonVariant;
   umbra: ButtonUmbra;
+  /** The picked shadow color: hard's offset edge, soft/lift's ambient tint. */
   edge: string;
 }
 
@@ -369,6 +376,19 @@ export const linkEntrances: Array<{ id: LinkEntrance; label: string }> = [
   { id: "slide", label: "Slide" },
 ];
 
+/**
+ * One motion per entrance. Fade reads slowest (opacity only carries no
+ * distance), pop is the playful one and earns the overshoot curve, rise and
+ * slide share the standard reveal. These are landing-page first-impressions,
+ * the one tier allowed past the 300ms UI bar.
+ */
+export const entranceMotion = {
+  fade: { duration: "450ms", easing: "var(--ease-out)" },
+  rise: { duration: "380ms", easing: "var(--ease-out)" },
+  pop: { duration: "320ms", easing: "var(--ease-pop)" },
+  slide: { duration: "380ms", easing: "var(--ease-out)" },
+} as const;
+
 /** What a link does when a visitor points at it. */
 export const linkHoverIds = ["none", "lift", "scale", "glow"] as const;
 
@@ -406,6 +426,7 @@ export const appearanceSchema = z.object({
   buttonContour: z.enum(buttonContourIds),
   buttonVariant: z.enum(buttonVariantIds),
   buttonUmbra: z.enum(buttonUmbraIds),
+  buttonUmbraColor: hexColor,
   buttonColor: hexColor,
   buttonTextColor: hexColor,
   fontId: z.enum(fontIds),
@@ -440,6 +461,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#111111",
     buttonColor: "#111111",
     buttonTextColor: "#ffffff",
     fontId: "inter",
@@ -464,6 +486,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#fafafa",
     buttonColor: "#fafafa",
     buttonTextColor: "#101010",
     fontId: "inter",
@@ -488,6 +511,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#1c1917",
     buttonColor: "#1c1917",
     buttonTextColor: "#faf6ee",
     fontId: "merriweather",
@@ -512,6 +536,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#0d3b2e",
     buttonColor: "#0d3b2e",
     buttonTextColor: "#eafff5",
     fontId: "nunito",
@@ -536,6 +561,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#0f172a",
     buttonColor: "#0f172a",
     buttonTextColor: "#ffffff",
     fontId: "inter",
@@ -560,6 +586,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "hard",
+    buttonUmbraColor: "#ffffff",
     buttonColor: "#ffffff",
     buttonTextColor: "#2b1055",
     fontId: "inter",
@@ -584,6 +611,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "sharp",
     buttonVariant: "outline",
     buttonUmbra: "none",
+    buttonUmbraColor: "#fafafa",
     buttonColor: "#fafafa",
     buttonTextColor: "#fafafa",
     fontId: "ibm-plex-mono",
@@ -608,6 +636,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "soft",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#2b2620",
     buttonColor: "#2b2620",
     buttonTextColor: "#f6f4ef",
     fontId: "playfair-display",
@@ -632,6 +661,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#9d174d",
     buttonColor: "#ec4899",
     buttonTextColor: "#ffffff",
     fontId: "figtree",
@@ -656,6 +686,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "round",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#e9f4ec",
     buttonColor: "#e9f4ec",
     buttonTextColor: "#14261c",
     fontId: "fraunces",
@@ -680,6 +711,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "glass",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#e0f2fe",
     buttonColor: "#38bdf8",
     buttonTextColor: "#f0f9ff",
     fontId: "space-grotesk",
@@ -704,6 +736,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "outline",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#40348c",
     buttonColor: "#6d5bd0",
     buttonTextColor: "#ffffff",
     fontId: "dm-sans",
@@ -728,6 +761,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "soft",
     buttonVariant: "fill",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#7c2d12",
     buttonColor: "#c2410c",
     buttonTextColor: "#fff7ed",
     fontId: "karla",
@@ -752,6 +786,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "pill",
     buttonVariant: "glass",
     buttonUmbra: "soft",
+    buttonUmbraColor: "#eef2ff",
     buttonColor: "#a5b4fc",
     buttonTextColor: "#eef2ff",
     fontId: "inter",
@@ -776,6 +811,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "sharp",
     buttonVariant: "fill",
     buttonUmbra: "none",
+    buttonUmbraColor: "#43352a",
     buttonColor: "#6b4f36",
     buttonTextColor: "#f3ead9",
     fontId: "work-sans",
@@ -800,6 +836,7 @@ export const themePresetValues: Record<PresetThemeId, Appearance> = {
     buttonContour: "round",
     buttonVariant: "fill",
     buttonUmbra: "hard",
+    buttonUmbraColor: "#f5e3ff",
     buttonColor: "#facc15",
     buttonTextColor: "#2e1065",
     fontId: "lora",
@@ -1018,6 +1055,7 @@ export function resolveAppearance(input: {
   buttonContour?: string | null;
   buttonVariant?: string | null;
   buttonUmbra?: string | null;
+  buttonUmbraColor?: string | null;
   buttonColor?: string | null;
   buttonTextColor?: string | null;
   fontId?: string | null;
@@ -1042,6 +1080,7 @@ export function resolveAppearance(input: {
     buttonContour: toContour(input.buttonContour),
     buttonVariant: toVariant(input.buttonVariant),
     buttonUmbra: toUmbra(input.buttonUmbra),
+    buttonUmbraColor: toHex(input.buttonUmbraColor, "#111111"),
     buttonColor: toHex(input.buttonColor, "#111111"),
     buttonTextColor: toHex(input.buttonTextColor, "#ffffff"),
     fontId: toFontId(input.fontId),

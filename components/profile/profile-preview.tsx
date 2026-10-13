@@ -2,6 +2,7 @@
 
 import type { Link as LinkData, Profile } from "@/lib/db/schema";
 
+import { useAppearanceScrub } from "@/components/appearance/appearance-scrub-context";
 import { useLinksQuery } from "@/components/links/use-links-query";
 import { useEditorDraft } from "./editor-draft-context";
 import { ProfilePreviewContent } from "./profile-preview-content";
@@ -21,16 +22,17 @@ export function ProfilePreview({
   const { profile } = useProfileQuery(username, initialProfile);
   const { links } = useLinksQuery(profileId, initialLinks);
   const draft = useEditorDraft();
+  const scrub = useAppearanceScrub();
 
-  // In manual mode the preview shows the staged draft, so what the editor shows
-  // is what will publish. Outside a draft provider this is the published row.
-  const previewProfile = draft
-    ? {
-        ...profile,
-        ...draft.profileDraft,
-        ...draft.appearanceDraft,
-      }
-    : profile;
+  // Layering, tightest scope last: the published row, then staged drafts,
+  // then the hover-scrub preview. Spreading the possibly-null overlays
+  // no-ops, so this reads correctly in every mode.
+  const previewProfile = {
+    ...profile,
+    ...draft?.profileDraft,
+    ...draft?.appearanceDraft,
+    ...scrub,
+  };
 
   return (
     <ProfilePreviewContent profile={previewProfile} links={links} interactive={false} />

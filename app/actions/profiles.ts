@@ -630,6 +630,7 @@ export async function publishAppearanceSection(input: {
           buttonContour: draft.buttonContour,
           buttonVariant: draft.buttonVariant,
           buttonUmbra: draft.buttonUmbra,
+          buttonUmbraColor: draft.buttonUmbraColor,
           buttonColor: draft.buttonColor,
           buttonTextColor: draft.buttonTextColor,
           fontId: draft.fontId,
@@ -691,6 +692,7 @@ export async function updateAppearance(input: {
   buttonContour: string;
   buttonVariant: string;
   buttonUmbra: string;
+  buttonUmbraColor: string;
   buttonColor: string;
   buttonTextColor: string;
   fontId: string;
@@ -731,6 +733,7 @@ export async function updateAppearance(input: {
         buttonContour: parsed.data.buttonContour,
         buttonVariant: parsed.data.buttonVariant,
         buttonUmbra: parsed.data.buttonUmbra,
+        buttonUmbraColor: parsed.data.buttonUmbraColor,
         buttonColor: parsed.data.buttonColor,
         buttonTextColor: parsed.data.buttonTextColor,
         fontId: parsed.data.fontId,

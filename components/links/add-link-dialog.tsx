@@ -2,34 +2,20 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { AppleMusicResult } from "@/lib/links/apple-music";
-import {
-  AppleLogoIcon,
-  CalendarIcon,
-  CaretLeftIcon,
-  LinkSimpleIcon,
-  ListChecksIcon,
-  MagnifyingGlassIcon,
-  MapTrifoldIcon,
-  MusicNoteIcon,
-  PlusIcon,
-  SoundcloudLogoIcon,
-  SpotifyLogoIcon,
-  TextTIcon,
-  TelegramLogoIcon,
-  VideoCameraIcon,
-  WhatsappLogoIcon,
-  YoutubeLogoIcon,
-} from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 
-import { searchAppleMusic } from "@/app/actions/apple-music";
 import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links";
+import { AddLinkItemForm, CategoryIcon } from "@/components/links/add-link-item-form";
+import {
+  AddLinkUrlPreview,
+  type LinkMeta,
+} from "@/components/links/add-link-url-preview";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -41,50 +27,14 @@ import {
 } from "@/components/ui/input-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { useSrcImageFailure } from "@/components/use-image-failure";
 import { CATALOG, CATEGORIES, type CatalogItem } from "@/lib/links/catalog";
 import { parseEmbedUrl } from "@/lib/links/embeds";
-import { linkUrlSchema, normalizeUrl } from "@/lib/links/model";
+import { hostnameOf, isLinkLike, linkUrlSchema, normalizeUrl } from "@/lib/links/model";
 import { parseMusicUrl } from "@/lib/links/music";
 import { parseVideoUrl } from "@/lib/links/video";
 import { useCreateLink } from "./use-link-mutations";
 
-function CategoryIcon({ item }: { item: CatalogItem }) {
-  switch (item.id) {
-    case "spotify":
-      return <SpotifyLogoIcon className="size-4" />;
-    case "apple-music":
-      return <AppleLogoIcon className="size-4" />;
-    case "soundcloud":
-      return <SoundcloudLogoIcon className="size-4" />;
-    case "youtube":
-      return <YoutubeLogoIcon className="size-4" />;
-    case "vimeo":
-      return <VideoCameraIcon className="size-4" />;
-    case "google-maps":
-      return <MapTrifoldIcon className="size-4" />;
-    case "google-calendar":
-      return <CalendarIcon className="size-4" />;
-    case "typeform":
-      return <ListChecksIcon className="size-4" />;
-    case "whatsapp":
-      return <WhatsappLogoIcon className="size-4" />;
-    case "telegram":
-      return <TelegramLogoIcon className="size-4" />;
-    case "heading":
-      return <TextTIcon className="size-4" />;
-    default:
-      return <LinkSimpleIcon className="size-4" />;
-  }
-}
-
 type Category = (typeof CATEGORIES)[number]["id"];
-
-interface LinkMeta {
-  title: string;
-  imageUrl: string | null;
-  url: string;
-}
 
 export function AddLinkDialog({
   profileId,
@@ -97,58 +47,23 @@ export function AddLinkDialog({
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<Category>("socials");
   const [selected, setSelected] = useState<CatalogItem | null>(null);
-  const [handle, setHandle] = useState("");
   const [meta, setMeta] = useState<LinkMeta | null>(null);
-  const [searchResults, setSearchResults] = useState<Array<AppleMusicResult>>([]);
-  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const searchRef = useRef<HTMLInputElement>(null);
-  const handleRef = useRef<HTMLInputElement>(null);
-  // A foreign origin's og:image can 404 at any time, so the preview carries
-  // the same failure state as the rows.
-  const [metaImageBroken, onMetaImageFailed, metaImageRef] = useSrcImageFailure(
-    meta?.imageUrl ?? null,
-  );
 
   useEffect(() => {
-    if (!open) return;
-    (selected ? handleRef : searchRef).current?.focus();
+    if (!open || selected) return;
+    searchRef.current?.focus();
   }, [open, selected]);
 
   function reset() {
     setCategory("socials");
     setSelected(null);
-    setHandle("");
     setMeta(null);
-    setSearchResults([]);
-    setSearching(false);
     setError(null);
     form.reset();
   }
-
-  // Spotify links can be found without a pasted URL: search the catalogue
-  // live, but stand down the moment the input is cleared or looks like a URL.
-  useEffect(() => {
-    // Apple Music search works key-free; Spotify is paste-only until the
-    // account has Premium.
-    if (selected?.id !== "apple-music") {
-      return;
-    }
-    const query = handle.trim();
-    if (query.length < 2 || isLinkLike(query)) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setSearching(true);
-      void (async () => {
-        const result = await searchAppleMusic({ query });
-        setSearchResults("error" in result ? [] : result.results);
-        setSearching(false);
-      })();
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [handle, selected]);
 
   function addMusicResult(result: AppleMusicResult) {
     setError(null);
@@ -173,8 +88,7 @@ export function AddLinkDialog({
     });
   }
 
-  function addHeading() {
-    const title = handle.trim();
+  function addHeading(title: string) {
     if (!title) {
       setError("Give the heading some text.");
       return;
@@ -218,7 +132,7 @@ export function AddLinkDialog({
     },
   });
 
-  function addItem() {
+  function addItem(handle: string) {
     if (!selected) return;
     const url = selected.buildUrl(handle);
     if (!url) {
@@ -343,61 +257,15 @@ export function AddLinkDialog({
                 )}
 
                 {!selected && isUrl && (
-                  <div className="flex flex-col gap-2">
-                    <div className="border-input bg-card flex items-center gap-3 rounded-xl border p-3">
-                      {meta?.imageUrl && !metaImageBroken ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- cross-host og:image preview: the optimizer cache never earns its keep for one-off hosts
-                        <img
-                          ref={metaImageRef}
-                          src={meta.imageUrl}
-                          alt=""
-                          onError={onMetaImageFailed}
-                          className="size-10 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
-                        />
-                      ) : (
-                        <LinkSimpleIcon className="text-muted-foreground size-5" />
-                      )}
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        {field.state.meta.isValidating && !meta ? (
-                          <span className="text-muted-foreground text-sm">
-                            Loading preview…
-                          </span>
-                        ) : (
-                          <span className="truncate text-sm font-medium">
-                            {meta?.title ?? query}
-                          </span>
-                        )}
-                        {meta ? (
-                          <span className="text-muted-foreground truncate text-xs">
-                            {query}
-                          </span>
-                        ) : null}
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => form.handleSubmit()}
-                        disabled={pending}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {music ? (
-                      <p className="text-muted-foreground px-1 text-xs">
-                        Music link: your profile will play it inline.
-                      </p>
-                    ) : video ? (
-                      <p className="text-muted-foreground px-1 text-xs">
-                        Video link: your profile will play it inline.
-                      </p>
-                    ) : embed ? (
-                      <p className="text-muted-foreground px-1 text-xs">
-                        Web link: your profile will render it inline.
-                      </p>
-                    ) : null}
-                    {error ? (
-                      <p className="text-destructive px-1 text-sm">{error}</p>
-                    ) : null}
-                  </div>
+                  <AddLinkUrlPreview
+                    meta={meta}
+                    query={query}
+                    validating={field.state.meta.isValidating}
+                    pending={pending}
+                    hint={music ? "music" : video ? "video" : embed ? "embed" : null}
+                    error={error}
+                    onAdd={() => form.handleSubmit()}
+                  />
                 )}
 
                 <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
@@ -448,150 +316,18 @@ export function AddLinkDialog({
 
                   <div className="flex min-w-0 flex-1 flex-col gap-3">
                     {selected ? (
-                      selected.id === "heading" ? (
-                        <form
-                          noValidate
-                          className="flex flex-col gap-3"
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            addHeading();
-                          }}
-                        >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelected(null);
-                              setHandle("");
-                              setError(null);
-                            }}
-                            className="self-start"
-                          >
-                            <CaretLeftIcon />
-                            Back
-                          </Button>
-                          <InputGroup>
-                            <InputGroupAddon align="inline-start">
-                              <TextTIcon />
-                            </InputGroupAddon>
-                            <InputGroupInput
-                              ref={handleRef}
-                              value={handle}
-                              onChange={(event) => setHandle(event.target.value)}
-                              placeholder="Section title"
-                              aria-label="Heading text"
-                            />
-                          </InputGroup>
-                          {error ? (
-                            <p className="text-destructive text-sm">{error}</p>
-                          ) : null}
-                          <DialogFooter>
-                            <Button type="submit" disabled={pending}>
-                              {pending && <Spinner />}
-                              Add heading
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      ) : (
-                        <form
-                          noValidate
-                          className="flex flex-col gap-3"
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            addItem();
-                          }}
-                        >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelected(null);
-                              setHandle("");
-                              setSearchResults([]);
-                              setSearching(false);
-                              setError(null);
-                            }}
-                            className="self-start"
-                          >
-                            <CaretLeftIcon />
-                            Back
-                          </Button>
-                          <InputGroup>
-                            <InputGroupAddon align="inline-start">
-                              {selected.platform ? (
-                                <SocialIcon id={selected.platform} />
-                              ) : (
-                                <CategoryIcon item={selected} />
-                              )}
-                            </InputGroupAddon>
-                            <InputGroupInput
-                              ref={handleRef}
-                              value={handle}
-                              onChange={(event) => {
-                                setHandle(event.target.value);
-                                // Stale results belong to the previous query; the
-                                // effect re-populates only when the debounce fires.
-                                setSearchResults([]);
-                                setSearching(false);
-                              }}
-                              placeholder={
-                                selected.id === "apple-music"
-                                  ? `Search ${selected.label} or paste a link`
-                                  : selected.placeholder
-                              }
-                              aria-label={selected.label}
-                            />
-                            {searching ? (
-                              <InputGroupAddon align="inline-end">
-                                <Spinner />
-                              </InputGroupAddon>
-                            ) : null}
-                          </InputGroup>
-                          {selected?.id === "apple-music" && searchResults.length > 0 ? (
-                            <ul className="border-input flex max-h-64 flex-col overflow-y-auto rounded-xl border">
-                              {searchResults.map((result) => (
-                                <li key={`${result.type}-${result.id}`}>
-                                  <button
-                                    type="button"
-                                    onClick={() => addMusicResult(result)}
-                                    className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors"
-                                  >
-                                    {result.imageUrl ? (
-                                      <ResultImage src={result.imageUrl} />
-                                    ) : (
-                                      <span className="bg-muted grid size-10 place-items-center rounded-md">
-                                        <MusicNoteIcon className="size-4" />
-                                      </span>
-                                    )}
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block truncate font-medium">
-                                        {result.title}
-                                      </span>
-                                      <span className="text-muted-foreground block truncate text-xs">
-                                        {result.subtitle}
-                                      </span>
-                                    </span>
-                                    <span className="text-muted-foreground text-xs capitalize">
-                                      {result.type}
-                                    </span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                          {error ? (
-                            <p className="text-destructive text-sm">{error}</p>
-                          ) : null}
-                          <DialogFooter>
-                            <Button type="submit" disabled={pending}>
-                              {pending && <Spinner />}
-                              Add {selected.label}
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      )
+                      <AddLinkItemForm
+                        selected={selected}
+                        pending={pending}
+                        error={error}
+                        onBack={() => {
+                          setSelected(null);
+                          setError(null);
+                        }}
+                        onSubmitHeading={addHeading}
+                        onSubmitItem={addItem}
+                        onAddMusicResult={addMusicResult}
+                      />
                     ) : (
                       results.map((item) => (
                         <button
@@ -635,50 +371,4 @@ export function AddLinkDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-/**
- * A transient search-result thumbnail from Apple's CDN. Remote artwork fails
- * to load like any cross-host image, and a broken glyph inside search
- * results reads as a defect, so it falls back to the music note.
- */
-function ResultImage({ src }: { src: string }) {
-  const [broken, onFailed, failedRef] = useSrcImageFailure(src);
-  if (broken) {
-    return (
-      <span className="bg-muted grid size-10 place-items-center rounded-md">
-        <MusicNoteIcon className="size-4" />
-      </span>
-    );
-  }
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- transient search preview: next/image adds nothing for a thumbnail shown for a moment
-    <img
-      ref={failedRef}
-      src={src}
-      alt=""
-      onError={onFailed}
-      className="size-10 rounded-md object-cover"
-    />
-  );
-}
-
-function isLinkLike(input: string): boolean {
-  const normalized = normalizeUrl(input.trim());
-  if (!linkUrlSchema.safeParse(normalized).success) return false;
-  try {
-    const url = new URL(normalized);
-    if (url.protocol === "mailto:" || url.protocol === "tel:") return true;
-    return url.hostname.includes(".");
-  } catch {
-    return false;
-  }
-}
-
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "") || url;
-  } catch {
-    return url;
-  }
 }

@@ -122,6 +122,28 @@ export function displayUrl(url: string): string {
 // changed, so a dense 0..n sequence would churn the whole list on every drag.
 export const POSITION_GAP = 1000;
 
+/** True when the input parses to an acceptable http/mailto/tel URL. */
+export function isLinkLike(input: string): boolean {
+  const normalized = normalizeUrl(input.trim());
+  if (!linkUrlSchema.safeParse(normalized).success) return false;
+  try {
+    const url = new URL(normalized);
+    if (url.protocol === "mailto:" || url.protocol === "tel:") return true;
+    return url.hostname.includes(".");
+  } catch {
+    return false;
+  }
+}
+
+/** Bare www-stripped hostname, for the default title of a pasted link. */
+export function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "") || url;
+  } catch {
+    return url;
+  }
+}
+
 export function positionAfter(max: number | null | undefined): number {
   return (max ?? -POSITION_GAP) + POSITION_GAP;
 }

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { Link as LinkData } from "@/lib/db/schema";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { updateLink } from "@/app/actions/links";
+import { updateLink } from "@/app/actions/links/link";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import {

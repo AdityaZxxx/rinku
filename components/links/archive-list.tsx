@@ -14,7 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { getArchivedLinks } from "@/app/actions/links";
+import { getArchivedLinks } from "@/app/actions/links/link";
 import {
   AlertDialog,
   AlertDialogAction,

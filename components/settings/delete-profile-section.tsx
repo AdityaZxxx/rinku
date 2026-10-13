@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { TrashIcon } from "@phosphor-icons/react";
 
-import { deleteProfile } from "@/app/actions/profiles";
+import { deleteProfile } from "@/app/actions/profiles/profile";
 import {
   AlertDialog,
   AlertDialogAction,

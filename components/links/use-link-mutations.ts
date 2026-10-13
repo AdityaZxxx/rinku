@@ -4,8 +4,8 @@ import type { Link } from "@/lib/db/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { createLink, updateLink } from "@/app/actions/links";
 import { archiveLink, deleteLink, restoreLink } from "@/app/actions/links/archive";
+import { createLink, updateLink } from "@/app/actions/links/link";
 import { reorderLinks } from "@/app/actions/links/order";
 import { parseEmbedUrl } from "@/lib/links/embeds";
 import { parseMusicUrl } from "@/lib/links/music";

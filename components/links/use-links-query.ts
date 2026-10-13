@@ -3,7 +3,7 @@
 import type { Link as LinkData } from "@/lib/db/schema";
 import { useQuery } from "@tanstack/react-query";
 
-import { getLinks } from "@/app/actions/links";
+import { getLinks } from "@/app/actions/links/link";
 
 export function useLinksQuery(profileId: string, initialLinks: LinkData[]) {
   const query = useQuery({

@@ -5,7 +5,7 @@ import type { AppleMusicResult } from "@/lib/links/apple-music";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 
-import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links";
+import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links/link";
 import { AddLinkItemForm, CategoryIcon } from "@/components/links/add-link-item-form";
 import {
   AddLinkUrlPreview,

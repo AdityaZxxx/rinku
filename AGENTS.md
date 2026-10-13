@@ -16,7 +16,9 @@ Supabase (Postgres + storage), reached through Drizzle.
 ## Where things live
 
 The layer and route map is `docs/architecture.md`; read it before exploring,
-and update it in the same commit that moves or renames a domain folder.
+and update it in the same commit that moves or renames a domain folder. When
+a request uses product vocabulary (often Linktree's), `docs/glossary.md`
+maps those words to code locations.
 
 ## Keyboard shortcuts
 
@@ -29,8 +31,10 @@ unpublished edits still warn, and bare-key shortcuts must bail on
 
 ## Server actions
 
-Server actions live in `app/actions/<domain>[/<sub>].ts`, one file per segment
-they mutate, each starting with `"use server"`.
+Server actions live in `app/actions/<domain>/<segment>.ts`, one file per
+segment they mutate, each starting with `"use server"`. A single-segment
+domain is one flat file instead (`accounts.ts`); a domain folder never pairs
+with a same-named file beside it.
 
 ## Vendored directories
 

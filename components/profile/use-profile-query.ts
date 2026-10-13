@@ -3,7 +3,7 @@
 import type { Profile } from "@/lib/db/schema";
 import { useQuery } from "@tanstack/react-query";
 
-import { getProfile } from "@/app/actions/profiles";
+import { getProfile } from "@/app/actions/profiles/profile";
 
 export function useProfileQuery(username: string, initialProfile: Profile) {
   const query = useQuery({

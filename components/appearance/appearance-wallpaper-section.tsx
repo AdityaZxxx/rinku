@@ -8,7 +8,10 @@ import {
   spacingLabel,
   thicknessLabel,
 } from "@/components/appearance/appearance-fields";
-import { KindMock, WallpaperKindTile } from "@/components/appearance/appearance-mocks";
+import {
+  KindPreview,
+  WallpaperKindTile,
+} from "@/components/appearance/appearance-previews";
 import { OptionTile } from "@/components/appearance/appearance-tiles";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -115,7 +118,7 @@ export function WallpaperSection({
                   onScrub={() => scrubTile({ wallpaperPattern: pattern.id })}
                   onScrubEnd={scrubEnd}
                 >
-                  <KindMock
+                  <KindPreview
                     kind="pattern"
                     color={values.wallpaperColor}
                     colorB={values.wallpaperColorB}

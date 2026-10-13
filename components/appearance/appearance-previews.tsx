@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { ImageIcon, VideoCameraIcon } from "@phosphor-icons/react";
 
-import { OptionTile, TileMock } from "@/components/appearance/appearance-tiles";
+import { OptionTile, TilePreview } from "@/components/appearance/appearance-tiles";
 import { patternBackground } from "@/components/appearance/wallpaper-layer";
 import { type Appearance } from "@/lib/profiles/appearance";
 import {
@@ -58,7 +58,7 @@ export function WallpaperKindTile({
           checked ? "border-ring ring-ring/30 ring-3" : "border-input hover:bg-accent/40",
         )}
       >
-        <KindMock kind={kind} color={color} colorB={colorB} />
+        <KindPreview kind={kind} color={color} colorB={colorB} />
         <span className="text-muted-foreground absolute inset-x-0 bottom-0.5 text-center text-xs capitalize">
           {label}
         </span>
@@ -75,7 +75,7 @@ export function WallpaperKindTile({
       onScrub={onScrub}
       onScrubEnd={onScrubEnd}
     >
-      <KindMock
+      <KindPreview
         kind={kind}
         color={color}
         colorB={colorB}
@@ -88,7 +88,7 @@ export function WallpaperKindTile({
 }
 
 /** One miniature button rendered with the page's real recipe and palette. */
-export function VariantMock({
+export function VariantPreview({
   variant,
   look,
 }: {
@@ -96,7 +96,7 @@ export function VariantMock({
   look: Appearance;
 }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className={cn("h-6 w-4/5 border", buttonContourClass(look.buttonContour))}
         style={buttonBodyStyle({
@@ -107,14 +107,14 @@ export function VariantMock({
           edge: look.buttonUmbraColor,
         })}
       />
-    </TileMock>
+    </TilePreview>
   );
 }
 
 /** The real shadow at miniature scale, on the same button the page shows. */
-export function UmbraMock({ umbra, look }: { umbra: ButtonUmbra; look: Appearance }) {
+export function UmbraPreview({ umbra, look }: { umbra: ButtonUmbra; look: Appearance }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className={cn("h-7 w-4/5 border", buttonContourClass(look.buttonContour))}
         style={buttonBodyStyle({
@@ -125,24 +125,24 @@ export function UmbraMock({ umbra, look }: { umbra: ButtonUmbra; look: Appearanc
           edge: look.buttonUmbraColor,
         })}
       />
-    </TileMock>
+    </TilePreview>
   );
 }
 
 /**
- * Mock-scale radii. The real corner classes clamp shut at this size (a 28px
+ * Preview-scale radii. The real corner classes clamp shut at this size (a 28px
  * bar turns rounded-2xl into a full capsule), so each contour instead gets
- * the same share of the mock's height that the public page shows on a real
+ * the same share of the preview's height that the public page shows on a real
  * button: 0, roughly a sixth, a third, and fully round.
  */
-const contourMockRadius: Record<ButtonContour, string> = {
+const contourPreviewRadius: Record<ButtonContour, string> = {
   sharp: "0px",
   soft: "5px",
   round: "9px",
   pill: "9999px",
 };
 
-export function ContourMock({
+export function ContourPreview({
   contour,
   look,
 }: {
@@ -150,7 +150,7 @@ export function ContourMock({
   look: Appearance;
 }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className="h-7 w-full border"
         style={{
@@ -161,14 +161,14 @@ export function ContourMock({
             umbra: "none",
             edge: look.buttonUmbraColor,
           }),
-          borderRadius: contourMockRadius[contour],
+          borderRadius: contourPreviewRadius[contour],
         }}
       />
-    </TileMock>
+    </TilePreview>
   );
 }
 
-export function KindMock({
+export function KindPreview({
   kind,
   color,
   colorB,
@@ -185,17 +185,17 @@ export function KindMock({
 }) {
   if (kind === "gradient") {
     return (
-      <TileMock>
+      <TilePreview>
         <span
           className="h-9 w-full rounded-md border"
           style={{ background: `linear-gradient(180deg, ${color}, ${colorB})` }}
         />
-      </TileMock>
+      </TilePreview>
     );
   }
   if (kind === "blur") {
     return (
-      <TileMock>
+      <TilePreview>
         <span
           className="relative h-9 w-full overflow-hidden rounded-md border"
           style={{ backgroundColor: color }}
@@ -209,43 +209,43 @@ export function KindMock({
             style={{ backgroundColor: colorB, opacity: 0.5 }}
           />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (kind === "pattern") {
     return (
-      <TileMock>
+      <TilePreview>
         <span
           className="h-9 w-full rounded-md border"
           style={{
             background: patternBackground(pattern, color, colorB, spacing, thickness),
           }}
         />
-      </TileMock>
+      </TilePreview>
     );
   }
   if (kind === "image") {
     return (
-      <TileMock>
+      <TilePreview>
         <span className="flex h-9 w-full items-center justify-center rounded-md border">
           <ImageIcon className="text-muted-foreground size-5" />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (kind === "video") {
     return (
-      <TileMock>
+      <TilePreview>
         <span className="flex h-9 w-full items-center justify-center rounded-md border">
           <VideoCameraIcon className="text-muted-foreground size-5" />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   return (
-    <TileMock>
+    <TilePreview>
       <span className="h-9 w-full rounded-md border" style={{ backgroundColor: color }} />
-    </TileMock>
+    </TilePreview>
   );
 }
 
@@ -256,7 +256,7 @@ export function KindMock({
  * short one with the avatar overlapping its edge, cutout an inset square,
  * classic a small circle, minimal text only, statement one big line.
  */
-export function HeaderMock({ value, look }: { value: string; look: Appearance }) {
+export function HeaderPreview({ value, look }: { value: string; look: Appearance }) {
   const title = look.titleColor;
   const body = hexWithAlpha(look.bodyColor, "8c");
   const media = hexWithAlpha(look.titleColor, "40");
@@ -264,7 +264,7 @@ export function HeaderMock({ value, look }: { value: string; look: Appearance })
 
   if (value === "statement") {
     return (
-      <TileMock background={look.wallpaperColor}>
+      <TilePreview background={look.wallpaperColor}>
         <span className="flex h-9 w-full flex-col items-center justify-center gap-1">
           <span
             className="h-2.5 w-full rounded-full"
@@ -273,12 +273,12 @@ export function HeaderMock({ value, look }: { value: string; look: Appearance })
           <span className="h-1 w-2/3 rounded-full" style={{ backgroundColor: body }} />
           <span className="h-1 w-2/5 rounded-full" style={{ backgroundColor: body }} />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (value === "banner") {
     return (
-      <TileMock background={look.wallpaperColor}>
+      <TilePreview background={look.wallpaperColor}>
         <span className="flex h-9 w-full flex-col items-center">
           <span
             className="-mx-2 h-3.5 w-[calc(100%+1rem)]"
@@ -293,33 +293,33 @@ export function HeaderMock({ value, look }: { value: string; look: Appearance })
             style={{ backgroundColor: title }}
           />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (value === "minimal") {
     return (
-      <TileMock background={look.wallpaperColor}>
+      <TilePreview background={look.wallpaperColor}>
         <span className="flex h-9 w-full flex-col items-center justify-center gap-1">
           <span className="h-1.5 w-1/2 rounded-full" style={{ backgroundColor: title }} />
           <span className="h-1 w-1/3 rounded-full" style={{ backgroundColor: body }} />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (value === "cutout") {
     return (
-      <TileMock background={look.wallpaperColor}>
+      <TilePreview background={look.wallpaperColor}>
         <span className="flex h-9 w-full flex-col items-center gap-1">
           <span className="h-4 w-3/5 rounded-lg" style={{ backgroundColor: media }} />
           <span className="h-1.5 w-3/5 rounded-full" style={{ backgroundColor: title }} />
           <span className="h-1 w-2/5 rounded-full" style={{ backgroundColor: body }} />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   if (value === "hero") {
     return (
-      <TileMock background={look.wallpaperColor}>
+      <TilePreview background={look.wallpaperColor}>
         <span className="flex h-9 w-full flex-col items-center">
           <span className="-mx-2 h-6 w-[calc(100%+1rem)]" style={{ background: fade }} />
           <span
@@ -328,21 +328,21 @@ export function HeaderMock({ value, look }: { value: string; look: Appearance })
           />
           <span className="h-1 w-1/3 rounded-full" style={{ backgroundColor: body }} />
         </span>
-      </TileMock>
+      </TilePreview>
     );
   }
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span className="flex h-9 w-full flex-col items-center gap-1">
         <span className="size-5 rounded-full" style={{ backgroundColor: media }} />
         <span className="h-1.5 w-3/5 rounded-full" style={{ backgroundColor: title }} />
         <span className="h-1 w-2/5 rounded-full" style={{ backgroundColor: body }} />
       </span>
-    </TileMock>
+    </TilePreview>
   );
 }
 
-export function AlignmentMock({
+export function AlignmentPreview({
   alignment,
   look,
 }: {
@@ -350,7 +350,7 @@ export function AlignmentMock({
   look: Appearance;
 }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className={cn(
           "flex w-full flex-col gap-1",
@@ -370,12 +370,12 @@ export function AlignmentMock({
           style={{ backgroundColor: hexWithAlpha(look.bodyColor, "8c") }}
         />
       </span>
-    </TileMock>
+    </TilePreview>
   );
 }
 
 /**
- * Mid-flight snapshots for the entrance mocks: a three-row list where the
+ * Mid-flight snapshots for the entrance previews: a three-row list where the
  * top row has landed and the rest are still arriving, so both the trajectory
  * and the stagger read at a glance.
  */
@@ -408,14 +408,14 @@ const entranceSnapshots: Record<LinkEntrance, Array<{ key: string; cls: string }
 };
 
 /**
- * Each entrance mocked by its snapshot. Pointing at a tile replays the real
+ * Each entrance previewed by its snapshot. Pointing at a tile replays the real
  * entrance on pointer devices; the replay rules live in globals.css beside
  * the keyframes they borrow, and the rows carry .rinku-entrance so reduced
  * motion stays gentle here too.
  */
-export function EntranceMock({ id, look }: { id: LinkEntrance; look: Appearance }) {
+export function EntrancePreview({ id, look }: { id: LinkEntrance; look: Appearance }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className={cn(
           "flex w-full flex-col items-center gap-1",
@@ -426,18 +426,21 @@ export function EntranceMock({ id, look }: { id: LinkEntrance; look: Appearance 
           <span
             key={row.key}
             className={cn(
-              "rinku-entrance rinku-mock-row h-1.5 w-4/5 rounded-full",
+              "rinku-entrance rinku-preview-row h-1.5 w-4/5 rounded-full",
               row.cls,
             )}
             style={
               // SAFETY: React's CSSProperties rejects custom-property keys; this
               // only feeds the stagger delay the replay rules in globals.css read.
-              { backgroundColor: look.buttonColor, "--mock-row": index } as CSSProperties
+              {
+                backgroundColor: look.buttonColor,
+                "--preview-row": index,
+              } as CSSProperties
             }
           />
         ))}
       </span>
-    </TileMock>
+    </TilePreview>
   );
 }
 
@@ -446,9 +449,9 @@ export function EntranceMock({ id, look }: { id: LinkEntrance; look: Appearance 
  * touch screens; pointing at a tile deepens the effect live on pointer
  * devices, with the same transition the public page uses.
  */
-export function HoverMock({ id, look }: { id: LinkHover; look: Appearance }) {
+export function HoverPreview({ id, look }: { id: LinkHover; look: Appearance }) {
   return (
-    <TileMock background={look.wallpaperColor}>
+    <TilePreview background={look.wallpaperColor}>
       <span
         className={cn(
           "h-2 w-4/5 rounded-full transition-[transform,box-shadow] ease-[ease] duration-150",
@@ -456,16 +459,16 @@ export function HoverMock({ id, look }: { id: LinkHover; look: Appearance }) {
             "-translate-y-1 shadow-md pointer-fine:group-hover:-translate-y-1.5 pointer-fine:group-hover:shadow-lg",
           id === "scale" && "scale-110 pointer-fine:group-hover:scale-[1.15]",
           id === "glow" &&
-            "shadow-[0_0_14px_-2px_var(--mock-glow)] pointer-fine:group-hover:shadow-[0_0_22px_2px_var(--mock-glow)]",
+            "shadow-[0_0_14px_-2px_var(--preview-glow)] pointer-fine:group-hover:shadow-[0_0_22px_2px_var(--preview-glow)]",
         )}
         style={
-          // SAFETY: custom-property key, same cast reason as EntranceMock.
+          // SAFETY: custom-property key, same cast reason as EntrancePreview.
           {
             backgroundColor: look.buttonColor,
-            "--mock-glow": look.buttonColor,
+            "--preview-glow": look.buttonColor,
           } as CSSProperties
         }
       />
-    </TileMock>
+    </TilePreview>
   );
 }

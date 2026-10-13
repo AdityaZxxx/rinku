@@ -253,22 +253,22 @@
    lib/profiles/appearance.ts). The rows carry .rinku-entrance, so the
    blanket reset and the gentle carve-out above apply to them too. */
 @media (hover: hover) and (pointer: fine) {
-  .rinku-entrance-replay-fade .rinku-mock-row {
+  .rinku-entrance-replay-fade .rinku-preview-row {
     animation: rinku-entrance-fade 450ms var(--ease-out) both;
   }
-  .rinku-entrance-replay-rise .rinku-mock-row {
+  .rinku-entrance-replay-rise .rinku-preview-row {
     animation: rinku-entrance-rise 380ms var(--ease-out) both;
   }
-  .rinku-entrance-replay-pop .rinku-mock-row {
+  .rinku-entrance-replay-pop .rinku-preview-row {
     animation: rinku-entrance-pop 320ms var(--ease-pop) both;
   }
-  .rinku-entrance-replay-slide .rinku-mock-row {
+  .rinku-entrance-replay-slide .rinku-preview-row {
     animation: rinku-entrance-slide 380ms var(--ease-out) both;
   }
-  .rinku-entrance-replay-fade .rinku-mock-row,
-  .rinku-entrance-replay-rise .rinku-mock-row,
-  .rinku-entrance-replay-pop .rinku-mock-row,
-  .rinku-entrance-replay-slide .rinku-mock-row {
-    animation-delay: calc(var(--mock-row, 0) * 60ms);
+  .rinku-entrance-replay-fade .rinku-preview-row,
+  .rinku-entrance-replay-rise .rinku-preview-row,
+  .rinku-entrance-replay-pop .rinku-preview-row,
+  .rinku-entrance-replay-slide .rinku-preview-row {
+    animation-delay: calc(var(--preview-row, 0) * 60ms);
   }
 }

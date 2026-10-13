@@ -48,8 +48,8 @@ export function OptionTile({
   );
 }
 
-/** The shared miniature-tile frame every appearance mock renders inside. */
-export function TileMock({
+/** The shared miniature-tile frame every appearance preview renders inside. */
+export function TilePreview({
   children,
   background,
 }: {

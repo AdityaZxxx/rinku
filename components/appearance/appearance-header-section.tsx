@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import type { Appearance } from "@/lib/profiles/appearance";
 
 import {
-  AlignmentMock,
-  EntranceMock,
-  HeaderMock,
-  HoverMock,
-} from "@/components/appearance/appearance-mocks";
+  AlignmentPreview,
+  EntrancePreview,
+  HeaderPreview,
+  HoverPreview,
+} from "@/components/appearance/appearance-previews";
 import { OptionTile } from "@/components/appearance/appearance-tiles";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
@@ -57,7 +57,7 @@ export function HeaderSection({
               onScrub={() => scrubTile({ headerStyle: value })}
               onScrubEnd={scrubEnd}
             >
-              <HeaderMock value={value} look={values} />
+              <HeaderPreview value={value} look={values} />
             </OptionTile>
           ))}
         </div>
@@ -98,7 +98,7 @@ export function HeaderSection({
               onScrub={() => scrubTile({ pageAlignment: alignment.id })}
               onScrubEnd={scrubEnd}
             >
-              <AlignmentMock alignment={alignment.id} look={values} />
+              <AlignmentPreview alignment={alignment.id} look={values} />
             </OptionTile>
           ))}
         </div>
@@ -122,7 +122,7 @@ export function HeaderSection({
               onScrub={() => scrubTile({ linkEntrance: entrance.id })}
               onScrubEnd={scrubEnd}
             >
-              <EntranceMock id={entrance.id} look={values} />
+              <EntrancePreview id={entrance.id} look={values} />
             </OptionTile>
           ))}
         </div>
@@ -146,7 +146,7 @@ export function HeaderSection({
               onScrub={() => scrubTile({ linkHover: hover.id })}
               onScrubEnd={scrubEnd}
             >
-              <HoverMock id={hover.id} look={values} />
+              <HoverPreview id={hover.id} look={values} />
             </OptionTile>
           ))}
         </div>

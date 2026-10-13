@@ -4,10 +4,10 @@ import type { Appearance } from "@/lib/profiles/appearance";
 
 import { ColorField } from "@/components/appearance/appearance-fields";
 import {
-  ContourMock,
-  UmbraMock,
-  VariantMock,
-} from "@/components/appearance/appearance-mocks";
+  ContourPreview,
+  UmbraPreview,
+  VariantPreview,
+} from "@/components/appearance/appearance-previews";
 import { OptionTile } from "@/components/appearance/appearance-tiles";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -49,7 +49,7 @@ export function ButtonSection({
               onScrub={() => scrubTile({ buttonVariant: variant.id })}
               onScrubEnd={scrubEnd}
             >
-              <VariantMock variant={variant.id} look={values} />
+              <VariantPreview variant={variant.id} look={values} />
             </OptionTile>
           ))}
         </div>
@@ -73,7 +73,7 @@ export function ButtonSection({
               onScrub={() => scrubTile({ buttonContour: contour.id })}
               onScrubEnd={scrubEnd}
             >
-              <ContourMock contour={contour.id} look={values} />
+              <ContourPreview contour={contour.id} look={values} />
             </OptionTile>
           ))}
         </div>
@@ -97,7 +97,7 @@ export function ButtonSection({
               onScrub={() => scrubTile({ buttonUmbra: umbra.id })}
               onScrubEnd={scrubEnd}
             >
-              <UmbraMock umbra={umbra.id} look={values} />
+              <UmbraPreview umbra={umbra.id} look={values} />
             </OptionTile>
           ))}
         </div>

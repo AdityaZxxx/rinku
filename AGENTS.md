@@ -13,6 +13,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Link-in-bio SaaS: one public page per user at `/<username>`. Data lives in
 Supabase (Postgres + storage), reached through Drizzle.
 
+## Where things live
+
+The layer and route map is `docs/architecture.md`; read it before exploring,
+and update it in the same commit that moves or renames a domain folder.
+
 ## Keyboard shortcuts
 
 `lib/dashboard/shortcuts.ts` is the single source of truth for nav digits and cheat-sheet

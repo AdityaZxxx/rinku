@@ -24,6 +24,11 @@
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error"] }],
 
+    // Files past this size cost every future session extra re-reads and stale
+    // edit retries; split them instead of growing them. Current exceptions sit
+    // in the override below and shrink as each file is extracted.
+    "max-lines": ["error", { "max": 500 }],
+
     // Direct db access bypasses RLS: a direct Postgres connection has no
     // auth.uid() claims, so policies silently evaluate false. lib/db owns the
     // connection; the helpers in lib/db/with-user.ts set the claims per query.
@@ -125,6 +130,22 @@
       "files": ["lib/db/**"],
       "rules": {
         "no-restricted-imports": "off"
+      }
+    },
+    {
+      // Oversized files already in the tree. Extract parts from each, then
+      // delete its entry here; do not add new entries.
+      "files": [
+        "app/actions/links.ts",
+        "app/actions/profiles.ts",
+        "app/actions/profiles/media.ts",
+        "components/appearance/appearance-editor.tsx",
+        "components/appearance/appearance-mocks.tsx",
+        "components/links/add-link-dialog.tsx",
+        "lib/profiles/appearance.ts"
+      ],
+      "rules": {
+        "max-lines": "off"
       }
     }
   ]

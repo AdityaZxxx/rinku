@@ -11,7 +11,7 @@ import {
   removeWallpaperMedia,
   uploadBanner,
   uploadWallpaper,
-} from "@/app/actions/profiles/media";
+} from "@/app/actions/profiles/media/appearance";
 
 function profileKey(username: string) {
   return ["profile", username] as const;

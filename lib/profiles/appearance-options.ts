@@ -29,6 +29,11 @@ export const wallpaperPatterns: Array<{ id: WallpaperPattern; label: string }> =
   { id: "waves", label: "Waves" },
 ];
 
+// The two wallpaper media slots an upload or removal can aim at.
+export const wallpaperMediaTargetIds = ["wallpaper-image", "wallpaper-video"] as const;
+
+export type WallpaperMediaTarget = (typeof wallpaperMediaTargetIds)[number];
+
 // Pattern tuning: tile spacing and stroke weight, each on a 1-4 scale. The
 // defaults reproduce the hardcoded SVG dimensions these knobs replace, so
 // existing pattern pages render exactly as they did before the sliders.

@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { updateProfile } from "@/app/actions/profiles";
-import { uploadProfileImage } from "@/app/actions/profiles/media";
+import { uploadProfileImage } from "@/app/actions/profiles/media/avatar";
 
 function profileKey(username: string) {
   return ["profile", username] as const;

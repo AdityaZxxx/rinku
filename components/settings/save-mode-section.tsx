@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { EditorArea, SaveMode } from "@/lib/profiles/schema";
 import { toast } from "sonner";
 
-import { updateSaveMode } from "@/app/actions/profiles";
+import { updateSaveMode } from "@/app/actions/profiles/editor-settings";
 import { cn } from "@/lib/utils";
 
 const areas: Array<{

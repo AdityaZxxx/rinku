@@ -7,7 +7,7 @@ import { ImageSquareIcon, TrashIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
-import { removeSeoImage, updateSeo, uploadSeoImage } from "@/app/actions/profiles";
+import { removeSeoImage, updateSeo, uploadSeoImage } from "@/app/actions/profiles/seo";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";

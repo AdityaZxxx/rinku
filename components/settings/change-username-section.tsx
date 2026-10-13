@@ -12,7 +12,7 @@ import {
   getUsernameHistory,
   reclaimUsername,
   renameProfile,
-} from "@/app/actions/profiles";
+} from "@/app/actions/profiles/username";
 import {
   AlertDialog,
   AlertDialogAction,

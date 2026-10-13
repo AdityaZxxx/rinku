@@ -13,7 +13,7 @@ import {
   publishProfileSection,
   saveAppearanceDraft,
   saveProfileDraft,
-} from "@/app/actions/profiles";
+} from "@/app/actions/profiles/drafts";
 import { setEditorDirty } from "@/components/profile/unsaved-guard";
 
 function profileKey(username: string) {

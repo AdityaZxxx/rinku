@@ -7,7 +7,8 @@ import { CheckIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 import * as z from "zod";
 
-import { checkUsernameAvailability, createProfile } from "@/app/actions/profiles";
+import { createProfile } from "@/app/actions/profiles";
+import { checkUsernameAvailability } from "@/app/actions/profiles/username";
 import { Button } from "@/components/ui/button";
 import {
   Card,

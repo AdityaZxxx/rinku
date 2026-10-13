@@ -5,7 +5,7 @@ import type { Appearance } from "@/lib/profiles/appearance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { updateAppearance } from "@/app/actions/profiles";
+import { updateAppearance } from "@/app/actions/profiles/appearance";
 import {
   removeBanner,
   removeWallpaperMedia,

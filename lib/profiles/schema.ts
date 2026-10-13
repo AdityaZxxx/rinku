@@ -103,3 +103,32 @@ export const imageMaxBytes = {
   wallpaperImage: 5 * 1024 * 1024,
   wallpaperVideo: 25 * 1024 * 1024,
 };
+
+export const profileIdSchema = z.object({ profileId: z.uuid() });
+
+/**
+ * The file's extension plus the user-facing rejection, if any. One home for
+ * the empty-file and type/size checks every upload action repeats; `kind`
+ * picks the extension table and the error copy.
+ */
+export function validateMediaUpload(
+  file: File,
+  kind: "image" | "video",
+  maxBytes: number,
+): { ok: true; extension: string } | { ok: false; error: string } {
+  const extension =
+    kind === "video" ? videoExtension(file.type) : imageExtension(file.type);
+  if (file.size === 0) {
+    return { ok: false, error: "That file is empty." };
+  }
+  if (extension === null || file.size > maxBytes) {
+    return {
+      ok: false,
+      error:
+        kind === "video"
+          ? `Upload an MP4 or WebM video up to ${maxBytes / (1024 * 1024)} MB.`
+          : `Upload a JPEG, PNG, WebP, or AVIF image up to ${maxBytes / (1024 * 1024)} MB.`,
+    };
+  }
+  return { ok: true, extension };
+}

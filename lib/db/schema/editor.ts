@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   foreignKey,
   integer,
@@ -183,6 +184,7 @@ export const appearanceDrafts = pgTable(
     linkEntrance: text("link_entrance").notNull().default("none"),
     linkHover: text("link_hover").notNull().default("none"),
     pageAlignment: text("page_alignment").notNull().default("center"),
+    showUsername: boolean("show_username").notNull().default(false),
     wallpaperImagePath: text("wallpaper_image_path"),
     wallpaperVideoPath: text("wallpaper_video_path"),
 

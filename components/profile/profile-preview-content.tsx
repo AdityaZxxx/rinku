@@ -241,6 +241,7 @@ export function ProfilePreviewContent({
                       key={link.id}
                       className={cn(
                         "mt-4 text-sm font-semibold tracking-wide",
+                        left ? "text-left" : "text-center",
                         entranceClass,
                       )}
                       style={{ color: muted, ...entranceStyle(look.linkEntrance, index) }}

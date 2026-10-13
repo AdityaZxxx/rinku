@@ -72,6 +72,9 @@ export const profiles = pgTable(
     linkEntrance: text("link_entrance").notNull().default("none"),
     linkHover: text("link_hover").notNull().default("none"),
     pageAlignment: text("page_alignment").notNull().default("center"),
+    // The page hides the handle by default, matching the Linktree reference;
+    // the owner opts in. The URL and the derived SEO title keep it either way.
+    showUsername: boolean("show_username").notNull().default(false),
     wallpaperImagePath: text("wallpaper_image_path"),
     wallpaperVideoPath: text("wallpaper_video_path"),
 

@@ -639,6 +639,7 @@ export async function publishAppearanceSection(input: {
           linkEntrance: draft.linkEntrance,
           linkHover: draft.linkHover,
           pageAlignment: draft.pageAlignment,
+          showUsername: draft.showUsername,
           wallpaperImagePath: draft.wallpaperImagePath,
           wallpaperVideoPath: draft.wallpaperVideoPath,
           updatedAt: new Date(),
@@ -701,6 +702,7 @@ export async function updateAppearance(input: {
   linkEntrance: string;
   linkHover: string;
   pageAlignment: string;
+  showUsername: boolean;
   wallpaperImagePath: string | null;
   wallpaperVideoPath: string | null;
 }): Promise<{ ok: true } | { error: string }> {
@@ -742,6 +744,7 @@ export async function updateAppearance(input: {
         linkEntrance: parsed.data.linkEntrance,
         linkHover: parsed.data.linkHover,
         pageAlignment: parsed.data.pageAlignment,
+        showUsername: parsed.data.showUsername,
         wallpaperImagePath: parsed.data.wallpaperImagePath,
         wallpaperVideoPath: parsed.data.wallpaperVideoPath,
         updatedAt: new Date(),

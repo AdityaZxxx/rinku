@@ -54,6 +54,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 import { isEditableTarget } from "@/lib/dashboard/keyboard";
 import {
   buttonBodyStyle,
@@ -113,6 +114,7 @@ function appearanceFromProfile(profile: Profile): Appearance {
     linkEntrance: resolved.linkEntrance,
     linkHover: resolved.linkHover,
     pageAlignment: resolved.pageAlignment,
+    showUsername: resolved.showUsername,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };
@@ -248,6 +250,7 @@ export function AppearanceEditor({
     return {
       ...themePresetValues[id],
       headerStyle: values.headerStyle,
+      showUsername: values.showUsername,
       bannerPath: values.bannerPath,
       wallpaperImagePath: values.wallpaperImagePath,
       wallpaperVideoPath: values.wallpaperVideoPath,
@@ -612,6 +615,21 @@ export function AppearanceEditor({
           className="hidden"
           onChange={onPickBannerFile}
         />
+
+        <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">Show @{username}</span>
+            <span className="text-muted-foreground text-xs leading-normal text-pretty">
+              Turn on to show @{username} under your name. Your page link and search
+              results keep it either way.
+            </span>
+          </div>
+          <Switch
+            checked={values.showUsername}
+            onCheckedChange={(showUsername) => tweak({ showUsername })}
+            aria-label={`Show @${username}`}
+          />
+        </div>
 
         <Field>
           <FieldLabel id="alignment-label">Page alignment</FieldLabel>

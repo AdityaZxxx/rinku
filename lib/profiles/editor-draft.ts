@@ -53,6 +53,7 @@ export function appearanceDraftFromProfile(profile: Profile): AppearanceDraftFie
     linkEntrance: resolved.linkEntrance,
     linkHover: resolved.linkHover,
     pageAlignment: resolved.pageAlignment,
+    showUsername: resolved.showUsername,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };
@@ -82,6 +83,7 @@ export function appearanceDraftFromRow(row: AppearanceDraft): AppearanceDraftFie
     linkEntrance: resolved.linkEntrance,
     linkHover: resolved.linkHover,
     pageAlignment: resolved.pageAlignment,
+    showUsername: resolved.showUsername,
     wallpaperImagePath: resolved.wallpaperImagePath,
     wallpaperVideoPath: resolved.wallpaperVideoPath,
   };

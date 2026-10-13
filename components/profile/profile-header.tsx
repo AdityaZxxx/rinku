@@ -150,9 +150,11 @@ export function ProfileHeader({
           <p className="text-sm" style={{ color: muted }}>
             {displayName?.trim() ? displayName.trim() : username}
           </p>
-          <p className="text-sm" style={{ color: muted }}>
-            @{username}
-          </p>
+          {look.showUsername ? (
+            <p className="text-sm" style={{ color: muted }}>
+              @{username}
+            </p>
+          ) : null}
         </div>
       ) : (
         <div
@@ -168,9 +170,11 @@ export function ProfileHeader({
           >
             {displayName?.trim() ? displayName : username}
           </p>
-          <p className="text-sm" style={{ color: muted }}>
-            @{username}
-          </p>
+          {look.showUsername ? (
+            <p className="text-sm" style={{ color: muted }}>
+              @{username}
+            </p>
+          ) : null}
           {bio?.trim() ? (
             <p
               className={cn("max-w-prose text-sm", left && "whitespace-pre-line")}

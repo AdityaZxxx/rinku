@@ -449,6 +449,7 @@ export const appearanceSchema = z.object({
   linkEntrance: z.enum(linkEntranceIds),
   linkHover: z.enum(linkHoverIds),
   pageAlignment: z.enum(pageAlignmentIds),
+  showUsername: z.boolean(),
   wallpaperImagePath: z.string().max(512).nullable(),
   wallpaperVideoPath: z.string().max(512).nullable(),
 });
@@ -603,6 +604,7 @@ export function resolveAppearance(input: {
   linkEntrance?: string | null;
   linkHover?: string | null;
   pageAlignment?: string | null;
+  showUsername?: boolean | null;
   wallpaperImagePath?: string | null;
   wallpaperVideoPath?: string | null;
 }): ResolvedAppearance {
@@ -638,6 +640,7 @@ export function resolveAppearance(input: {
     linkEntrance: toEntrance(input.linkEntrance),
     linkHover: toHover(input.linkHover),
     pageAlignment: toAlignment(input.pageAlignment),
+    showUsername: input.showUsername ?? false,
     wallpaperImagePath: input.wallpaperImagePath ?? null,
     wallpaperVideoPath: input.wallpaperVideoPath ?? null,
   };

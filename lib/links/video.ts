@@ -1,3 +1,5 @@
+import type { EmbedMetadata } from "@/lib/links/embeds";
+import type { LinkMetadata } from "@/lib/links/music";
 import * as z from "zod";
 
 /** Typed metadata for "video" links. Stored in links.metadata once at write
@@ -103,4 +105,10 @@ export function videoEmbed(metadata: VideoMetadata): string {
     case "vimeo":
       return `https://player.vimeo.com/video/${metadata.id}`;
   }
+}
+
+export function isVideoMetadata(
+  metadata: LinkMetadata | VideoMetadata | EmbedMetadata,
+): metadata is VideoMetadata {
+  return metadata.provider === "youtube" || metadata.provider === "vimeo";
 }

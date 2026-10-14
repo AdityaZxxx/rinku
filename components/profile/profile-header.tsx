@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { PreviewLink } from "@/components/profile/profile-preview-content";
+import type { HeaderStyleId } from "@/lib/profiles/schema";
 
 import { SocialIcon } from "@/components/social-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,13 +13,7 @@ import { profileInitials } from "@/lib/profiles/initials";
 import { avatarUrl, bannerUrl } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
 
-export type ProfileHeaderVariant =
-  | "classic"
-  | "hero"
-  | "banner"
-  | "cutout"
-  | "minimal"
-  | "statement";
+export type ProfileHeaderVariant = HeaderStyleId;
 
 export function ProfileHeader({
   variant,

@@ -1,3 +1,4 @@
+import type { HeaderStyleId } from "@/lib/profiles/schema";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -50,7 +51,7 @@ export const profiles = pgTable(
     // does not mean rewriting rows.
     avatarPath: text("avatar_path"),
     bannerPath: text("banner_path"),
-    headerStyle: text("header_style").notNull().default("classic"),
+    headerStyle: text("header_style").notNull().default("classic").$type<HeaderStyleId>(),
     themeId: text("theme_id").notNull().default("air"),
     buttonContour: text("button_shape").notNull().default("pill"),
     buttonVariant: text("button_style").notNull().default("fill"),

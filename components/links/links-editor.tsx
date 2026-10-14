@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Route } from "next";
 import Link from "next/link";
 import type { Link as LinkData } from "@/lib/db/schema";
 import {
@@ -36,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { changedPositions } from "@/lib/links/model";
 import { EASE_OUT } from "@/lib/links/motion";
 import { platformById } from "@/lib/links/platforms";
+import { typedRoute } from "@/lib/next-path";
 import { cn } from "@/lib/utils";
 import { AddLinkDialog } from "./add-link-dialog";
 import { HeadingRow } from "./heading-row";
@@ -177,9 +177,7 @@ export function LinksEditor({
             variant="outline"
             size="sm"
             nativeButton={false}
-            // SAFETY: /:username/links/archive for the current profile; the
-            // typed route union is only knowable for literals.
-            render={<Link href={`/${username}/links/archive` as Route} />}
+            render={<Link href={typedRoute(`/${username}/links/archive`)} />}
           >
             <ArchiveIcon />
             Archive

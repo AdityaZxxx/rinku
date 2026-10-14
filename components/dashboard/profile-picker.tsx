@@ -1,6 +1,5 @@
 "use client";
 
-import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { profiles } from "@/lib/db/schema";
@@ -18,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { typedRoute } from "@/lib/next-path";
 import { EDIT_SECTIONS } from "@/lib/profiles/sections";
 import { avatarUrl } from "@/lib/supabase/storage";
 
@@ -67,9 +67,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
             <DropdownMenuItem
               key={profile.id}
               render={
-                // SAFETY: /:username/:section; the typed route union is only
-                // knowable for literals.
-                <GuardedLink href={`/${profile.username}/${section}` as Route} />
+                <GuardedLink href={typedRoute(`/${profile.username}/${section}`)} />
               }
             >
               <Avatar className="size-5 shrink-0">

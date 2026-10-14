@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { CheckIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
@@ -20,6 +19,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { typedRoute } from "@/lib/next-path";
 import { profileBasicsSchema, usernameSchema } from "@/lib/profiles/schema";
 
 const onboardingSchema = z.object({
@@ -60,9 +60,7 @@ export function OnboardingForm() {
 
       sessionStorage.removeItem("rinku:claim");
 
-      // SAFETY: the destination is /:username/overview for the profile just
-      // created; the typed route union is only knowable for literals.
-      router.push(`/${result.username}/overview` as Route);
+      router.push(typedRoute(`/${result.username}/overview`));
       router.refresh();
     },
   });

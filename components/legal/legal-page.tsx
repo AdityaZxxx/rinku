@@ -5,11 +5,11 @@ import matter from "gray-matter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { safeNextPath } from "@/lib/next-path";
+
 function MarkdownLink({ href, children }: { href?: string; children?: React.ReactNode }) {
   if (href && href.startsWith("/")) {
-    // SAFETY: internal links are validated site-relative by the startsWith
-    // check above, so this satisfies the typed-routes literal constraint.
-    return <Link href={href as never}>{children}</Link>;
+    return <Link href={safeNextPath(href)}>{children}</Link>;
   }
   return <a href={href}>{children}</a>;
 }

@@ -34,6 +34,8 @@ import {
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 
+const thumbnailSchema = z.object({ thumbnail_url: z.string().optional() });
+
 /** Thumbnails derived server-side when the row carries no image of its own. */
 async function videoThumbnail(url: string, video: VideoMetadata): Promise<string | null> {
   if (video.provider === "youtube") {
@@ -48,9 +50,12 @@ async function videoThumbnail(url: string, video: VideoMetadata): Promise<string
   if (!response.ok) {
     return null;
   }
-  // SAFETY: thumbnail_url is optional; a malformed body narrows to undefined.
-  const data = (await response.json()) as { thumbnail_url?: string };
-  return data.thumbnail_url ?? null;
+  try {
+    const data = thumbnailSchema.parse(await response.json());
+    return data.thumbnail_url ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function firstIssue(error: z.ZodError): string {

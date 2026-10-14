@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { ReservedUsername } from "@/lib/profiles/schema";
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
@@ -37,6 +36,7 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { typedRoute } from "@/lib/next-path";
 import { usernameSchema } from "@/lib/profiles/schema";
 import { cn } from "@/lib/utils";
 
@@ -87,9 +87,7 @@ export function ChangeUsernameSection({
       setOpen(false);
       form.reset();
       setCheckedValue(candidate);
-      // SAFETY: /:username/settings for the profile just renamed; the typed
-      // route union is only knowable for literals.
-      const destination = `/${candidate}/settings` as Route;
+      const destination = typedRoute(`/${candidate}/settings`);
       router.replace(destination);
       router.refresh();
     },
@@ -226,8 +224,7 @@ export function ChangeUsernameSection({
                 username={username}
                 onReclaim={(handle) => {
                   setOpen(false);
-                  // SAFETY: same shape as the rename destination above.
-                  const destination = `/${handle}/settings` as Route;
+                  const destination = typedRoute(`/${handle}/settings`);
                   router.replace(destination);
                   router.refresh();
                 }}

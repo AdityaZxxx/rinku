@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 export const fontIds = [
   "inter",
   "noto-sans",
@@ -75,18 +77,10 @@ export const fonts: Array<{ id: FontId; label: string; sample: string; family: s
   ];
 
 export function toFontId(value: string | null | undefined): FontId {
-  if (!value) {
-    return "inter";
-  }
-  // SAFETY: fontIds and FontId derive from the same const tuple, so a
-  // includes() hit means the value is a FontId member; z.enum-validated DB
-  // writes keep this invariant at runtime.
-  for (const id of fontIds) {
-    if (value === id) {
-      return id;
-    }
-  }
-  return "inter";
+  return z
+    .enum(fontIds)
+    .catch("inter")
+    .parse(value ?? null);
 }
 
 export function fontStack(font: FontId): string {

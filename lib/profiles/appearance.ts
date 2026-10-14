@@ -163,15 +163,10 @@ function toAlignment(value: string | null | undefined): PageAlignment {
 }
 
 function toHeaderStyle(value: string | null | undefined): HeaderStyleId {
-  // SAFETY: headerStyleIds and HeaderStyleId derive from the same const
-  // tuple, so an includes() hit means the value is a member; the DB CHECK
-  // and appearanceSchema keep the invariant at rest.
-  for (const id of headerStyleIds) {
-    if (value === id) {
-      return value;
-    }
-  }
-  return "classic";
+  return z
+    .enum(headerStyleIds)
+    .catch("classic")
+    .parse(value ?? null);
 }
 
 function toInt(
@@ -199,15 +194,11 @@ function toHex(value: string | null | undefined, fallback: string): string {
   return fallback;
 }
 
-const presetThemeIdSet = new Set<string>(presetThemeIds);
-
 function toThemeId(value: string | null | undefined): ThemeId {
-  if (value === "custom" || presetThemeIdSet.has(value ?? "")) {
-    // SAFETY: membership in presetThemeIdSet is exactly the PresetThemeId
-    // union, and the "custom" literal is checked before the fallthrough.
-    return value as ThemeId;
-  }
-  return "custom";
+  return z
+    .enum(themeIds)
+    .catch("custom")
+    .parse(value ?? null);
 }
 
 export interface ResolvedAppearance extends Appearance {

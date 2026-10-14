@@ -5,7 +5,9 @@ import * as z from "zod";
  * write time, so the public page renders the embed without re-parsing URLs.
  */
 
-export type SpotifyType = "track" | "album" | "playlist" | "artist" | "episode" | "show";
+const spotifyTypes = ["track", "album", "playlist", "artist", "episode", "show"] as const;
+
+export type SpotifyType = (typeof spotifyTypes)[number];
 
 /** How a music link renders on the profile: the player itself, a classic row, or a featured card. */
 export type MusicEmbedStyle = "embed" | "classic" | "featured";
@@ -48,18 +50,12 @@ export const linkMetadataSchema = z.discriminatedUnion("provider", [
   z.object({ provider: z.literal("soundcloud"), url: z.string(), ...styleField }),
 ]);
 
-const SPOTIFY_TYPES: ReadonlySet<string> = new Set([
-  "track",
-  "album",
-  "playlist",
-  "artist",
-  "episode",
-  "show",
-]);
-
 function asSpotifyType(value: string | undefined): SpotifyType | null {
-  // SAFETY: SPOTIFY_TYPES only contains values of the SpotifyType union.
-  return value !== undefined && SPOTIFY_TYPES.has(value) ? (value as SpotifyType) : null;
+  return z
+    .enum(spotifyTypes)
+    .nullable()
+    .catch(null)
+    .parse(value ?? null);
 }
 
 /** Parse a user-pasted URL into music metadata, or null when it is not music. */

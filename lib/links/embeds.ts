@@ -1,3 +1,5 @@
+import type { LinkMetadata } from "@/lib/links/music";
+import type { VideoMetadata } from "@/lib/links/video";
 import * as z from "zod";
 
 /**
@@ -130,4 +132,14 @@ export function embedSpec(metadata: EmbedMetadata): EmbedSpec {
     case "typeform":
       return { src: `https://form.typeform.com/to/${metadata.formId}`, height: 500 };
   }
+}
+
+export function isEmbedMetadata(
+  metadata: LinkMetadata | VideoMetadata | EmbedMetadata,
+): metadata is EmbedMetadata {
+  return (
+    metadata.provider === "google-maps" ||
+    metadata.provider === "google-calendar" ||
+    metadata.provider === "typeform"
+  );
 }

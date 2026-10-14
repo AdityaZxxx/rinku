@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { ImageIcon, VideoCameraIcon } from "@phosphor-icons/react";
 
 import { OptionTile, TilePreview } from "@/components/appearance/appearance-tiles";
@@ -20,7 +19,7 @@ import {
   type PageAlignment,
   type WallpaperPattern,
 } from "@/lib/profiles/appearance-options";
-import { cn } from "@/lib/utils";
+import { cn, type CssVariables } from "@/lib/utils";
 
 export function WallpaperKindTile({
   kind,
@@ -422,23 +421,22 @@ export function EntrancePreview({ id, look }: { id: LinkEntrance; look: Appearan
           id !== "none" && `rinku-entrance-replay-${id}`,
         )}
       >
-        {entranceSnapshots[id].map((row, index) => (
-          <span
-            key={row.key}
-            className={cn(
-              "rinku-entrance rinku-preview-row h-1.5 w-4/5 rounded-full",
-              row.cls,
-            )}
-            style={
-              // SAFETY: React's CSSProperties rejects custom-property keys; this
-              // only feeds the stagger delay the replay rules in globals.css read.
-              {
-                backgroundColor: look.buttonColor,
-                "--preview-row": index,
-              } as CSSProperties
-            }
-          />
-        ))}
+        {entranceSnapshots[id].map((row, index) => {
+          const rowStyle: CssVariables = {
+            backgroundColor: look.buttonColor,
+            "--preview-row": index,
+          };
+          return (
+            <span
+              key={row.key}
+              className={cn(
+                "rinku-entrance rinku-preview-row h-1.5 w-4/5 rounded-full",
+                row.cls,
+              )}
+              style={rowStyle}
+            />
+          );
+        })}
       </span>
     </TilePreview>
   );
@@ -450,6 +448,10 @@ export function EntrancePreview({ id, look }: { id: LinkEntrance; look: Appearan
  * devices, with the same transition the public page uses.
  */
 export function HoverPreview({ id, look }: { id: LinkHover; look: Appearance }) {
+  const style: CssVariables = {
+    backgroundColor: look.buttonColor,
+    "--preview-glow": look.buttonColor,
+  };
   return (
     <TilePreview background={look.wallpaperColor}>
       <span
@@ -461,13 +463,7 @@ export function HoverPreview({ id, look }: { id: LinkHover; look: Appearance }) 
           id === "glow" &&
             "shadow-[0_0_14px_-2px_var(--preview-glow)] pointer-fine:group-hover:shadow-[0_0_22px_2px_var(--preview-glow)]",
         )}
-        style={
-          // SAFETY: custom-property key, same cast reason as EntrancePreview.
-          {
-            backgroundColor: look.buttonColor,
-            "--preview-glow": look.buttonColor,
-          } as CSSProperties
-        }
+        style={style}
       />
     </TilePreview>
   );

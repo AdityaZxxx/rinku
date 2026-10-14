@@ -48,17 +48,11 @@ export async function getSaveMode(
   const settings = await getEditorSettings(userId, profileId);
   switch (area) {
     case "links":
-      // SAFETY: links_save_mode is constrained to this union by a database
-      // CHECK and saveModeSchema, so the stored value narrows safely.
-      return settings.linksSaveMode as SaveMode;
+      return settings.linksSaveMode;
     case "profile":
-      // SAFETY: profile_save_mode is constrained to this union by a database
-      // CHECK and saveModeSchema, so the stored value narrows safely.
-      return settings.profileSaveMode as SaveMode;
+      return settings.profileSaveMode;
     default:
-      // SAFETY: appearance_save_mode is constrained to this union by a database
-      // CHECK and saveModeSchema, so the stored value narrows safely.
-      return settings.appearanceSaveMode as SaveMode;
+      return settings.appearanceSaveMode;
   }
 }
 

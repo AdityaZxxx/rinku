@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 const SEARCH_URL = "https://itunes.apple.com/search";
 
 export interface AppleMusicResult {
@@ -9,22 +11,26 @@ export interface AppleMusicResult {
   url: string;
 }
 
-interface ItunesTrack {
-  trackId?: number;
-  trackName?: string;
-  artistName?: string;
-  kind?: string;
-  trackViewUrl?: string;
-  artworkUrl100?: string;
-}
+// Only the fields the mapping below reads; everything else the API sends is
+// ignored, and a malformed body degrades to an empty result list.
+const itunesTrackSchema = z.object({
+  trackId: z.number().optional(),
+  trackName: z.string().optional(),
+  artistName: z.string().optional(),
+  trackViewUrl: z.string().optional(),
+  artworkUrl100: z.string().optional(),
+});
 
-interface ItunesAlbum {
-  collectionId?: number;
-  collectionName?: string;
-  artistName?: string;
-  collectionViewUrl?: string;
-  artworkUrl100?: string;
-}
+const itunesAlbumSchema = z.object({
+  collectionId: z.number().optional(),
+  collectionName: z.string().optional(),
+  artistName: z.string().optional(),
+  collectionViewUrl: z.string().optional(),
+  artworkUrl100: z.string().optional(),
+});
+
+const songFeedSchema = z.object({ results: z.array(itunesTrackSchema).optional() });
+const albumFeedSchema = z.object({ results: z.array(itunesAlbumSchema).optional() });
 
 /** Bigger artwork than the API's 100px thumb; the public page shows square covers. */
 function artwork(url: string | undefined): string | null {
@@ -32,7 +38,22 @@ function artwork(url: string | undefined): string | null {
 }
 
 // The iTunes Search API needs no key and mirrors Apple Music's catalogue;
-// that is Apple Music search without a developer account.
+// that is Apple Music search without a developer account. A non-OK response
+// or a malformed body degrades to null, which the caller reads as no results.
+async function fetchFeed<T>(
+  url: URL,
+  schema: z.ZodType<{ results?: T[] }>,
+): Promise<{ results?: T[] } | null> {
+  try {
+    const response = await fetch(url, { next: { revalidate: 60 } });
+    if (!response.ok) {
+      return null;
+    }
+    return schema.parse(await response.json());
+  } catch {
+    return null;
+  }
+}
 export async function searchAppleMusicLibrary(
   query: string,
 ): Promise<AppleMusicResult[] | null> {
@@ -47,15 +68,8 @@ export async function searchAppleMusicLibrary(
   };
 
   const [songs, albums] = await Promise.all([
-    // SAFETY: every field read below is optional and guarded, so a malformed
-    // body degrades to an empty result list instead of throwing.
-    fetch(make("song"), { next: { revalidate: 60 } })
-      .then((res) => (res.ok ? res.json() : null))
-      .catch(() => null) as Promise<{ results?: ItunesTrack[] } | null>,
-    // SAFETY: same as above (optional fields, guarded below).
-    fetch(make("album"), { next: { revalidate: 60 } })
-      .then((res) => (res.ok ? res.json() : null))
-      .catch(() => null) as Promise<{ results?: ItunesAlbum[] } | null>,
+    fetchFeed(make("song"), songFeedSchema),
+    fetchFeed(make("album"), albumFeedSchema),
   ]);
   if (!songs && !albums) {
     return null;

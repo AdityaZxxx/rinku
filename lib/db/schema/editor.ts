@@ -1,3 +1,4 @@
+import type { HeaderStyleId, SaveMode } from "@/lib/profiles/schema";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -35,9 +36,15 @@ export const profileEditorSettings = pgTable(
   "profile_editor_settings",
   {
     profileId: uuid("profile_id").primaryKey(),
-    linksSaveMode: text("links_save_mode").notNull().default("auto"),
-    profileSaveMode: text("profile_save_mode").notNull().default("auto"),
-    appearanceSaveMode: text("appearance_save_mode").notNull().default("auto"),
+    linksSaveMode: text("links_save_mode").notNull().default("auto").$type<SaveMode>(),
+    profileSaveMode: text("profile_save_mode")
+      .notNull()
+      .default("auto")
+      .$type<SaveMode>(),
+    appearanceSaveMode: text("appearance_save_mode")
+      .notNull()
+      .default("auto")
+      .$type<SaveMode>(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -162,7 +169,7 @@ export const appearanceDrafts = pgTable(
     // The header setting is owned by the Appearance section, so its staged
     // value lives here, not in `profile_drafts`. The banner rides along: it
     // is what the "banner" header recipe renders, so it is appearance media.
-    headerStyle: text("header_style").notNull().default("classic"),
+    headerStyle: text("header_style").notNull().default("classic").$type<HeaderStyleId>(),
     bannerPath: text("banner_path"),
     buttonContour: text("button_shape").notNull().default("pill"),
     buttonVariant: text("button_style").notNull().default("fill"),

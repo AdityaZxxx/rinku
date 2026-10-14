@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { links } from "@/lib/db/schema";
@@ -32,6 +31,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFaviconImage } from "@/components/use-image-failure";
 import { displayUrl, faviconUrl } from "@/lib/links/model";
+import { typedRoute } from "@/lib/next-path";
 import { useDeleteLink, useRestoreLink } from "./use-link-mutations";
 
 type ArchivedLink = typeof links.$inferSelect;
@@ -71,9 +71,7 @@ export function ArchiveList({
           variant="ghost"
           size="sm"
           nativeButton={false}
-          // SAFETY: /:username/links for the current profile; the typed route
-          // union is only knowable for literals.
-          render={<Link href={`/${username}/links` as Route} />}
+          render={<Link href={typedRoute(`/${username}/links`)} />}
         >
           <CaretLeftIcon />
           Back to links

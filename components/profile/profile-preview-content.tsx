@@ -14,13 +14,12 @@ import { MusicEmbed } from "@/components/links/music-embed";
 import { VideoEmbed } from "@/components/links/video-embed";
 import { MediaIcon } from "@/components/media-icon";
 import { AgeGateLink, AgeBadge } from "@/components/profile/age-gate-link";
-import {
-  ProfileHeader,
-  type ProfileHeaderVariant,
-} from "@/components/profile/profile-header";
+import { ProfileHeader } from "@/components/profile/profile-header";
 import { ShareLinkMenu } from "@/components/profile/share-link-menu";
+import { isEmbedMetadata } from "@/lib/links/embeds";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl, scheduleStatus } from "@/lib/links/model";
+import { isVideoMetadata } from "@/lib/links/video";
 import { resolveAppearance } from "@/lib/profiles/appearance";
 import {
   buttonBodyStyle,
@@ -35,7 +34,7 @@ import {
   type LinkHover,
 } from "@/lib/profiles/appearance-options";
 import { gatedThumbUrl } from "@/lib/supabase/storage";
-import { cn } from "@/lib/utils";
+import { cn, type CssVariables } from "@/lib/utils";
 
 export interface PreviewLink {
   id: string;
@@ -185,19 +184,12 @@ export function ProfilePreviewContent({
   const hover = hoverClass(look.linkHover);
   // Marks entrance rows for the reduced-motion carve-out in globals.css.
   const entranceClass = look.linkEntrance === "none" ? "" : "rinku-entrance";
-  // SAFETY: React's CSSProperties rejects custom-property keys; this only
-  // feeds the CSS variable that the glow hover class reads.
-  const glowVar = { "--link-glow": look.buttonColor } as CSSProperties;
+  const headerStyle: CssVariables = { fontFamily, "--link-glow": look.buttonColor };
 
-  // SAFETY: headerStyle is constrained to this union by the database
-  // CHECK and the zod schema, so the persisted value narrows safely.
-  const headerVariant = profile.headerStyle as ProfileHeaderVariant;
+  const headerVariant = profile.headerStyle;
 
   return (
-    <div
-      className="relative flex min-h-full w-full flex-1 flex-col"
-      style={{ fontFamily, ...glowVar }}
-    >
+    <div className="relative flex min-h-full w-full flex-1 flex-col" style={headerStyle}>
       <FontStylesheet font={look.font} />
       {bare ? null : (
         <WallpaperLayer
@@ -294,15 +286,12 @@ export function ProfilePreviewContent({
                       className={cn("w-full", entranceClass)}
                       style={entranceStyle(look.linkEntrance, index)}
                     >
-                      {link.kind === "video" ? (
-                        // SAFETY: kind === "video" implies VideoMetadata shape.
-                        <VideoEmbed metadata={link.metadata as VideoMetadata} />
-                      ) : link.kind === "embed" ? (
-                        // SAFETY: kind === "embed" implies EmbedMetadata shape.
-                        <BlockEmbed metadata={link.metadata as EmbedMetadata} />
+                      {isVideoMetadata(link.metadata) ? (
+                        <VideoEmbed metadata={link.metadata} />
+                      ) : isEmbedMetadata(link.metadata) ? (
+                        <BlockEmbed metadata={link.metadata} />
                       ) : (
-                        // SAFETY: only music left.
-                        <MusicEmbed metadata={link.metadata as LinkMetadata} />
+                        <MusicEmbed metadata={link.metadata} />
                       )}
                     </div>
                   );

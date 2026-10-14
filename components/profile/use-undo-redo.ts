@@ -66,11 +66,10 @@ export function useUndoRedo<T>(initial: T, limit = 100) {
   );
 
   const undo = useCallback((): T | undefined => {
-    if (past.current.length === 0) {
+    const previous = past.current.at(-1);
+    if (!previous) {
       return undefined;
     }
-    // SAFETY: only read after the length guard above, so the index is in range.
-    const previous = past.current[past.current.length - 1] as T;
     past.current = past.current.slice(0, -1);
     future.current = [...future.current, present.current];
     openKey.current = null;
@@ -80,11 +79,10 @@ export function useUndoRedo<T>(initial: T, limit = 100) {
   }, [sync]);
 
   const redo = useCallback((): T | undefined => {
-    if (future.current.length === 0) {
+    const next = future.current.at(-1);
+    if (!next) {
       return undefined;
     }
-    // SAFETY: only read after the length guard above, so the index is in range.
-    const next = future.current[future.current.length - 1] as T;
     future.current = future.current.slice(0, -1);
     past.current = [...past.current, present.current];
     openKey.current = null;

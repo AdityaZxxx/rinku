@@ -46,6 +46,7 @@ import {
   navShortcutHref,
   type NavSection,
 } from "@/lib/dashboard/shortcuts";
+import { typedRoute } from "@/lib/next-path";
 import { EDIT_SECTIONS } from "@/lib/profiles/sections";
 
 type Profile = typeof profiles.$inferSelect;
@@ -155,9 +156,7 @@ export function CommandPalette({ profiles: allProfiles }: { profiles: Profile[] 
             </AvatarFallback>
           </Avatar>
         ),
-        // SAFETY: /:username/:section; the typed route union is only knowable
-        // for literals.
-        run: () => go(`/${profile.username}/${switchSection}` as Route),
+        run: () => go(typedRoute(`/${profile.username}/${switchSection}`)),
       })),
     ...(["light", "dark", "system"] as const).map((value) => ({
       id: `theme-${value}`,

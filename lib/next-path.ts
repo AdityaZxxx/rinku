@@ -13,3 +13,16 @@ export function safeNextPath(candidate: string | null | undefined): Route {
   // narrowed further because the route union is only known for literals.
   return candidate as Route;
 }
+
+/**
+ * Marks a path built at runtime from this app's own route segments as a
+ * Route. The generated route union lists literal paths only, so a runtime
+ * template can never narrow on its own; the segments must therefore come
+ * from this app's enums and validated usernames, never from external input.
+ * For unvalidated strings use safeNextPath instead.
+ */
+export function typedRoute(path: string): Route {
+  // SAFETY: contract above; the segments are the app's own, so the path
+  // names one of the app's routes.
+  return path as Route;
+}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Route } from "next";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { typedRoute } from "@/lib/next-path";
 
 export function ClaimUsernameForm() {
   const router = useRouter();
@@ -25,9 +25,7 @@ export function ClaimUsernameForm() {
           return;
         }
         setError(null);
-        // SAFETY: username is validated before navigation, and the query value
-        // is encoded, so the route stays within the typed-routes union.
-        router.push(`/signup?username=${encodeURIComponent(trimmed)}` as Route);
+        router.push(typedRoute(`/signup?username=${encodeURIComponent(trimmed)}`));
       }}
     >
       <div className="flex w-full flex-col gap-3 sm:flex-row">

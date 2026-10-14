@@ -1,5 +1,7 @@
 import type { Route } from "next";
 
+import { typedRoute } from "@/lib/next-path";
+
 /**
  * The single source of truth for the dashboard's keyboard shortcuts. The
  * sidebar tooltips, the command palette, the global digit handler, and the
@@ -67,8 +69,7 @@ export function navShortcutHref(section: NavSection, username: string): Route {
   if (section === "dashboard") {
     return "/dashboard";
   }
-  // SAFETY: /:username/<section>; the typed route union is only knowable for literals.
-  return `/${username}/${section}` as Route;
+  return typedRoute(`/${username}/${section}`);
 }
 
 export type ShortcutRow = {

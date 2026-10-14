@@ -102,8 +102,6 @@ export function AppearanceUploadDialog({
     const file = input.files?.[0];
     const rawTarget = input.dataset.target;
     input.value = "";
-    // SAFETY: the data-target attribute is only ever set by this file's own
-    // hidden inputs, so an unmatched string can only be a bug here, not user data.
     if (rawTarget === "wallpaper-image" || rawTarget === "wallpaper-video") {
       acceptSelectedFile(rawTarget, file);
     }

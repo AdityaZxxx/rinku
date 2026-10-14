@@ -26,12 +26,10 @@ export default async function ProfileSettingsPage({
   }
 
   const settings = await getEditorSettings(userId, profile.id);
-  // SAFETY: each column is constrained to this union by a database CHECK and
-  // saveModeSchema, so the persisted values narrow safely.
   const initial = {
-    links: settings.linksSaveMode as SaveMode,
-    profile: settings.profileSaveMode as SaveMode,
-    appearance: settings.appearanceSaveMode as SaveMode,
+    links: settings.linksSaveMode,
+    profile: settings.profileSaveMode,
+    appearance: settings.appearanceSaveMode,
   } satisfies Record<EditorArea, SaveMode>;
 
   return (

@@ -280,7 +280,8 @@ export function useRestoreLink(profileId: string) {
 
 export function useDeleteLink(profileId: string) {
   const queryClient = useQueryClient();
-  const key = archivedKey(profileId);
+  const editorKey = linksKey(profileId);
+  const archiveKey = archivedKey(profileId);
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -292,14 +293,32 @@ export function useDeleteLink(profileId: string) {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["links", profileId] });
-      const previous = queryClient.getQueryData<Link[]>(key);
-      queryClient.setQueryData<Link[]>(key, (old) =>
-        (old ?? []).filter((link) => link.id !== id),
-      );
-      return { previous };
+      const previousEditor = queryClient.getQueryData<Link[]>(editorKey);
+      const previousArchived = queryClient.getQueryData<Link[]>(archiveKey);
+      // A delete can start from the editor's dialogs or from the archive
+      // list, so the optimistic filter covers both caches; as in
+      // useRestoreLink, only a cache that already has data is written.
+      if (previousArchived) {
+        queryClient.setQueryData<Link[]>(
+          archiveKey,
+          previousArchived.filter((row) => row.id !== id),
+        );
+      }
+      if (previousEditor) {
+        queryClient.setQueryData<Link[]>(
+          editorKey,
+          previousEditor.filter((row) => row.id !== id),
+        );
+      }
+      return { previousEditor, previousArchived };
     },
     onError: (_error, _id, context) => {
-      rollback(queryClient, key, context?.previous);
+      if (context?.previousArchived) {
+        queryClient.setQueryData(archiveKey, context.previousArchived);
+      }
+      if (context?.previousEditor) {
+        queryClient.setQueryData(editorKey, context.previousEditor);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["links", profileId] });

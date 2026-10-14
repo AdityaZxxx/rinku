@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { Link as LinkData } from "@/lib/db/schema";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { updateLink } from "@/app/actions/links/link";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { linkUrlSchema } from "@/lib/links/model";
 import { platformById } from "@/lib/links/platforms";
-import { useDeleteLink } from "./use-link-mutations";
+import { useDeleteLink, useUpdateLink } from "./use-link-mutations";
 
 export function EditSocialDialog({
   link,
@@ -32,9 +30,9 @@ export function EditSocialDialog({
 }) {
   const [value, setValue] = useState(link.url);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-  const queryClient = useQueryClient();
+  const update = useUpdateLink(link.profileId);
   const remove = useDeleteLink(link.profileId);
+  const busy = update.isPending || remove.isPending;
   const Platform = platformById(link.platform);
 
   function onSave() {
@@ -44,21 +42,18 @@ export function EditSocialDialog({
       return;
     }
     setError(null);
-    startTransition(async () => {
-      const result = await updateLink({
+    // The row updates optimistically in useUpdateLink; closing waits for the
+    // server so a failure (rollback + toast there) leaves the dialog open.
+    update.mutate(
+      {
         id: link.id,
         title: Platform?.label ?? link.title,
         url: trimmed,
         variant: link.variant,
         isActive: link.isActive,
-      });
-      if ("error" in result) {
-        setError(result.error);
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ["links", link.profileId] });
-      onOpenChange(false);
-    });
+      },
+      { onSuccess: () => onOpenChange(false) },
+    );
   }
 
   return (
@@ -84,24 +79,26 @@ export function EditSocialDialog({
           <Button
             type="button"
             variant="destructive"
-            disabled={pending}
+            disabled={busy}
             onClick={() => {
-              startTransition(async () => {
-                try {
-                  await remove.mutateAsync(link.id);
-                  onOpenChange(false);
-                } catch (caught) {
+              setError(null);
+              remove.mutate(link.id, {
+                onSuccess: () => onOpenChange(false),
+                onError: (caught) => {
                   setError(
-                    caught instanceof Error ? caught.message : "Removing this failed.",
+                    caught instanceof Error
+                      ? caught.message
+                      : "Removing this link failed. Try again.",
                   );
-                }
+                },
               });
             }}
           >
+            {remove.isPending ? <Spinner /> : null}
             Remove
           </Button>
-          <Button type="button" onClick={onSave} disabled={pending}>
-            {pending ? <Spinner /> : null}
+          <Button type="button" onClick={onSave} disabled={busy}>
+            {update.isPending ? <Spinner /> : null}
             Save
           </Button>
         </DialogFooter>

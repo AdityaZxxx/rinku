@@ -147,7 +147,11 @@ export function useCreateLink(profileId: string) {
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Link[]>(key);
-      const tempId = crypto.randomUUID();
+      // The id is a stand-in until the server row replaces it in onSuccess,
+      // so it never needs to be a UUID: crypto.randomUUID exists only in
+      // secure contexts and throws raw TypeError text into the dialog on a
+      // LAN preview over plain http.
+      const tempId = `temp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
       const music = input.platform ? null : parseMusicUrl(input.url);
       const video = music || input.platform ? null : parseVideoUrl(input.url);
       const embed = music || video || input.platform ? null : parseEmbedUrl(input.url);

@@ -10,8 +10,8 @@
  * back to the username, whose handle regex guarantees ASCII letters, so the
  * avatar never renders an emoji or a broken glyph where users expect initials.
  */
-export function profileInitials(displayName: string | null, username: string): string {
-  return initial(displayName?.trim() ?? "") || initial(username);
+export function profileInitials(title: string | null, username: string): string {
+  return initial(title?.trim() ?? "") || initial(username);
 }
 
 function initial(source: string): string {

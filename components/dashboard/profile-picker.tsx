@@ -29,7 +29,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
   const currentUsername = segments[1];
   const urlProfile = profiles.find((profile) => profile.username === currentUsername);
   const current = urlProfile ?? profiles[0];
-  const label = current ? (current.displayName ?? current.username) : null;
+  const label = current ? (current.title ?? current.username) : null;
 
   // Switching keeps the section being edited, /firstProfile/links to
   // /secondProfile/links; only a profile-scoped URL carries it over.
@@ -75,10 +75,10 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
                   src={profile.avatarPath ? avatarUrl(profile.avatarPath) : undefined}
                 />
                 <AvatarFallback className="text-[10px] font-medium">
-                  {(profile.displayName ?? profile.username)[0]?.toUpperCase()}
+                  {(profile.title ?? profile.username)[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="truncate">{profile.displayName ?? profile.username}</span>
+              <span className="truncate">{profile.title ?? profile.username}</span>
               {profile.id === urlProfile?.id && (
                 <CheckIcon className="ms-auto shrink-0" />
               )}

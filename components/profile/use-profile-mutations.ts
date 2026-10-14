@@ -16,7 +16,7 @@ export function useUpdateProfile(username: string) {
   const key = profileKey(username);
 
   return useMutation({
-    mutationFn: async (input: { displayName: string; bio: string }) => {
+    mutationFn: async (input: { title: string; bio: string }) => {
       const result = await updateProfile({ username, ...input });
       if ("error" in result) {
         throw new Error(result.error);
@@ -30,7 +30,7 @@ export function useUpdateProfile(username: string) {
         old
           ? {
               ...old,
-              displayName: input.displayName.trim() || null,
+              title: input.title.trim() || null,
               bio: input.bio.trim() || null,
               updatedAt: new Date(),
             }

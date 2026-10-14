@@ -12,7 +12,7 @@ const maxChars = (limit: number) =>
     .refine((value) => [...value].length <= limit, `Use ${limit} characters or fewer.`);
 
 export const profileBasicsSchema = z.object({
-  displayName: maxChars(50),
+  title: maxChars(50),
   bio: maxChars(150),
 });
 

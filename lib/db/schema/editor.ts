@@ -106,7 +106,7 @@ export const profileDrafts = pgTable(
   "profile_drafts",
   {
     profileId: uuid("profile_id").primaryKey(),
-    displayName: text("display_name"),
+    title: text("title"),
     bio: text("bio"),
 
     // Staged photo. Uploaded to storage immediately (a file has to live
@@ -123,8 +123,8 @@ export const profileDrafts = pgTable(
     }).onDelete("cascade"),
 
     check(
-      "profile_drafts_display_name_length",
-      sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,
+      "profile_drafts_title_length",
+      sql`${t.title} is null or char_length(${t.title}) <= 50`,
     ),
     check(
       "profile_drafts_bio_length",

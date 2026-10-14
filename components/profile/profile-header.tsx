@@ -17,7 +17,7 @@ export type ProfileHeaderVariant = HeaderStyleId;
 
 export function ProfileHeader({
   variant,
-  displayName,
+  title,
   username,
   bio,
   avatarPath,
@@ -27,7 +27,7 @@ export function ProfileHeader({
   look,
 }: {
   variant: ProfileHeaderVariant;
-  displayName: string | null;
+  title: string | null;
   username: string;
   bio: string | null;
   avatarPath: string | null;
@@ -119,7 +119,7 @@ export function ProfileHeader({
           style={{ borderColor: look.wallpaperColor }}
         >
           <AvatarImage src={avatarPath ? avatarUrl(avatarPath) : undefined} />
-          <AvatarFallback>{profileInitials(displayName, username)}</AvatarFallback>
+          <AvatarFallback>{profileInitials(title, username)}</AvatarFallback>
         </Avatar>
       ) : null}
 
@@ -134,14 +134,10 @@ export function ProfileHeader({
             className="line-clamp-4 text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl"
             style={{ color: look.titleColor }}
           >
-            {bio?.trim()
-              ? bio.trim()
-              : displayName?.trim()
-                ? displayName.trim()
-                : username}
+            {bio?.trim() ? bio.trim() : title?.trim() ? title.trim() : username}
           </p>
           <p className="text-sm" style={{ color: muted }}>
-            {displayName?.trim() ? displayName.trim() : username}
+            {title?.trim() ? title.trim() : username}
           </p>
           {look.showUsername ? (
             <p className="text-sm" style={{ color: muted }}>
@@ -161,7 +157,7 @@ export function ProfileHeader({
             className="text-2xl leading-tight font-semibold tracking-tight"
             style={{ color: look.titleColor }}
           >
-            {displayName?.trim() ? displayName : username}
+            {title?.trim() ? title : username}
           </p>
           {look.showUsername ? (
             <p className="text-sm" style={{ color: muted }}>

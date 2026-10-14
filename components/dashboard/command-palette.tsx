@@ -147,12 +147,12 @@ export function CommandPalette({ profiles: allProfiles }: { profiles: Profile[] 
       .map((profile) => ({
         id: `switch-${profile.id}`,
         group: "Profiles" as const,
-        label: `Switch to ${profile.displayName ?? profile.username}`,
+        label: `Switch to ${profile.title ?? profile.username}`,
         keywords: ["switch", "profile", profile.username],
         icon: (
           <Avatar className="size-4">
             <AvatarFallback className="text-[8px] font-medium">
-              {(profile.displayName ?? profile.username)[0]?.toUpperCase()}
+              {(profile.title ?? profile.username)[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
         ),

@@ -24,7 +24,7 @@ import { profileBasicsSchema, usernameSchema } from "@/lib/profiles/schema";
 
 const onboardingSchema = z.object({
   username: usernameSchema,
-  displayName: profileBasicsSchema.shape.displayName,
+  title: profileBasicsSchema.shape.title,
 });
 
 function claimedUsername(): string {
@@ -42,7 +42,7 @@ export function OnboardingForm() {
   const form = useForm({
     defaultValues: {
       username: typeof window === "undefined" ? "" : claimedUsername(),
-      displayName: "",
+      title: "",
     },
     validators: { onSubmit: onboardingSchema },
     onSubmit: async ({ value }) => {
@@ -50,7 +50,7 @@ export function OnboardingForm() {
 
       const result = await createProfile({
         username: value.username,
-        displayName: value.displayName || undefined,
+        title: value.title || undefined,
       });
 
       if ("error" in result) {
@@ -163,12 +163,12 @@ export function OnboardingForm() {
             />
 
             <form.Field
-              name="displayName"
+              name="title"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Display name</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Title</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}

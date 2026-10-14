@@ -31,12 +31,13 @@ export const profiles = pgTable(
     // trigger keeps the two in step, so treat this column as read-only.
     username: text("username").notNull(),
 
-    displayName: text("display_name"),
+    title: text("title"),
     bio: text("bio"),
 
     // Crawler-facing overrides for the public page's <head>. Every one is
-    // nullable because null means "derive it": the title from display name and
-    // handle, the description from bio, the share image from banner then avatar.
+    // nullable because null means "derive it": the SEO title from the profile
+    // title and handle, the description from bio, the share image from banner
+    // then avatar.
     // These are public by nature (search engines and link unfurlers read them),
     // so they belong on the world-readable row, not a private table.
     metaTitle: text("meta_title"),
@@ -148,8 +149,8 @@ export const profiles = pgTable(
     ),
     check("profiles_page_alignment", sql`${t.pageAlignment} in ('center', 'left')`),
     check(
-      "profiles_display_name_length",
-      sql`${t.displayName} is null or char_length(${t.displayName}) <= 50`,
+      "profiles_title_length",
+      sql`${t.title} is null or char_length(${t.title}) <= 50`,
     ),
     check("profiles_bio_length", sql`${t.bio} is null or char_length(${t.bio}) <= 150`),
     // Search-result truncation points: ~60 characters for a title, ~160 for a

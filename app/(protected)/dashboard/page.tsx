@@ -74,7 +74,7 @@ export default async function DashboardPage() {
               </Avatar>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-medium">
-                  {profile.displayName ?? profile.username}
+                  {profile.title ?? profile.username}
                 </span>
                 <span className="text-muted-foreground text-xs">/{profile.username}</span>
                 <div className="text-muted-foreground mt-1 flex gap-3 text-xs tabular-nums">

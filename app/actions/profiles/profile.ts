@@ -33,7 +33,7 @@ export async function getProfile(input: {
 
 export async function updateProfile(input: {
   username: string;
-  displayName: string;
+  title: string;
   bio: string;
 }): Promise<{ ok: true } | { error: string }> {
   const supabase = await createClient();
@@ -53,7 +53,7 @@ export async function updateProfile(input: {
     tx
       .update(profiles)
       .set({
-        displayName: parsed.data.displayName.trim() || null,
+        title: parsed.data.title.trim() || null,
         bio: parsed.data.bio.trim() || null,
         updatedAt: new Date(),
       })
@@ -69,7 +69,7 @@ export async function updateProfile(input: {
 
 export async function createProfile(input: {
   username: string;
-  displayName?: string;
+  title?: string;
 }): Promise<{ username: string } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -82,7 +82,7 @@ export async function createProfile(input: {
   const { error } = await supabase.from("profiles").insert({
     user_id: user.id,
     username: input.username,
-    display_name: input.displayName?.trim() || null,
+    title: input.title?.trim() || null,
   });
 
   if (error) {

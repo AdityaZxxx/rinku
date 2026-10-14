@@ -209,7 +209,7 @@ export function ProfilePreviewContent({
       >
         <ProfileHeader
           variant={headerVariant}
-          displayName={profile.displayName}
+          title={profile.title}
           username={profile.username}
           bio={profile.bio}
           avatarPath={profile.avatarPath}

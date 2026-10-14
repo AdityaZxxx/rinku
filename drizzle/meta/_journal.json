@@ -309,6 +309,13 @@
       "when": 1791893264754,
       "tag": "0043_modern_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791940963181,
+      "tag": "0044_rename_display_name_to_title",
+      "breakpoints": true
     }
   ]
 }

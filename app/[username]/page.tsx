@@ -23,8 +23,8 @@ export async function generateMetadata({
 
   // Each stored override wins; the derived value is the same one the page body
   // shows, so a profile with no SEO edits reads exactly as it did before.
-  const displayName = profile.displayName?.trim() ? profile.displayName : username;
-  const title = profile.metaTitle?.trim() || `${displayName} (@${username})`;
+  const profileTitle = profile.title?.trim() ? profile.title : username;
+  const title = profile.metaTitle?.trim() || `${profileTitle} (@${username})`;
   const description = profile.metaDescription?.trim() || profile.bio?.trim() || undefined;
   const image = profile.ogImagePath
     ? ogImageUrl(profile.ogImagePath)

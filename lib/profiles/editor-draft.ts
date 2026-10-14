@@ -5,7 +5,7 @@ import { resolveAppearance } from "@/lib/profiles/appearance";
 
 /** The Profile section's editable fields (empty string means unset). */
 export interface ProfileDraftFields {
-  displayName: string;
+  title: string;
   bio: string;
   avatarPath: string | null;
 }
@@ -15,7 +15,7 @@ export type AppearanceDraftFields = Appearance;
 
 export function profileDraftFromProfile(profile: Profile): ProfileDraftFields {
   return {
-    displayName: profile.displayName ?? "",
+    title: profile.title ?? "",
     bio: profile.bio ?? "",
     avatarPath: profile.avatarPath,
   };
@@ -23,7 +23,7 @@ export function profileDraftFromProfile(profile: Profile): ProfileDraftFields {
 
 export function profileDraftFromRow(row: ProfileDraft): ProfileDraftFields {
   return {
-    displayName: row.displayName ?? "",
+    title: row.title ?? "",
     bio: row.bio ?? "",
     avatarPath: row.avatarPath,
   };

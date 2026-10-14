@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function saveProfileDraft(input: {
   profileId: string;
-  displayName: string;
+  title: string;
   bio: string;
   avatarPath?: string | null;
 }): Promise<{ ok: true } | { error: string }> {
@@ -50,14 +50,14 @@ export async function saveProfileDraft(input: {
         .insert(profileDrafts)
         .values({
           profileId: parsed.data.profileId,
-          displayName: parsed.data.displayName.trim() || null,
+          title: parsed.data.title.trim() || null,
           bio: parsed.data.bio.trim() || null,
           ...paths,
         })
         .onConflictDoUpdate({
           target: profileDrafts.profileId,
           set: {
-            displayName: parsed.data.displayName.trim() || null,
+            title: parsed.data.title.trim() || null,
             bio: parsed.data.bio.trim() || null,
             ...paths,
             updatedAt: new Date(),
@@ -155,7 +155,7 @@ export async function publishProfileSection(input: {
       // Only overwrite a path when the draft carries one, so publishing text
       // edits does not clear a photo that was never staged.
       const published: Partial<typeof profiles.$inferInsert> = {
-        displayName: draft.displayName,
+        title: draft.title,
         bio: draft.bio,
         updatedAt: new Date(),
       };

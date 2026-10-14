@@ -12,7 +12,7 @@ const recentMs = 30 * 24 * 60 * 60 * 1000;
 export interface ProfileSnapshot {
   id: string;
   username: string;
-  displayName: string | null;
+  title: string | null;
   hasAvatar: boolean;
   avatarPath: string | null;
   hasBanner: boolean;
@@ -33,7 +33,7 @@ function row(
   return {
     id: profile.id,
     username: profile.username,
-    displayName: profile.displayName,
+    title: profile.title,
     hasAvatar: profile.avatarPath !== null,
     avatarPath: profile.avatarPath,
     hasBanner: profile.bannerPath !== null,

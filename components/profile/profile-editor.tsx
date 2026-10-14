@@ -66,7 +66,7 @@ export function ProfileEditor({
 
   const form = useForm({
     defaultValues: {
-      displayName: history.present.displayName ?? "",
+      title: history.present.title ?? "",
       bio: history.present.bio ?? "",
     },
     validators: { onChange: profileBasicsSchema },
@@ -76,7 +76,7 @@ export function ProfileEditor({
           return;
         }
         const next: ProfileDraftFields = {
-          displayName: formApi.state.values.displayName.trim(),
+          title: formApi.state.values.title.trim(),
           bio: formApi.state.values.bio.trim(),
           // The avatar path is owned by uploads, not the text form; carry the
           // staged one.
@@ -101,7 +101,7 @@ export function ProfileEditor({
   // text fields visibly rewind.
   function applyHistory(next: ProfileDraftFields) {
     form.reset({
-      displayName: next.displayName,
+      title: next.title,
       bio: next.bio,
     });
     setProfileDraft?.(next);
@@ -192,7 +192,7 @@ export function ProfileEditor({
   // live row); auto mode shows the published one.
   const shownAvatarPath = manual ? history.present.avatarPath : profile.avatarPath;
   const avatarSrc = shownAvatarPath ? avatarUrl(shownAvatarPath) : null;
-  const fallback = profileInitials(profile.displayName, username);
+  const fallback = profileInitials(profile.title, username);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6">
@@ -261,7 +261,7 @@ export function ProfileEditor({
           </div>
         </div>
 
-        <form.Field name="displayName">
+        <form.Field name="title">
           {(field) => {
             const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
             return (

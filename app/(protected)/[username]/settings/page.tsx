@@ -52,7 +52,7 @@ export default async function ProfileSettingsPage({
           keywords: profile.keywords ?? "",
           searchIndexing: profile.searchIndexing,
         }}
-        fallbackTitle={`${profile.displayName?.trim() || username} (@${username})`}
+        fallbackTitle={`${profile.title?.trim() || username} (@${username})`}
         fallbackDescription={profile.bio ?? ""}
         initialOgImagePath={profile.ogImagePath}
       />

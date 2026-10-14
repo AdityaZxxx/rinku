@@ -4,10 +4,16 @@ import { useEffect, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { EyesIcon, MagnifyingGlassIcon, ShareIcon } from "@phosphor-icons/react";
+import {
+  EyesIcon,
+  ListDashesIcon,
+  MagnifyingGlassIcon,
+  ShareIcon,
+} from "@phosphor-icons/react";
 
 import { openCommandPalette } from "@/components/dashboard/command-palette";
 import { ShareSheetContent, usernameParam } from "@/components/dashboard/share-page-menu";
+import { openSettingsToc } from "@/components/settings/settings-toc";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -61,6 +67,9 @@ export function MobileDock() {
   const section = pathname.split("/")[2];
   const hasPreview =
     username.success && PREVIEW_SECTIONS.some((name) => name === section);
+  // Both settings pages (/account/settings and /:username/settings) mount a
+  // contents sheet; every other route has nothing for it to list.
+  const hasToc = section === "settings";
 
   return (
     <>
@@ -72,6 +81,13 @@ export function MobileDock() {
               icon={<EyesIcon />}
               label="Preview"
               onClick={openMobilePreview}
+            />
+          ) : null}
+          {hasToc ? (
+            <DockTrigger
+              icon={<ListDashesIcon />}
+              label="Contents"
+              onClick={openSettingsToc}
             />
           ) : null}
           {username.success ? (

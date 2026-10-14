@@ -84,7 +84,16 @@ export async function getLinks(profileId: string): Promise<Link[] | { error: str
     return { error: "Profile not found." };
   }
 
-  return getLinksByProfile(user.id, profileId);
+  try {
+    return await getLinksByProfile(user.id, profileId);
+  } catch (error) {
+    log.error(
+      "links",
+      "getLinks failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Loading your links failed. Try again." };
+  }
 }
 
 export async function getArchivedLinks(
@@ -102,7 +111,16 @@ export async function getArchivedLinks(
     return { error: "Profile not found." };
   }
 
-  return getArchivedLinksByProfile(user.id, profileId);
+  try {
+    return await getArchivedLinksByProfile(user.id, profileId);
+  } catch (error) {
+    log.error(
+      "links",
+      "getArchivedLinks failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Loading your archive failed. Try again." };
+  }
 }
 
 export async function fetchUrlMetadata(input: {

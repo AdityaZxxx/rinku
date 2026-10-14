@@ -113,6 +113,7 @@ export function AddLinkItemForm({
 }) {
   const [handle, setHandle] = useState("");
   const [searchResults, setSearchResults] = useState<Array<AppleMusicResult>>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const handleRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +138,7 @@ export function AddLinkItemForm({
       void (async () => {
         const result = await searchAppleMusic({ query });
         setSearchResults("error" in result ? [] : result.results);
+        setSearchError("error" in result ? result.error : null);
         setSearching(false);
       })();
     }, 400);
@@ -219,6 +221,7 @@ export function AddLinkItemForm({
                 // Stale results belong to the previous query; the
                 // effect re-populates only when the debounce fires.
                 setSearchResults([]);
+                setSearchError(null);
                 setSearching(false);
               }}
               placeholder={
@@ -234,6 +237,9 @@ export function AddLinkItemForm({
               </InputGroupAddon>
             ) : null}
           </InputGroup>
+          {selected.id === "apple-music" && searchError ? (
+            <p className="text-destructive px-1 text-sm">{searchError}</p>
+          ) : null}
           {selected.id === "apple-music" && searchResults.length > 0 ? (
             <ul className="border-input flex max-h-64 flex-col overflow-y-auto rounded-xl border">
               {searchResults.map((result) => (

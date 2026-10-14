@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useSrcImageFailure } from "@/components/use-image-failure";
 import { isIconMedia } from "@/lib/links/media";
+import { imageMaxBytes } from "@/lib/profiles/schema";
 import { useUpdateLink } from "./use-link-mutations";
 
 export function ThumbnailSection({ link }: { link: Link }) {
@@ -34,6 +35,10 @@ export function ThumbnailSection({ link }: { link: Link }) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    if (file.size > imageMaxBytes.link) {
+      toast.error(`Upload an image up to ${imageMaxBytes.link / (1024 * 1024)} MB.`);
+      return;
+    }
     const data = new FormData();
     data.set("linkId", link.id);
     data.set("file", file);

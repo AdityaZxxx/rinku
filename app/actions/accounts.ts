@@ -93,12 +93,7 @@ export async function deleteAccount(): Promise<{ ok: true } | { error: string }>
       "deleteAccount failed",
       error instanceof Error ? error.message : String(error),
     );
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Deleting your account failed. Try again.",
-    };
+    return { error: "Deleting your account failed. Try again." };
   }
 
   await supabase.auth.signOut();

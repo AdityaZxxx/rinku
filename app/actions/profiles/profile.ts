@@ -87,7 +87,7 @@ export async function createProfile(input: {
 
   if (error) {
     log.error("profiles", "createProfile failed", error.message);
-    return { error: error.message };
+    return { error: "Setting up your profile failed. Try again." };
   }
 
   updateTag(PUBLIC_PROFILE_TAG);

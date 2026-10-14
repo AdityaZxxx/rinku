@@ -5,9 +5,11 @@ import type { ChangeEvent } from "react";
 import Image from "next/image";
 import { ImageSquareIcon, TrashIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { removeSeoImage, updateSeo, uploadSeoImage } from "@/app/actions/profiles/seo";
+import { profileKey } from "@/components/profile/use-draft-mutations";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -57,6 +59,7 @@ export function SeoSection({
   const [ogImagePath, setOgImagePath] = useState(initialOgImagePath);
   const [uploading, startUpload] = useTransition();
   const [removing, startRemove] = useTransition();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const busy = uploading || removing;
 
@@ -75,6 +78,9 @@ export function SeoSection({
         void updateSeo({ profileId, ...formApi.state.values }).then((result) => {
           if ("error" in result) {
             toast.error(result.error);
+          } else {
+            // The discoverability card below renders from the profile query.
+            queryClient.invalidateQueries({ queryKey: profileKey(username) });
           }
           return result;
         });
@@ -119,10 +125,10 @@ export function SeoSection({
   }
 
   return (
-    <section className="rounded-2xl border p-5">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-4">
         <div className="flex max-w-sm flex-col gap-2">
-          <h2 className="text-sm font-medium">SEO and discoverability</h2>
+          <h2 className="text-sm font-medium">SEO</h2>
           <p className="text-muted-foreground text-sm leading-normal text-pretty wrap-break-word">
             Choose how /{username} appears in search results and link previews. Leave a
             field blank to use your profile details.
@@ -238,6 +244,7 @@ export function SeoSection({
                   </span>
                 </div>
                 <Switch
+                  id="search-indexing"
                   checked={field.state.value}
                   onCheckedChange={(checked) => field.handleChange(checked)}
                   aria-label="Allow search indexing"
@@ -280,6 +287,7 @@ export function SeoSection({
             />
             <Button
               type="button"
+              id="og-image-upload"
               variant="outline"
               size="sm"
               disabled={busy}
@@ -303,6 +311,6 @@ export function SeoSection({
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

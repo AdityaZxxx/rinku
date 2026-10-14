@@ -3,6 +3,7 @@ import type { EditorArea, SaveMode } from "@/lib/profiles/schema";
 
 import { ChangeUsernameSection } from "@/components/settings/change-username-section";
 import { DeleteProfileSection } from "@/components/settings/delete-profile-section";
+import { DiscoverabilitySection } from "@/components/settings/discoverability-section";
 import { SaveModeSection } from "@/components/settings/save-mode-section";
 import { SeoSection } from "@/components/settings/seo-section";
 import {
@@ -10,6 +11,7 @@ import {
   SettingsTocSheet,
   type SettingsTocItem,
 } from "@/components/settings/settings-toc";
+import { Separator } from "@/components/ui/separator";
 import { getUserId } from "@/lib/auth";
 import { getEditorSettings } from "@/lib/db/editor";
 import { getProfileByUsername } from "@/lib/db/profile";
@@ -61,7 +63,7 @@ export default async function ProfileSettingsPage({
           <section id="username" className="scroll-mt-20">
             <ChangeUsernameSection username={username} profileId={profile.id} />
           </section>
-          <section id="seo" className="scroll-mt-20">
+          <section id="seo" className="scroll-mt-20 rounded-2xl border p-5">
             <SeoSection
               profileId={profile.id}
               username={username}
@@ -75,6 +77,8 @@ export default async function ProfileSettingsPage({
               fallbackDescription={profile.bio ?? ""}
               initialOgImagePath={profile.ogImagePath}
             />
+            <Separator className="my-5" />
+            <DiscoverabilitySection username={username} profile={profile} />
           </section>
           <section id="delete" className="scroll-mt-20">
             <DeleteProfileSection username={username} />

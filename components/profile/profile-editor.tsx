@@ -266,7 +266,7 @@ export function ProfileEditor({
             const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Title</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -275,7 +275,7 @@ export function ProfileEditor({
                   onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={isInvalid}
                   autoComplete="off"
-                  placeholder="Your name"
+                  placeholder="Your title"
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>

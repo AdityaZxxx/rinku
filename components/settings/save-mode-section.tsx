@@ -22,7 +22,7 @@ const areas: Array<{
   {
     id: "profile",
     label: "Profile",
-    description: "Your name, bio, and header style.",
+    description: "Your title, bio, and header style.",
   },
   {
     id: "appearance",

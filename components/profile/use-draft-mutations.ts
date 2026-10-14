@@ -9,6 +9,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
+  discardAppearanceDraft,
+  discardProfileDraft,
   publishAppearanceSection,
   publishProfileSection,
   saveAppearanceDraft,
@@ -100,6 +102,44 @@ export function usePublishAppearanceSection(username: string, profileId: string)
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Publishing failed.");
+    },
+  });
+}
+
+export function useDiscardProfileSection(username: string, profileId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const result = await discardProfileDraft({ profileId });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKey(username) });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Discarding failed.");
+    },
+  });
+}
+
+export function useDiscardAppearanceSection(username: string, profileId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const result = await discardAppearanceDraft({ profileId });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKey(username) });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Discarding failed.");
     },
   });
 }

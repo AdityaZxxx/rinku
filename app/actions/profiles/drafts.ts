@@ -296,3 +296,69 @@ export async function publishAppearanceSection(input: {
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
 }
+
+export async function discardProfileDraft(input: {
+  profileId: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = profileIdSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Discarding failed. Try again." };
+  }
+
+  try {
+    await withUserDb(user.id, async (tx) => {
+      await tx
+        .delete(profileDrafts)
+        .where(eq(profileDrafts.profileId, parsed.data.profileId));
+    });
+  } catch (error) {
+    log.error(
+      "profiles",
+      "discardProfileDraft failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Discarding failed. Try again." };
+  }
+  return { ok: true };
+}
+
+export async function discardAppearanceDraft(input: {
+  profileId: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = profileIdSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Discarding failed. Try again." };
+  }
+
+  try {
+    await withUserDb(user.id, async (tx) => {
+      await tx
+        .delete(appearanceDrafts)
+        .where(eq(appearanceDrafts.profileId, parsed.data.profileId));
+    });
+  } catch (error) {
+    log.error(
+      "profiles",
+      "discardAppearanceDraft failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return { error: "Discarding failed. Try again." };
+  }
+  return { ok: true };
+}

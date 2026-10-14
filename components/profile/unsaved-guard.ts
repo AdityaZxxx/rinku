@@ -40,6 +40,40 @@ export function useEditorDirty() {
 }
 
 /**
+ * What the leave-confirmation can do about pending edits: apply the draft
+ * (save) or delete it (discard), then navigate. The editor that raised the
+ * dirty flag registers these; the provider lives in a different tree and
+ * cannot know which area is dirty.
+ */
+export type UnsavedActions = {
+  save: () => Promise<void>;
+  discard: () => Promise<void>;
+};
+
+let actionsRef: { current: UnsavedActions | null } | null = null;
+
+export function setUnsavedActions(ref: { current: UnsavedActions | null } | null) {
+  actionsRef = ref;
+}
+
+export function getUnsavedActions(): UnsavedActions | null {
+  return actionsRef?.current ?? null;
+}
+
+/**
+ * Keeps the editor's latest save and discard flows visible to the leave
+ * confirmation for as long as the editor is mounted. The ref indirection
+ * keeps the registration stable while the closures stay fresh.
+ */
+export function useUnsavedActions(actions: UnsavedActions) {
+  const { save, discard } = actions;
+  useEffect(() => {
+    setUnsavedActions({ current: { save, discard } });
+    return () => setUnsavedActions(null);
+  }, [save, discard]);
+}
+
+/**
  * Native confirm for a reload or tab close. Mount once per editor route; it
  * only attaches a listener while edits are actually pending. This is the one
  * path that cannot use the styled dialog: browsers do not let a page draw

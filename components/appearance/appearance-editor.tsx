@@ -18,8 +18,12 @@ import { AppearanceUploadDialog } from "@/components/appearance/appearance-uploa
 import { WallpaperSection } from "@/components/appearance/appearance-wallpaper-section";
 import { useEditorDraft } from "@/components/profile/editor-draft-context";
 import { PublishControls } from "@/components/profile/publish-controls";
-import { useUnsavedChangesWarning } from "@/components/profile/unsaved-guard";
 import {
+  useUnsavedActions,
+  useUnsavedChangesWarning,
+} from "@/components/profile/unsaved-guard";
+import {
+  useDiscardAppearanceSection,
   useDraftDirty,
   usePublishAppearanceSection,
   useSaveAppearanceDraft,
@@ -94,6 +98,15 @@ export function AppearanceEditor({
   const update = useUpdateAppearance(username);
   const saveDraft = useSaveAppearanceDraft(username, initialProfile.id);
   const publish = usePublishAppearanceSection(username, initialProfile.id);
+  const discard = useDiscardAppearanceSection(username, initialProfile.id);
+  useUnsavedActions({
+    save: async () => {
+      await publish.mutateAsync();
+    },
+    discard: async () => {
+      await discard.mutateAsync();
+    },
+  });
   const { setAppearanceDraft } = useEditorDraft() ?? {};
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -230,6 +243,17 @@ export function AppearanceEditor({
     });
   }
 
+  function onDiscard() {
+    // Optimistic: the editor rewinds at once and the draft row is deleted in
+    // the background; a failed delete toasts, and the draft resurfaces on the
+    // next visit.
+    const published = appearanceFromProfile(profile);
+    setBaseline(published);
+    history.reset(published);
+    setAppearanceDraft?.(null);
+    discard.mutate();
+  }
+
   // Uploads keep their immediate server side effect (the file is written and
   // the live path updated); the resulting value is then folded into the draft
   // so the preview reflects it. Deferred uploads are a later pass. The upload
@@ -322,7 +346,7 @@ export function AppearanceEditor({
           <h1 className="text-lg font-medium">Appearance</h1>
           <p className="text-muted-foreground text-sm">
             Themes, page background, buttons, and text.{" "}
-            {manual ? "Publish to make changes live." : "Changes save automatically."}
+            {manual ? "Save to make changes live." : "Changes save automatically."}
           </p>
         </div>
         {manual && (dirty || history.canUndo || history.canRedo) ? (
@@ -331,6 +355,7 @@ export function AppearanceEditor({
             canRedo={history.canRedo}
             onUndo={onUndo}
             onRedo={onRedo}
+            onDiscard={onDiscard}
             onPublish={onPublish}
             publishDisabled={!dirty}
             publishing={publish.isPending}

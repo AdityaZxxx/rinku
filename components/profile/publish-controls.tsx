@@ -6,18 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
 /**
- * The manual-mode action cluster: undo, redo, and Publish. Rendered inline in
- * the editor's header row (alongside the title), not a full-width strip that
- * would read as detached chrome.
+ * The manual-mode action cluster: undo, redo, Cancel, and Save. Rendered
+ * inline in the editor's header row (alongside the title), not a full-width
+ * strip that would read as detached chrome.
  *
  * Mounted only while there are unpublished changes, so its presence is itself
- * the signal that a publish is pending.
+ * the signal that a save is pending. Cancel rewinds the editor to the
+ * published values at once and deletes the staged draft in the background;
+ * Save applies it.
  */
 export function PublishControls({
   canUndo,
   canRedo,
   onUndo,
   onRedo,
+  onDiscard,
   onPublish,
   publishDisabled,
   publishing,
@@ -26,6 +29,7 @@ export function PublishControls({
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  onDiscard: () => void;
   onPublish: () => void;
   publishDisabled: boolean;
   publishing: boolean;
@@ -54,12 +58,22 @@ export function PublishControls({
       </Button>
       <Button
         type="button"
+        variant="ghost"
+        size="sm"
+        className="text-destructive hover:text-destructive"
+        onClick={onDiscard}
+        disabled={publishing}
+      >
+        Cancel
+      </Button>
+      <Button
+        type="button"
         size="sm"
         onClick={onPublish}
         disabled={publishDisabled || publishing}
       >
         {publishing ? <Spinner /> : null}
-        Publish changes
+        Save
       </Button>
     </div>
   );

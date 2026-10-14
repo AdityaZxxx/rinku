@@ -22,8 +22,9 @@ import { imageMaxBytes, profileBasicsSchema } from "@/lib/profiles/schema";
 import { avatarUrl } from "@/lib/supabase/storage";
 import { useEditorDraft } from "./editor-draft-context";
 import { PublishControls } from "./publish-controls";
-import { useUnsavedChangesWarning } from "./unsaved-guard";
+import { useUnsavedActions, useUnsavedChangesWarning } from "./unsaved-guard";
 import {
+  useDiscardProfileSection,
   useDraftDirty,
   usePublishProfileSection,
   useSaveProfileDraft,
@@ -47,6 +48,15 @@ export function ProfileEditor({
   const update = useUpdateProfile(username);
   const upload = useUploadProfileImage(username);
   const saveDraft = useSaveProfileDraft(username, initialProfile.id);
+  const discard = useDiscardProfileSection(username, initialProfile.id);
+  useUnsavedActions({
+    save: async () => {
+      await publish.mutateAsync();
+    },
+    discard: async () => {
+      await discard.mutateAsync();
+    },
+  });
   const publish = usePublishProfileSection(username, initialProfile.id);
   const { setProfileDraft } = useEditorDraft() ?? {};
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +143,18 @@ export function ProfileEditor({
     });
   }
 
+  function onDiscard() {
+    // Optimistic: the editor rewinds at once (staged avatar path included)
+    // and the draft row is deleted in the background; a failed delete toasts,
+    // and the draft resurfaces on the next visit.
+    const published = profileDraftFromProfile(profile);
+    setBaseline(published);
+    history.reset(published);
+    setProfileDraft?.(null);
+    form.reset({ title: published.title, bio: published.bio });
+    discard.mutate();
+  }
+
   useEffect(() => {
     if (!manual) {
       return;
@@ -201,7 +223,7 @@ export function ProfileEditor({
           <h1 className="text-lg font-medium">Profile</h1>
           <p className="text-muted-foreground text-sm">
             Your photo, name, and bio: what visitors see first.{" "}
-            {manual ? "Publish to make changes live." : "Changes save as you type."}
+            {manual ? "Save to make changes live." : "Changes save as you type."}
           </p>
         </div>
         {manual && (dirty || history.canUndo || history.canRedo) ? (
@@ -210,6 +232,7 @@ export function ProfileEditor({
             canRedo={history.canRedo}
             onUndo={onUndo}
             onRedo={onRedo}
+            onDiscard={onDiscard}
             onPublish={onPublish}
             publishDisabled={!dirty}
             publishing={publish.isPending}

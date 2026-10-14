@@ -21,12 +21,13 @@ export default async function ProfileOverviewPage({
     notFound();
   }
 
-  const profile = await getProfileByUsername(userId, username);
+  const [profile, snapshots] = await Promise.all([
+    getProfileByUsername(userId, username),
+    getProfileSnapshots(userId),
+  ]);
   if (!profile || profile.userId !== userId) {
     notFound();
   }
-
-  const snapshots = await getProfileSnapshots(userId);
   const snapshot = snapshots.find((row) => row.id === profile.id);
   if (!snapshot) {
     notFound();

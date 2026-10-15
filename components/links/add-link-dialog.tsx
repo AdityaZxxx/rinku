@@ -5,7 +5,7 @@ import type { AppleMusicResult } from "@/lib/links/apple-music";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { useForm } from "@tanstack/react-form";
 
-import { createSectionHeading, fetchUrlMetadata } from "@/app/actions/links/link";
+import { fetchUrlMetadata } from "@/app/actions/links/link";
 import { AddLinkItemForm, CategoryIcon } from "@/components/links/add-link-item-form";
 import {
   AddLinkUrlPreview,
@@ -32,7 +32,7 @@ import { parseEmbedUrl } from "@/lib/links/embeds";
 import { hostnameOf, isLinkLike, linkUrlSchema, normalizeUrl } from "@/lib/links/model";
 import { parseMusicUrl } from "@/lib/links/music";
 import { parseVideoUrl } from "@/lib/links/video";
-import { useCreateLink } from "./use-link-mutations";
+import { useCreateLink, useCreateSectionHeading } from "./use-link-mutations";
 
 type Category = (typeof CATEGORIES)[number]["id"];
 
@@ -44,6 +44,7 @@ export function AddLinkDialog({
   onCreated: (linkId: string) => void;
 }) {
   const create = useCreateLink(profileId);
+  const createHeading = useCreateSectionHeading(profileId);
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<Category>("socials");
   const [selected, setSelected] = useState<CatalogItem | null>(null);
@@ -94,14 +95,18 @@ export function AddLinkDialog({
       return;
     }
     startTransition(async () => {
-      const created = await createSectionHeading({ profileId, title });
-      if ("error" in created) {
-        setError(created.error);
-        return;
+      try {
+        const created = await createHeading.mutateAsync({ title });
+        setOpen(false);
+        reset();
+        onCreated(created.id);
+      } catch (mutationError) {
+        setError(
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Adding this heading failed. Try again.",
+        );
       }
-      setOpen(false);
-      reset();
-      onCreated(created.id);
     });
   }
 

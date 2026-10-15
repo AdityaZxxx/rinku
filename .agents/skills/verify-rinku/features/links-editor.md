@@ -47,15 +47,24 @@ Preconditions:
 - **Edit.** Click a row (its selection control is labelled
   `Select <title>`) or "Expand link", change the title, confirm. The list
   and the preview show the new title.
-- **Reorder.** Drag the row's handle (labelled "Drag to reorder") above or
-  below a neighbor, or use `browser.drag` between the two handles. The list
-  order and the preview order both change.
+- **Reorder.** The pointer drag surface is the whole row (dnd-kit listeners
+  on the row, `cursor-grab`); the "Drag to reorder" grip is a keyboard
+  helper that is `sr-only` until focused, so do not aim the drag at it: on
+  rows with a thumbnail the artwork covers the grip's click point and the
+  driver refuses. Drag row selector to row selector, for example
+  `agent-browser drag '#link-<id-1>' '#link-<id-2>' --human`. The list
+  order and the preview order both change, and positions stay sparse.
 - **Hide.** Toggle the row's active control (headings use
   "Hide heading"/"Show heading"). The row leaves the public preview.
 - **Schedule.** Open the row's schedule section and set a `visibleFrom` in
-  the future. The row leaves the public preview immediately.
+  the future. A single calendar click sets a one-day window
+  (`visible_from` = that day's local midnight, `visible_until` = local
+  23:59:59.999). The row leaves the public preview immediately.
 - **Age gate.** Open the row's age gate section and set a minimum age
-  between 13 and 99. The public page withholds the direct URL for the row.
+  between 13 and 99. Opening the section itself applies the 18 default at
+  once (the header flips to "Visitors confirm they are 18+ ..."); the 13+,
+  16+, 18+, and 21+ presets and the custom input write on click. The
+  public page withholds the direct URL for the row.
 - **Archive.** Archive the row from its menu; it leaves the list. Open
   `/<username>/links/archive`, find it, restore it. It returns to its
   position.
@@ -70,7 +79,9 @@ profiles where username = '<handle>') order by position`. Positions are
 - Snapshot refs die between CLI invocations on this app; Base UI dialogs and
   menus may ignore synthetic clicks. Prefer `find` and CSS selectors, and
   use an in-page `eval` click when a control does not respond (see
-  `../SKILL.md` Drive).
+  `../SKILL.md` Drive). The toolbar's "Add" sits next to "Archive" and
+  "Select": click it by fresh ref, not by fuzzy name, or the click can
+  land on Archive and navigate to the archive page.
 - The public preview pane is part of the editor, not proof of public
   behavior: withholding is enforced by RLS, so public claims need the real
   `/<username>` page (see public-profile-page.md).

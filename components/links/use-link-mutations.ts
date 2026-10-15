@@ -11,7 +11,7 @@ import {
   deleteLink,
   restoreLink,
 } from "@/app/actions/links/archive";
-import { createLink, updateLink } from "@/app/actions/links/link";
+import { createLink, createSectionHeading, updateLink } from "@/app/actions/links/link";
 import { reorderLinks } from "@/app/actions/links/order";
 import { parseEmbedUrl } from "@/lib/links/embeds";
 import { parseMusicUrl } from "@/lib/links/music";
@@ -41,6 +41,14 @@ function rollback(
   if (previous) {
     queryClient.setQueryData(key, previous);
   }
+}
+
+// The optimistic id is a stand-in until the server row replaces it in
+// onSuccess, so it never needs to be a UUID: crypto.randomUUID exists only
+// in secure contexts and throws raw TypeError text into the dialog on a
+// LAN preview over plain http.
+function tempLinkId() {
+  return `temp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function applyReorderToCache(
@@ -186,11 +194,7 @@ export function useCreateLink(profileId: string) {
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<Link[]>(key);
-      // The id is a stand-in until the server row replaces it in onSuccess,
-      // so it never needs to be a UUID: crypto.randomUUID exists only in
-      // secure contexts and throws raw TypeError text into the dialog on a
-      // LAN preview over plain http.
-      const tempId = `temp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      const tempId = tempLinkId();
       const music = input.platform ? null : parseMusicUrl(input.url);
       const video = music || input.platform ? null : parseVideoUrl(input.url);
       const embed = music || video || input.platform ? null : parseEmbedUrl(input.url);
@@ -215,6 +219,61 @@ export function useCreateLink(profileId: string) {
                 : "custom",
         platform: input.platform ?? null,
         metadata: music ?? video ?? embed,
+        visibleFrom: null,
+        visibleUntil: null,
+        minAge: null,
+        // Sorts last, so the new row appears at the end of the list until the
+        // server hands back the real position.
+        position: Number.MAX_SAFE_INTEGER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      queryClient.setQueryData<Link[]>(key, (old) => [...(old ?? []), optimistic]);
+      return { previous, tempId };
+    },
+    onSuccess: (created, _input, context) => {
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? []).map((link) => (link.id === context?.tempId ? created : link)),
+      );
+    },
+    onError: (_error, _input, context) => {
+      rollback(queryClient, key, context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useCreateSectionHeading(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (input: { title: string }) => {
+      const result = await createSectionHeading({ profileId, title: input.title });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      const tempId = tempLinkId();
+      const optimistic: Link = {
+        id: tempId,
+        profileId,
+        title: input.title,
+        url: "",
+        imageUrl: null,
+        variant: "classic",
+        clickCount: 0,
+        isActive: true,
+        archivedAt: null,
+        kind: "heading",
+        platform: null,
+        metadata: null,
         visibleFrom: null,
         visibleUntil: null,
         minAge: null,

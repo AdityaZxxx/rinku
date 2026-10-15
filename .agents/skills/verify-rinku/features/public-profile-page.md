@@ -15,7 +15,9 @@ the database itself withholds anything that is not currently public.
   confirms.
 - `withholding` hides inactive, archived, and out-of-schedule sections at
   the database level, not by client filtering.
-- `not-found` shows the not-found state for an unknown username.
+- `not-found` shows the branded not-found state for an unknown username:
+  rabbit mark, "Page not found" heading, copy, and a "Go to Rinku" home
+  link (`app/not-found.tsx`, root boundary, also covers unmatched URLs).
 - `metadata` derives the HTML title as `<title> (@<username>)` unless an SEO
   override exists.
 
@@ -51,8 +53,9 @@ Preconditions:
 - **Withholding.** Hide one section in the editor (or set `visibleFrom` in
   the future), then reload the public page: the section is gone while the
   editor still lists it. Restore the row through the editor afterwards.
-- **Not found.** Open `/verify-nonexistent-<token>`; the not-found state
-  renders and the document title is "Not found".
+- **Not found.** Open `/verify-nonexistent-<token>`: the branded page
+  renders with document title "Not found" and heading "Page not found".
+  The response status is 404 with `robots noindex` injected.
 - **Visit recording.** The visit write path is the beacon fetch the page
   fires: POST `/<username>/visit` with JSON `{"profileId": "<id>"}` exactly
   as the page does. Drive it from a context that passes the route's rules

@@ -43,6 +43,15 @@ From the repo root:
    - When there is no lock or the PID is dead, launch your own in the
      background and record the PID:
      `nohup ./node_modules/.bin/next dev -p 3100 > /tmp/rinku-verify-dev.log 2>&1 & echo $!`
+   - Drive the hostname the server was started on: the lock's `appUrl`
+     origin when connected (e.g. `http://localhost:3000`), and
+     `localhost` for your own launches. Never browse `127.0.0.1` when the
+     server answered on `localhost`: Next 16 blocks its dev resources
+     (`/_next/*`) from other hosts, so pages render as SSR HTML that never
+     hydrates. Symptom: forms submit natively as GET, a login click then
+     puts the credentials into the URL. The dev log names the blocked
+     host: "Blocked cross-origin request to Next.js dev resource ... from
+     \"127.0.0.1\"".
 5. Ready means all of: `curl -sf http://127.0.0.1:<port>/login` returns 200
    and its HTML contains "Rinku", and `scripts/doctor.sh <port>` passes. The
    first compile of a route is slow; poll with a bounded loop instead of a
@@ -82,6 +91,10 @@ account.
   this app refs go stale between CLI invocations (focus-triggered refetches
   re-render the tree), so prefer `find role <role> click "<label>"` and CSS
   selectors, and re-snapshot right before a ref click.
+- `find` matches by accessible name and can land on the wrong control when
+  names overlap: a fuzzy click meant for "Add" once landed on the adjacent
+  "Archive" button and navigated away. When toolbar buttons sit side by
+  side, snapshot and click the exact ref instead.
 - `agent-browser find role <role> click "<label>"` locates controls by
   accessible name. This codebase labels its controls well: "Sign in",
   "Add", "Create new profile", "Drag to reorder".
@@ -96,6 +109,17 @@ account.
 - `agent-browser screenshot <absolute-path>` writes evidence; relative
   paths land in the daemon's tmp dir instead. `console`, `errors`, and
   `network requests` read browser-side evidence.
+- Wait for hydration before the first interaction with a page, not a fixed
+  sleep: dev-mode hydration can take longer than any guessed delay, and an
+  early click on a form does a native GET submit. Safe wait probe:
+
+  `agent-browser eval "JSON.stringify(Object.keys(document).some(k => k.startsWith('__reactContainer')))"`
+
+  Poll until `true` (eval output is quoted, so strip quotes before
+  comparing). To prove a specific form is wired, dispatch a submit event
+  before filling it and read `defaultPrevented`; only do this on forms
+  whose empty-submit is blocked by validation.
+
 - Digit keys 1 through 7 switch dashboard sections (dashboard, overview,
   links, profile, appearance, insights, settings; source:
   `lib/dashboard/shortcuts.ts`). "?" opens the command palette.

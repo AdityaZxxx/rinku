@@ -70,6 +70,15 @@ username like 'verify-%'` shows the created row, and
 
 ## Gotchas
 
+- Drive the origin the server was started on (the lock's `appUrl`, usually
+  `http://localhost:<port>`), never `127.0.0.1`: Next 16 dev blocks its
+  resources cross-host, the form never hydrates, and a "Sign in" click
+  does a native GET submit that puts the credentials into the URL. If that
+  already happened, navigate away and treat the values as exposed in the
+  run log; report it.
+- Wait for hydration (see `../SKILL.md` Drive) before filling the form: a
+  click before React attaches does a native GET submit with the filled
+  values in the query string.
 - The account's pre-existing profiles are off limits: never open an editor
   for one with intent to change it, and never pick one as the verification
   target. If a step needs a profile, always create a fresh `verify-%` one.

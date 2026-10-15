@@ -51,8 +51,10 @@ where profile_id = (select id from profiles where username = '<handle>'))`
   agents are dropped, and the beacon fires once per tab. Clicks are the
   deterministic signal; treat a visit mismatch as a beacon-rules outcome,
   not a bug, unless the route's rules changed.
-- The default window is the last 30 days ending today; a click driven
-  "yesterday" by a frozen clock or an old artifact will not appear.
+- The default window is Today (observed 2026-10-16: "Oct 16 – Oct 16,
+  2026" on open), not the last 30 days: a click from yesterday sits
+  outside it until you switch to 7d/30d/90d. Click parity claims must name
+  the window they were taken in.
 - Times are grouped per the viewer's timezone with a UTC fallback; do not
   chase an off-by-one day at window edges before checking the timezone.
 - The chart is a rendered component: assert on its visible labels and

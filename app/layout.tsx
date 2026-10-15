@@ -37,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased motion-safe:scroll-smooth`}
     >
       <body className="flex min-h-full flex-col font-sans">

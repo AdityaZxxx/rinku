@@ -9,6 +9,10 @@
       "supabase": {
         "type": "remote",
         "url": "https://mcp.supabase.com/mcp"
+      },
+      "next-devtools": {
+        "type": "local",
+        "command": ["npx", "-y", "next-devtools-mcp@latest"]
       }
     }
   }

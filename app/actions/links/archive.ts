@@ -1,12 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import * as z from "zod";
 
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
 import { links } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
+import { profileIdSchema } from "@/lib/profiles/schema";
 import { createClient } from "@/lib/supabase/server";
 
 const linkIdSchema = z.object({ id: z.uuid() });
@@ -130,4 +131,32 @@ export async function deleteLink(input: {
   }
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };
+}
+
+/** Empties the archive: every archived link of the profile, one round trip. */
+export async function deleteArchivedLinks(input: {
+  profileId: string;
+}): Promise<{ count: number } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  if (!profileIdSchema.safeParse(input).success) {
+    return { error: "The archive could not be emptied." };
+  }
+
+  const deleted = await withUserDb(user.id, (tx) =>
+    tx
+      .delete(links)
+      .where(and(eq(links.profileId, input.profileId), isNotNull(links.archivedAt)))
+      .returning({ id: links.id }),
+  );
+  if (deleted.length === 0) {
+    return { error: "The archive is already empty." };
+  }
+  return { count: deleted.length };
 }

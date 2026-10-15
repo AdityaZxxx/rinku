@@ -32,7 +32,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useFaviconImage } from "@/components/use-image-failure";
 import { displayUrl, faviconUrl } from "@/lib/links/model";
 import { typedRoute } from "@/lib/next-path";
-import { useDeleteLink, useRestoreLink } from "./use-link-mutations";
+import {
+  useDeleteArchivedLinks,
+  useDeleteLink,
+  useRestoreLink,
+} from "./use-link-mutations";
 
 type ArchivedLink = typeof links.$inferSelect;
 
@@ -60,22 +64,30 @@ export function ArchiveList({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-medium">Archive</h1>
           <p className="text-muted-foreground text-sm">
             Archived links stay restorable here. Delete removes them for good.
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          nativeButton={false}
-          render={<Link href={typedRoute(`/${username}/links`)} />}
-        >
-          <CaretLeftIcon />
-          Back to links
-        </Button>
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            // The ghost's own 12px padding sits between the container edge
+            // and its ink; pulling it out lines that ink up with the filled
+            // Delete all block on the opposite edge, so both read as inset
+            // by the same distance.
+            className="-ml-3"
+            nativeButton={false}
+            render={<Link href={typedRoute(`/${username}/links`)} />}
+          >
+            <CaretLeftIcon />
+            Back to links
+          </Button>
+          <DeleteAllArchived profileId={profileId} count={archived.length} />
+        </div>
       </div>
 
       {query.isError && (
@@ -83,9 +95,9 @@ export function ArchiveList({
       )}
 
       {archived.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 sm:p-10">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 text-center sm:p-10">
           <p className="text-sm font-medium">Nothing archived</p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground max-w-sm text-sm">
             Links you archive wait here. Restore them or delete them permanently.
           </p>
         </div>
@@ -97,6 +109,70 @@ export function ArchiveList({
         </div>
       )}
     </div>
+  );
+}
+
+function DeleteAllArchived({ profileId, count }: { profileId: string; count: number }) {
+  const removeAll = useDeleteArchivedLinks(profileId);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  async function onDelete() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await removeAll.mutateAsync();
+        setOpen(false);
+        toast(
+          `Deleted ${result.count} archived ${result.count === 1 ? "link" : "links"}`,
+        );
+      } catch (deleteError) {
+        setError(
+          deleteError instanceof Error
+            ? deleteError.message
+            : "Emptying the archive failed. Try again.",
+        );
+      }
+    });
+  }
+
+  // The dialog stays mounted even when the count hits zero: the optimistic
+  // clear empties the list mid-flight, and a failure has to keep its inline
+  // error and open dialog rather than unmounting with the trigger.
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      {count > 0 && (
+        <AlertDialogTrigger
+          render={
+            // ml-auto keeps the button on the trailing edge even when the
+            // header wraps on narrow screens.
+            <Button variant="destructive" size="sm" className="ml-auto">
+              Delete all
+            </Button>
+          }
+        />
+      )}
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <TrashIcon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Delete all archived links?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently deletes every archived link. They cannot be restored.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {error && <p className="text-destructive text-sm">{error}</p>}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" disabled={pending} onClick={onDelete}>
+            {pending && <Spinner />}
+            Delete all
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

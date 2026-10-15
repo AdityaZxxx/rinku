@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   archiveLink,
   archiveLinks,
+  deleteArchivedLinks,
   deleteLink,
   restoreLink,
 } from "@/app/actions/links/archive";
@@ -356,6 +357,39 @@ export function useDeleteLink(profileId: string) {
       }
       if (context?.previousEditor) {
         queryClient.setQueryData(editorKey, context.previousEditor);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["links", profileId] });
+    },
+  });
+}
+
+export function useDeleteArchivedLinks(profileId: string) {
+  const queryClient = useQueryClient();
+  const archiveKey = archivedKey(profileId);
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await deleteArchivedLinks({ profileId });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["links", profileId] });
+      const previous = queryClient.getQueryData<Link[]>(archiveKey);
+      // Only write a cache that has data, as in useRestoreLink: creating an
+      // absent one would leave a stale empty list behind for the other page.
+      if (previous) {
+        queryClient.setQueryData<Link[]>(archiveKey, []);
+      }
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(archiveKey, context.previous);
       }
     },
     onSettled: () => {

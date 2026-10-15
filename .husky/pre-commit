@@ -1,2 +1,6 @@
+# Hooks run in a non-login shell, so PATH from .zshrc etc. is absent and bun
+# (installed to ~/.bun/bin) goes missing; GUI git clients hit the same gap.
+export PATH="$HOME/.bun/bin:$PATH"
+
 bun run lint-staged
 bun run check

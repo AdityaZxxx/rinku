@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "next-themes";
 import { Geist_Mono, Inter } from "next/font/google";
 
@@ -23,6 +23,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: BRAND_NAME,
   description: "One link for everything you make and sell.",
+};
+
+// Cover lets the fixed bottom docks pad past the home indicator with
+// env(safe-area-inset-bottom); without it the browser letterboxes the page
+// and the insets read as zero.
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

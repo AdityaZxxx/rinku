@@ -36,9 +36,20 @@ type LinkRowProps = {
   expanded: boolean;
   onToggleExpand: () => void;
   onArchive: (link: Link) => void;
+  selecting: boolean;
+  selected: boolean;
+  onToggleSelected: () => void;
 };
 
-export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowProps) {
+export function LinkRow({
+  link,
+  expanded,
+  onToggleExpand,
+  onArchive,
+  selecting,
+  selected,
+  onToggleSelected,
+}: LinkRowProps) {
   const update = useUpdateLink(link.profileId);
 
   const {
@@ -108,25 +119,35 @@ export function LinkRow({ link, expanded, onToggleExpand, onArchive }: LinkRowPr
       // The whole row is the drag surface; the keyboard listener is dropped
       // here so Space/Enter inside the expand button can't start a drag: the
       // keyboard path stays on the grip button. The pointer gesture carries no
-      // control semantics, so the surface stays out of the a11y tree.
-      {...listeners}
+      // control semantics, so the surface stays out of the a11y tree. In
+      // selection mode rows pick instead of drag, so the surface is gone.
+      {...(selecting ? {} : listeners)}
       onKeyDown={undefined}
       role="presentation"
-      className="cursor-grab active:cursor-grabbing motion-reduce:transition-none!"
+      className={cn(
+        "motion-reduce:transition-none!",
+        selecting ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+      )}
     >
       <LinkRowShell
         link={link}
-        expanded={expanded}
+        expanded={selecting ? false : expanded}
         onToggleExpand={onToggleExpand}
         className={isDragging ? "opacity-40" : undefined}
-        activatorRef={setActivatorNodeRef}
+        selection={selecting ? { selected, onToggle: onToggleSelected } : undefined}
+        activatorRef={selecting ? undefined : setActivatorNodeRef}
         // SAFETY: dnd-kit's attributes and listeners are DOM-safe button props;
         // the sortable attribute types are wider than React's AriaRole union.
         activatorProps={
-          { ...attributes, ...listeners } as React.ComponentPropsWithoutRef<"button">
+          selecting
+            ? undefined
+            : ({
+                ...attributes,
+                ...listeners,
+              } as React.ComponentPropsWithoutRef<"button">)
         }
       >
-        {expanded && (
+        {expanded && !selecting && (
           <div className="flex flex-col gap-4 border-t p-3">
             <form.Field name="title">
               {(field) => {

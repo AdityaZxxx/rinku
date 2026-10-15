@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -16,6 +16,7 @@ import { ShareSheetContent, usernameParam } from "@/components/dashboard/share-p
 import { openSettingsToc } from "@/components/settings/settings-toc";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 /**
  * The editor pages that mount a preview sheet; the dock's Preview trigger
@@ -33,6 +34,38 @@ function openMobilePreview() {
   for (const listener of previewOpenListeners) {
     listener();
   }
+}
+
+/**
+ * Suppression signal for pages whose own bottom dock takes over this slot:
+ * the links editor's selection mode mounts its action dock in the same
+ * position, so the nav dock stands down while the flag is set. Module
+ * signals, same pattern as previewOpenListeners.
+ */
+const dockSuppressionListeners = new Set<() => void>();
+let dockSuppressed = false;
+
+export function setDockSuppressed(suppressed: boolean) {
+  if (suppressed === dockSuppressed) {
+    return;
+  }
+  dockSuppressed = suppressed;
+  for (const listener of dockSuppressionListeners) {
+    listener();
+  }
+}
+
+function useDockSuppressed() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      dockSuppressionListeners.add(onStoreChange);
+      return () => {
+        dockSuppressionListeners.delete(onStoreChange);
+      };
+    },
+    () => dockSuppressed,
+    () => false,
+  );
 }
 
 function DockTrigger({
@@ -62,6 +95,7 @@ function DockTrigger({
 export function MobileDock() {
   const pathname = usePathname();
   const params = useParams();
+  const suppressed = useDockSuppressed();
   const [shareOpen, setShareOpen] = useState(false);
   const username = usernameParam.safeParse(params.username);
   const section = pathname.split("/")[2];
@@ -74,7 +108,18 @@ export function MobileDock() {
   return (
     <>
       <div aria-hidden="true" className="h-16 lg:hidden" />
-      <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center lg:hidden">
+      {/* The dock never unmounts: suppression toggles classes, so handing its
+          slot to the selection dock (and taking it back) is a transition the
+          user can interrupt mid-flight. The incoming dock's 100ms delay lets
+          the outgoing one clear out first. */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] z-40 flex justify-center transition-[opacity,transform,visibility] duration-200 ease-out lg:hidden motion-reduce:transition-none!",
+          suppressed
+            ? "pointer-events-none invisible translate-y-3 opacity-0"
+            : "visible translate-y-0 opacity-100 delay-100",
+        )}
+      >
         <div className="border-input bg-background/80 flex items-center gap-1 rounded-full border p-1.5 shadow-lg backdrop-blur-sm">
           {hasPreview ? (
             <DockTrigger

@@ -4,7 +4,12 @@ import type { Link } from "@/lib/db/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { archiveLink, deleteLink, restoreLink } from "@/app/actions/links/archive";
+import {
+  archiveLink,
+  archiveLinks,
+  deleteLink,
+  restoreLink,
+} from "@/app/actions/links/archive";
 import { createLink, updateLink } from "@/app/actions/links/link";
 import { reorderLinks } from "@/app/actions/links/order";
 import { parseEmbedUrl } from "@/lib/links/embeds";
@@ -122,6 +127,39 @@ export function useUpdateLink(profileId: string) {
     // save's response and the latest keystrokes and briefly clobber them.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: key, refetchType: "none" });
+    },
+  });
+}
+
+export function useArchiveLinks(profileId: string) {
+  const queryClient = useQueryClient();
+  const key = linksKey(profileId);
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const result = await archiveLinks({ ids });
+      if ("error" in result) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Link[]>(key);
+      const selected = new Set(ids);
+      queryClient.setQueryData<Link[]>(key, (old) =>
+        (old ?? []).filter((link) => !selected.has(link.id)),
+      );
+      return { previous };
+    },
+    onError: (error, _ids, context) => {
+      rollback(queryClient, key, context?.previous);
+      toast.error(
+        error instanceof Error ? error.message : "Archiving these links failed.",
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
     },
   });
 }

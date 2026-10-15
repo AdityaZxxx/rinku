@@ -24,12 +24,18 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ArchiveIcon, DotsSixVerticalIcon, TextTIcon } from "@phosphor-icons/react";
+import {
+  ArchiveIcon,
+  DotsSixVerticalIcon,
+  ListChecksIcon,
+  TextTIcon,
+} from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { EditSocialDialog } from "@/components/links/edit-social-dialog";
 import { LinkRowShell } from "@/components/links/link-row-shell";
+import { SelectionDock } from "@/components/links/selection-dock";
 import { SocialIcon } from "@/components/social-icon";
 import { Button } from "@/components/ui/button";
 import { changedPositions } from "@/lib/links/model";
@@ -43,6 +49,7 @@ import { LinkRow } from "./link-row";
 import {
   applyReorderToCache,
   useArchiveLink,
+  useArchiveLinks,
   useReorderLinks,
   useRestoreLink,
 } from "./use-link-mutations";
@@ -75,7 +82,16 @@ export function LinksEditor({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Current-value mirror for mutation callbacks, which close over stale
+  // render-time state; written in an effect, never during render.
+  const selectingRef = useRef(false);
+  useEffect(() => {
+    selectingRef.current = selecting;
+  }, [selecting]);
   const archive = useArchiveLink(profileId);
+  const bulkArchive = useArchiveLinks(profileId);
   const restore = useRestoreLink(profileId);
   const reorder = useReorderLinks(profileId);
   const queryClient = useQueryClient();
@@ -154,6 +170,45 @@ export function LinksEditor({
     });
   }
 
+  function exitSelection() {
+    setSelecting(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function onBulkArchive() {
+    const ids = [...selectedIds];
+    // Optimistic all the way: the rows leave the list in the hook's onMutate
+    // and the mode exits now; the server response only decides the toast and
+    // whether the pre-action state comes back.
+    exitSelection();
+    bulkArchive.mutate(ids, {
+      onSuccess: () => {
+        toast(`Archived ${ids.length} ${ids.length === 1 ? "link" : "links"}`);
+      },
+      onError: () => {
+        // The hook rolled the rows back; restore the mode and selection too,
+        // unless the user has already started a new selection.
+        if (selectingRef.current) {
+          return;
+        }
+        setSelecting(true);
+        setSelectedIds(new Set(ids));
+      },
+    });
+  }
+
   function onCreated(linkId: string) {
     setExpandedId(linkId);
     requestAnimationFrame(() => {
@@ -169,7 +224,9 @@ export function LinksEditor({
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-medium">Links</h1>
           <p className="text-muted-foreground text-sm">
-            Drag to reorder. Changes save as you make them.
+            {selecting
+              ? "Choose the links to archive, then tap Archive below."
+              : "Drag to reorder. Changes save as you make them."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -182,6 +239,25 @@ export function LinksEditor({
             <ArchiveIcon />
             Archive
           </Button>
+          {customLinks.length > 0 && (
+            <Button
+              variant={selecting ? "default" : "outline"}
+              size="sm"
+              aria-pressed={selecting}
+              onClick={() => {
+                if (selecting) {
+                  exitSelection();
+                } else {
+                  setExpandedId(null);
+                  setSelectedIds(new Set());
+                  setSelecting(true);
+                }
+              }}
+            >
+              <ListChecksIcon />
+              Select
+            </Button>
+          )}
           <AddLinkDialog profileId={profileId} onCreated={onCreated} />
         </div>
       </div>
@@ -262,7 +338,13 @@ export function LinksEditor({
               {customLinks.map((link) => (
                 <div key={link.id} id={`link-${link.id}`}>
                   {link.kind === "heading" ? (
-                    <HeadingRow link={link} onArchive={onArchive} />
+                    <HeadingRow
+                      link={link}
+                      onArchive={onArchive}
+                      selecting={selecting}
+                      selected={selectedIds.has(link.id)}
+                      onToggleSelected={() => toggleSelected(link.id)}
+                    />
                   ) : (
                     <LinkRow
                       link={link}
@@ -271,6 +353,9 @@ export function LinksEditor({
                         setExpandedId((current) => (current === link.id ? null : link.id))
                       }
                       onArchive={onArchive}
+                      selecting={selecting}
+                      selected={selectedIds.has(link.id)}
+                      onToggleSelected={() => toggleSelected(link.id)}
                     />
                   )}
                 </div>
@@ -288,6 +373,13 @@ export function LinksEditor({
           </DragOverlay>
         </DndContext>
       )}
+
+      <SelectionDock
+        active={selecting}
+        count={selectedIds.size}
+        onCancel={exitSelection}
+        onArchive={onBulkArchive}
+      />
     </div>
   );
 }

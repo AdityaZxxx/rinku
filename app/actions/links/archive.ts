@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import * as z from "zod";
 
 import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
@@ -10,6 +10,7 @@ import { withUserDb } from "@/lib/db/with-user";
 import { createClient } from "@/lib/supabase/server";
 
 const linkIdSchema = z.object({ id: z.uuid() });
+const linkIdsSchema = z.object({ ids: z.array(z.uuid()).min(1) });
 
 export async function archiveLink(input: {
   id: string;
@@ -35,6 +36,37 @@ export async function archiveLink(input: {
   );
   if (archived.length === 0) {
     return { error: "This link could not be archived." };
+  }
+  updateTag(PUBLIC_PROFILE_TAG);
+  return { ok: true };
+}
+
+/** One round trip for the selection dock's bulk archive. */
+export async function archiveLinks(input: {
+  ids: string[];
+}): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session expired. Sign in again to continue." };
+  }
+
+  const parsed = linkIdsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "These links could not be archived." };
+  }
+
+  const archived = await withUserDb(user.id, (tx) =>
+    tx
+      .update(links)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(inArray(links.id, parsed.data.ids))
+      .returning({ id: links.id }),
+  );
+  if (archived.length === 0) {
+    return { error: "These links could not be archived." };
   }
   updateTag(PUBLIC_PROFILE_TAG);
   return { ok: true };

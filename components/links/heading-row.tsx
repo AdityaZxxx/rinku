@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,9 +25,15 @@ import { useUpdateLink } from "./use-link-mutations";
 export function HeadingRow({
   link,
   onArchive,
+  selecting,
+  selected,
+  onToggleSelected,
 }: {
   link: Link;
   onArchive: (link: Link) => void;
+  selecting: boolean;
+  selected: boolean;
+  onToggleSelected: () => void;
 }) {
   const update = useUpdateLink(link.profileId);
   const {
@@ -73,62 +80,92 @@ export function HeadingRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       // The whole row is the drag surface; the 6px mouse
       // sensor activation distance keeps clicks/text selection in the input
-      // working.
-      {...listeners}
+      // working. Selection mode turns the row into a picker instead.
+      {...(selecting ? {} : listeners)}
       onKeyDown={undefined}
       role="presentation"
       className={cn(
-        "flex items-center gap-2 rounded-2xl border border-dashed bg-transparent p-3 cursor-grab active:cursor-grabbing",
+        "flex items-center gap-2 rounded-2xl border border-dashed bg-transparent p-3",
+        selecting ? "cursor-default" : "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
       )}
     >
-      <button
-        ref={setActivatorNodeRef}
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="text-muted-foreground hover:bg-muted -ml-1 cursor-grab touch-none rounded-lg p-2 active:cursor-grabbing"
-        aria-label="Drag to reorder"
-      >
-        <DotsSixVerticalIcon className="size-4" />
-      </button>
+      {selecting ? (
+        // The grip's exact box, so the icon and title keep their positions.
+        <span className="-ml-1 flex size-8 shrink-0 items-center justify-center">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelected()}
+            aria-label={`Select ${link.title}`}
+            className="size-5"
+          />
+        </span>
+      ) : (
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="text-muted-foreground hover:bg-muted -ml-1 cursor-grab touch-none rounded-lg p-2 active:cursor-grabbing"
+          aria-label="Drag to reorder"
+        >
+          <DotsSixVerticalIcon className="size-4" />
+        </button>
+      )}
       <TextTIcon className="text-muted-foreground size-4 shrink-0" />
-      <Input
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-        aria-label="Section title"
-        placeholder="Section title"
-        maxLength={100}
-        className="h-8 flex-1 border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:ring-0"
-      />
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Toggle
-              size="sm"
-              pressed={link.isActive}
-              aria-label={link.isActive ? "Hide heading" : "Show heading"}
-              onPressedChange={(pressed) => {
-                update.mutate({
-                  id: link.id,
-                  title: link.title,
-                  url: "",
-                  variant: link.variant,
-                  isActive: pressed,
-                  imageUrl: link.imageUrl,
-                });
-              }}
-            >
-              {link.isActive ? <EyeIcon /> : <EyeClosedIcon />}
-            </Toggle>
-          }
-        />
-        <TooltipContent>{link.isActive ? "Hide heading" : "Show heading"}</TooltipContent>
-      </Tooltip>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onArchive(link)}>
-        <ArchiveIcon />
-        Archive
-      </Button>
+      {selecting ? (
+        // The input's exact box as one big toggle target, matching how a
+        // regular link row's title area selects.
+        <button
+          type="button"
+          onClick={onToggleSelected}
+          aria-pressed={selected}
+          className="h-8 min-w-0 flex-1 truncate px-1 text-left text-sm font-semibold"
+        >
+          {link.title}
+        </button>
+      ) : (
+        <>
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            aria-label="Section title"
+            placeholder="Section title"
+            maxLength={100}
+            className="h-8 flex-1 border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:ring-0"
+          />
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={link.isActive}
+                  aria-label={link.isActive ? "Hide heading" : "Show heading"}
+                  onPressedChange={(pressed) => {
+                    update.mutate({
+                      id: link.id,
+                      title: link.title,
+                      url: "",
+                      variant: link.variant,
+                      isActive: pressed,
+                      imageUrl: link.imageUrl,
+                    });
+                  }}
+                >
+                  {link.isActive ? <EyeIcon /> : <EyeClosedIcon />}
+                </Toggle>
+              }
+            />
+            <TooltipContent>
+              {link.isActive ? "Hide heading" : "Show heading"}
+            </TooltipContent>
+          </Tooltip>
+          <Button type="button" variant="ghost" size="sm" onClick={() => onArchive(link)}>
+            <ArchiveIcon />
+            Archive
+          </Button>
+        </>
+      )}
     </div>
   );
 }

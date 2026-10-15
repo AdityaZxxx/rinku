@@ -157,7 +157,7 @@ export function LinkRowShell({
           </span>
           <span className="text-muted-foreground flex max-w-full items-center gap-1.5 truncate text-xs">
             {summary ? (
-              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-xs leading-none font-medium">
                 <CalendarBlankIcon className="size-2.5" />
                 {status === "scheduled"
                   ? "Scheduled "
@@ -169,7 +169,7 @@ export function LinkRowShell({
             ) : null}
             <span className="truncate">{displayUrl(link.url)}</span>
             {link.minAge ? (
-              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+              <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-xs leading-none font-medium">
                 <LockSimpleIcon className="size-2.5" />
                 {link.minAge}+
               </span>

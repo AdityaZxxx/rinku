@@ -69,7 +69,7 @@ export function SaveModeSection({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="text-sm font-medium">Editing</h2>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground text-sm">
             How each part of your page saves. Manual keeps changes as a draft until you
             publish.
           </p>
@@ -88,7 +88,7 @@ export function SaveModeSection({
                     {area.label}
                   </span>
                   {area.comingSoon ? (
-                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-xs leading-none font-medium">
                       Soon
                     </span>
                   ) : null}
@@ -109,7 +109,7 @@ export function SaveModeSection({
                         key={mode.id}
                         title={area.comingSoon ? "Available soon" : mode.hint}
                         className={cn(
-                          "relative rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
+                          "relative rounded-md px-2.5 py-1 text-sm font-medium transition-colors duration-150 motion-reduce:transition-none has-focus-visible:ring-3 has-focus-visible:ring-ring/30",
                           checked
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground cursor-pointer",

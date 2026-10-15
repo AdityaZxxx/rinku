@@ -238,7 +238,7 @@ export function SeoSection({
               <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium">Allow search indexing</span>
-                  <span className="text-muted-foreground text-xs leading-normal text-pretty">
+                  <span className="text-muted-foreground text-sm leading-normal text-pretty">
                     Turn off to ask search engines not to show this page. Changes may take
                     time.
                   </span>
@@ -257,7 +257,7 @@ export function SeoSection({
         <div className="flex flex-col gap-2 border-t pt-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">Share image</span>
-            <span className="text-muted-foreground max-w-[65ch] text-xs leading-normal text-pretty">
+            <span className="text-muted-foreground max-w-[65ch] text-sm leading-normal text-pretty">
               Recommended size: 1200 × 630. Without an image, your banner or avatar is
               used in link previews.
             </span>

@@ -374,7 +374,7 @@ export function CommandPalette({ profiles: allProfiles }: { profiles: Profile[] 
               onChange={onQueryChange}
               onKeyDown={onListKeyDown}
               placeholder="Type a command or search…"
-              className="placeholder:text-muted-foreground h-12 w-full bg-transparent text-sm outline-none"
+              className="placeholder:text-muted-foreground h-12 w-full bg-transparent text-base outline-none md:text-sm"
             />
             <Kbd>esc</Kbd>
           </div>

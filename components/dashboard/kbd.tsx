@@ -20,7 +20,7 @@ export function Kbd({
     <kbd
       data-slot="kbd"
       className={cn(
-        "bg-muted text-muted-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1 font-sans text-[10px] font-medium tracking-wide whitespace-nowrap",
+        "bg-muted text-muted-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1 font-sans text-[11px] font-medium tracking-wide whitespace-nowrap",
         className,
       )}
     >

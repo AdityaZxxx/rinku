@@ -188,7 +188,7 @@ export function AppearanceUploadDialog({
               ? "Drag and drop a video, or choose one"
               : "Drag and drop an image, or choose one"}
           </span>
-          <span className="text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-sm">
             {target === "video"
               ? "MP4 or WebM, max 25 MB"
               : "JPEG, PNG, WebP, or AVIF, max 5 MB"}
@@ -252,7 +252,7 @@ export function AppearanceUploadDialog({
               upload.isPending
             }
             onClick={() => startUpload(target === "video" ? videoFile : imageFile)}
-            className="bg-foreground text-background rounded-full px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+            className="bg-foreground text-background rounded-full px-4 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             {upload.isPending ? <Spinner /> : "Upload"}
           </button>

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 export function AgeBadge({ minAge }: { minAge: number }) {
   return (
     <span
-      className="inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium opacity-70"
+      className="inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs leading-none font-medium opacity-70"
       title={`Age-restricted to ${minAge}+`}
     >
       <LockSimpleIcon className="size-2.5" aria-hidden />
@@ -106,7 +106,7 @@ export function AgeGateLink({
             <LockSimpleIcon className="size-4 shrink-0 opacity-80" aria-hidden />
             <span className="truncate leading-relaxed font-medium">{title}</span>
             <span
-              className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium opacity-70"
+              className="shrink-0 rounded-full border px-1.5 py-0.5 text-xs leading-none font-medium opacity-70"
               aria-hidden
             >
               {minAge}+
@@ -117,7 +117,7 @@ export function AgeGateLink({
             <LockSimpleIcon className="size-4 shrink-0" aria-hidden />
             <span className="truncate leading-relaxed">{title}</span>
             <span
-              className="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] leading-none font-medium opacity-70"
+              className="shrink-0 rounded-full border px-1.5 py-0.5 text-xs leading-none font-medium opacity-70"
               aria-hidden
             >
               {minAge}+

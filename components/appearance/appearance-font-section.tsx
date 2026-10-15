@@ -58,7 +58,7 @@ export function FontSection({ values, tweak }: { values: Appearance; tweak: Twea
                 {fonts.find((font) => font.id === values.fontId)?.sample ?? "Modern sans"}
               </span>
             </span>
-            <span className="text-muted-foreground text-xs underline">Change</span>
+            <span className="text-muted-foreground text-sm underline">Change</span>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>

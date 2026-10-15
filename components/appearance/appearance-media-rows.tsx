@@ -46,14 +46,14 @@ export function BannerMediaRow({
             />
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-sm font-medium">Banner image</span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Fades into the page behind your photo.
               </span>
             </div>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="text-muted-foreground hover:text-foreground text-xs underline"
+              className="text-muted-foreground hover:text-foreground text-sm underline"
             >
               Replace
             </button>
@@ -81,14 +81,14 @@ export function BannerMediaRow({
             </span>
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-sm font-medium">Banner image</span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 No banner yet: choose one to upload.
               </span>
             </div>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="text-xs font-medium underline"
+              className="text-sm font-medium underline"
             >
               Choose file
             </button>
@@ -145,14 +145,14 @@ export function WallpaperMediaRow({
           )}
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-medium">Background {noun}</span>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-sm">
               {isVideo ? "Loops silently behind your page." : "Covers the whole page."}
             </span>
           </div>
           <button
             type="button"
             onClick={onPick}
-            className="text-muted-foreground hover:text-foreground text-xs underline"
+            className="text-muted-foreground hover:text-foreground text-sm underline"
           >
             Replace
           </button>
@@ -181,14 +181,14 @@ export function WallpaperMediaRow({
           </span>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-medium">Background {noun}</span>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-sm">
               No {noun} yet: choose one to upload.
             </span>
           </div>
           <button
             type="button"
             onClick={onPick}
-            className="text-xs font-medium underline"
+            className="text-sm font-medium underline"
           >
             Choose file
           </button>

@@ -51,7 +51,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
           <AvatarImage
             src={current?.avatarPath ? avatarUrl(current.avatarPath) : undefined}
           />
-          <AvatarFallback className="text-[10px] font-medium">
+          <AvatarFallback className="text-[11px] font-medium">
             {(label ?? "?")[0]?.toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -74,7 +74,7 @@ export function ProfilePicker({ profiles }: { profiles: Profile[] }) {
                 <AvatarImage
                   src={profile.avatarPath ? avatarUrl(profile.avatarPath) : undefined}
                 />
-                <AvatarFallback className="text-[10px] font-medium">
+                <AvatarFallback className="text-[11px] font-medium">
                   {(profile.title ?? profile.username)[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>

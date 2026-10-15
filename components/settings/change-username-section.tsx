@@ -213,7 +213,7 @@ export function ChangeUsernameSection({
                 />
                 <label htmlFor="keep-old-username" className="flex flex-col gap-0.5">
                   <span className="text-sm">Keep my old username for 30 days</span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-sm">
                     Otherwise it&apos;s released now and anyone can claim it.
                   </span>
                 </label>
@@ -354,11 +354,11 @@ function UsernameHistory({
         {open ? (
           <div className="flex flex-col gap-2 pt-1 pb-2">
             {error ? (
-              <p className="text-muted-foreground text-xs">{error}</p>
+              <p className="text-muted-foreground text-sm">{error}</p>
             ) : entries === null ? (
-              <p className="text-muted-foreground text-xs">Loading…</p>
+              <p className="text-muted-foreground text-sm">Loading…</p>
             ) : entries.length === 0 ? (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-sm">
                 No held usernames. When you rename, choose to keep the old one and it
                 shows up here.
               </p>

@@ -80,7 +80,7 @@ function DockTrigger({
     <Button variant="ghost" className="rounded-full" {...props}>
       <span className="flex flex-col items-center gap-0.5 px-1">
         {icon}
-        <span className="text-[10px] leading-none">{label}</span>
+        <span className="text-xs leading-none">{label}</span>
       </span>
     </Button>
   );

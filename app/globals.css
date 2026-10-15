@@ -63,6 +63,15 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* UI type scale: one step above Tailwind's defaults (xs 13px, sm 15px) so
+   the default density reads comfortably on a consumer product. Only glyph
+   size moves; the paired line-height ratios and text-base (16px, the iOS
+   no-zoom floor) are left alone, so rhythm and chrome sizes are unchanged. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -188,12 +197,12 @@
 }
 
 .cn-toast[data-sonner-toast][data-styled="true"] {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .cn-toast[data-sonner-toast][data-styled="true"] [data-button] {
   border-radius: var(--border-radius);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 /* Public page link entrances. Under no-preference each entrance is its full

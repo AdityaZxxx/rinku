@@ -332,9 +332,9 @@ export function LinkRow({
                     <span className="text-sm leading-none font-medium">
                       Schedule visibility
                     </span>
-                    <span className="text-muted-foreground group-hover/schedule:text-foreground flex items-center gap-1.5 truncate text-xs transition-colors">
+                    <span className="text-muted-foreground group-hover/schedule:text-foreground flex items-center gap-1.5 text-sm transition-colors">
                       {scheduled ? (
-                        <span className="truncate">
+                        <span>
                           {status === "scheduled"
                             ? `Goes live ${summary}`
                             : status === "expired"
@@ -342,9 +342,7 @@ export function LinkRow({
                               : `Live ${summary}`}
                         </span>
                       ) : (
-                        <span className="truncate">
-                          Show this link only on chosen days
-                        </span>
+                        <span>Show this link only on chosen days</span>
                       )}
                     </span>
                   </div>

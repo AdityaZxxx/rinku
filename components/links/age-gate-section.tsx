@@ -37,7 +37,7 @@ export function AgeGateSection({
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-sm leading-none font-medium">Age restriction</span>
-          <span className="text-muted-foreground group-hover/agegate:text-foreground truncate text-xs transition-colors">
+          <span className="text-muted-foreground group-hover/agegate:text-foreground text-sm transition-colors">
             {gated
               ? `Visitors confirm they are ${minAge}+ before opening`
               : "Ask visitors to confirm their age before opening"}
@@ -64,7 +64,7 @@ export function AgeGateSection({
               onClick={() => onSave(value)}
               aria-pressed={minAge === value}
               className={cn(
-                "rounded-full px-2.5 py-1 text-xs transition-colors",
+                "rounded-full px-2.5 py-1 text-sm transition-colors",
                 minAge === value
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground hover:text-foreground",
@@ -86,7 +86,7 @@ export function AgeGateSection({
             inputMode="numeric"
             placeholder="Custom"
             aria-label="Custom minimum age"
-            className="h-7 w-20 rounded-full px-2.5 text-xs"
+            className="h-7 w-20 rounded-full px-2.5"
           />
         </div>
       ) : null}

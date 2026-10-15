@@ -68,7 +68,7 @@ export function HeaderSection({
       <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium">Show @{username}</span>
-          <span className="text-muted-foreground text-xs leading-normal text-pretty">
+          <span className="text-muted-foreground text-sm leading-normal text-pretty">
             Turn on to show @{username} under your name. Your page link and search results
             keep it either way.
           </span>

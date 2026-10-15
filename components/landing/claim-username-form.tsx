@@ -29,7 +29,7 @@ export function ClaimUsernameForm() {
       }}
     >
       <div className="flex w-full flex-col gap-3 sm:flex-row">
-        <label className="border-input bg-background focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 flex h-11 w-full items-center gap-0 overflow-hidden rounded-2xl border px-3 text-sm focus-within:ring-[3px] sm:flex-1">
+        <label className="border-input bg-background focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 flex h-11 w-full items-center gap-0 overflow-hidden rounded-2xl border px-3 text-base focus-within:ring-[3px] sm:flex-1 md:text-sm">
           <span className="text-muted-foreground shrink-0">rinku.app/</span>
           <input
             value={username}

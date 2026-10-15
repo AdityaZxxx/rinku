@@ -68,15 +68,15 @@ export function AddLinkUrlPreview({
         </Button>
       </div>
       {hint === "music" ? (
-        <p className="text-muted-foreground px-1 text-xs">
+        <p className="text-muted-foreground px-1 text-sm">
           Music link: your profile will play it inline.
         </p>
       ) : hint === "video" ? (
-        <p className="text-muted-foreground px-1 text-xs">
+        <p className="text-muted-foreground px-1 text-sm">
           Video link: your profile will play it inline.
         </p>
       ) : hint === "embed" ? (
-        <p className="text-muted-foreground px-1 text-xs">
+        <p className="text-muted-foreground px-1 text-sm">
           Web link: your profile will render it inline.
         </p>
       ) : null}

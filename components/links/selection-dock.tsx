@@ -85,7 +85,7 @@ function DockButton({
       <span className="flex flex-col items-center gap-0.5 px-1">
         {icon}
         {/* Tabular digits so the count's width is stable as it grows. */}
-        <span className="text-[10px] leading-none tabular-nums">{label}</span>
+        <span className="text-xs leading-none tabular-nums">{label}</span>
       </span>
     </Button>
   );

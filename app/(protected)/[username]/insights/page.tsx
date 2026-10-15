@@ -428,7 +428,7 @@ async function InsightsStats({
         <section className="flex flex-col gap-2">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-sm font-medium">Top sources</h2>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-sm">
               Where visits came from. Direct means no referrer was sent.
             </p>
           </div>

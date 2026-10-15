@@ -103,7 +103,7 @@ export function DiscoverabilitySection({
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-sm">{signal.label}</span>
               {signal.met ? null : (
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   {signal.hint} <SignalLink id={signal.id} />
                 </p>
               )}

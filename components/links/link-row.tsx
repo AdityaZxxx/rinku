@@ -62,6 +62,9 @@ export function LinkRow({
     isDragging,
   } = useSortable({
     id: link.id,
+    // An expanded row is a form, not a handle: text selection and taps on
+    // its controls must not be able to start a reorder.
+    disabled: expanded,
     transition: { duration: 200, easing: EASE_OUT },
   });
 
@@ -120,13 +123,14 @@ export function LinkRow({
       // here so Space/Enter inside the expand button can't start a drag: the
       // keyboard path stays on the grip button. The pointer gesture carries no
       // control semantics, so the surface stays out of the a11y tree. In
-      // selection mode rows pick instead of drag, so the surface is gone.
-      {...(selecting ? {} : listeners)}
+      // selection mode rows pick instead of drag, and an expanded row is a
+      // form first, so neither exposes a drag surface.
+      {...(selecting || expanded ? {} : listeners)}
       onKeyDown={undefined}
       role="presentation"
       className={cn(
         "motion-reduce:transition-none!",
-        selecting ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+        selecting || expanded ? "cursor-default" : "cursor-grab active:cursor-grabbing",
       )}
     >
       <LinkRowShell

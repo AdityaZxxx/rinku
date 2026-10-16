@@ -100,7 +100,7 @@ function hoverClass(hover: LinkHover): string {
   }
 }
 
-function LinkContent({ link }: { link: PreviewLink }) {
+function LinkContent({ link, left }: { link: PreviewLink; left: boolean }) {
   const favicon = faviconUrl(link.url);
   return (
     <>
@@ -120,7 +120,11 @@ function LinkContent({ link }: { link: PreviewLink }) {
       ) : link.imageUrl === null && favicon ? (
         <Favicon url={favicon} className="size-5 shrink-0 rounded-full" />
       ) : null}
-      <span className="line-clamp-2 leading-relaxed">{link.title}</span>
+      <span
+        className={cn("line-clamp-2 leading-snug", left ? "text-left" : "text-center")}
+      >
+        {link.title}
+      </span>
       {link.minAge && link.minAge > 0 ? <AgeBadge minAge={link.minAge} /> : null}
     </>
   );
@@ -252,7 +256,10 @@ export function ProfilePreviewContent({
                     ? (link.metadata?.style ?? link.gatedStyle ?? "embed")
                     : null;
                 const classicClass = cn(
-                  "flex w-full items-center border text-sm font-medium transition-[transform,box-shadow,filter] ease-[ease] duration-150 hover:brightness-95",
+                  // One height for every classic row: a clamped two-line
+                  // title and the 40px thumbnail both fit inside it, so a
+                  // long title cannot inflate its pill next to short ones.
+                  "flex h-14 w-full items-center border text-sm font-medium transition-[transform,box-shadow,filter] ease-[ease] duration-150 hover:brightness-95",
                   contour,
                   hover,
                   entranceClass,
@@ -334,11 +341,11 @@ export function ProfilePreviewContent({
                           target="_blank"
                           rel="noopener noreferrer"
                           className={cn(
-                            "flex min-w-0 flex-1 items-center gap-2 px-4 py-2.5",
+                            "flex min-w-0 flex-1 items-center gap-2 px-4",
                             left ? "justify-start" : "justify-center",
                           )}
                         >
-                          <LinkContent link={link} />
+                          <LinkContent link={link} left={left} />
                         </a>
                         <ShareLinkMenu link={link} className="mr-1.5" />
                       </>
@@ -360,11 +367,11 @@ export function ProfilePreviewContent({
                     ) : (
                       <span
                         className={cn(
-                          "flex flex-1 items-center gap-2 px-4 py-2.5",
+                          "flex flex-1 items-center gap-2 px-4",
                           left ? "justify-start" : "justify-center",
                         )}
                       >
-                        <LinkContent link={link} />
+                        <LinkContent link={link} left={left} />
                       </span>
                     )}
                   </div>

@@ -92,7 +92,7 @@ export function AgeGateLink({
             </span>
           </>
         ) : presentation === "classic" && previewImg ? (
-          <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5">
+          <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4">
             {/* Same slot the real thumbnail would occupy, server-blurred. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- the derivative arrives already downscaled and blurred; next/image only re-encodes it */}
             <img
@@ -113,7 +113,7 @@ export function AgeGateLink({
             </span>
           </span>
         ) : (
-          <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2.5">
+          <span className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4">
             <LockSimpleIcon className="size-4 shrink-0" aria-hidden />
             <span className="truncate leading-relaxed">{title}</span>
             <span

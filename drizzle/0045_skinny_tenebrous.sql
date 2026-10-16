@@ -1,0 +1,1 @@
+ALTER TABLE "links" ADD CONSTRAINT "links_heading_title_length" CHECK ("links"."kind"::text <> 'heading' or char_length(btrim("links"."title")) <= 60);

@@ -34,6 +34,15 @@ export const linkTitleSchema = maxChars(100).refine(
   "Give the link a title.",
 );
 
+// A heading is a label grouping the rows under it, not prose: the tighter
+// budget keeps it to two lines on the public page's narrowest width.
+export const HEADING_TITLE_MAX = 60;
+
+export const headingTitleSchema = maxChars(HEADING_TITLE_MAX).refine(
+  (value) => value.trim().length > 0,
+  "Give the heading a title.",
+);
+
 export const linkVariantSchema = z.enum(["classic", "featured"]);
 
 // The age-gate bound, mirroring the links_min_age check so the client,

@@ -14,6 +14,7 @@ import {
   embedMetadataSchema,
 } from "@/lib/links/embeds";
 import {
+  headingTitleSchema,
   httpUrlSchema,
   linkInputSchema,
   linkScheduleSchema,
@@ -250,7 +251,7 @@ export async function createSectionHeading(input: {
   }
 
   const parsed = z
-    .object({ profileId: z.uuid(), title: linkTitleSchema })
+    .object({ profileId: z.uuid(), title: headingTitleSchema })
     .safeParse(input);
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -357,6 +358,12 @@ export async function updateLink(input: {
     // A heading stays a heading as long as it carries no URL; giving it one
     // promotes it into a real link.
     if (existing.kind === "heading" && parsed.data.url.trim() === "") {
+      // Heading rows keep the heading budget, tighter than the link-title
+      // cap the shared parse just passed.
+      const headingTitle = headingTitleSchema.safeParse(parsed.data.title);
+      if (!headingTitle.success) {
+        return { error: firstIssue(headingTitle.error) };
+      }
       return tx
         .update(links)
         .set({
@@ -435,6 +442,9 @@ export async function updateLink(input: {
         metadata: links.metadata,
       });
   });
+  if ("error" in updated) {
+    return updated;
+  }
   const [row] = updated;
   if (!row) {
     return { error: "This link could not be saved." };

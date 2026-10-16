@@ -238,7 +238,7 @@ export function ProfilePreviewContent({
                     <h2
                       key={link.id}
                       className={cn(
-                        "mt-4 text-sm font-semibold tracking-wide",
+                        "mt-4 text-sm font-semibold tracking-wide wrap-anywhere",
                         left ? "text-left" : "text-center",
                         entranceClass,
                       )}

@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArchiveIcon,
   DotsSixVerticalIcon,
+  DotsThreeVerticalIcon,
   EyeClosedIcon,
   EyeIcon,
   TextTIcon,
@@ -14,11 +15,18 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Toggle } from "@/components/ui/toggle";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { HEADING_TITLE_MAX } from "@/lib/links/model";
 import { EASE_OUT } from "@/lib/links/motion";
 import { cn } from "@/lib/utils";
+import { useHeadingLimitNotice } from "./use-heading-limit-notice";
 import { useUpdateLink } from "./use-link-mutations";
 
 /** A section divider row: just a title, no URL, drag-to-reorderable. */
@@ -36,6 +44,8 @@ export function HeadingRow({
   onToggleSelected: () => void;
 }) {
   const update = useUpdateLink(link.profileId);
+  const limit = useHeadingLimitNotice();
+  const hidden = !link.isActive;
   const {
     attributes,
     listeners,
@@ -112,7 +122,9 @@ export function HeadingRow({
           <DotsSixVerticalIcon className="size-4" />
         </button>
       )}
-      <TextTIcon className="text-muted-foreground size-4 shrink-0" />
+      <TextTIcon
+        className={cn("text-muted-foreground size-4 shrink-0", hidden && "opacity-60")}
+      />
       {selecting ? (
         // The input's exact box as one big toggle target, matching how a
         // regular link row's title area selects.
@@ -120,7 +132,10 @@ export function HeadingRow({
           type="button"
           onClick={onToggleSelected}
           aria-pressed={selected}
-          className="h-8 min-w-0 flex-1 truncate px-1 text-left text-sm font-semibold"
+          className={cn(
+            "h-8 min-w-0 flex-1 truncate px-1 text-left text-sm",
+            hidden ? "text-muted-foreground" : "font-semibold",
+          )}
         >
           {link.title}
         </button>
@@ -129,41 +144,56 @@ export function HeadingRow({
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            onKeyDown={limit.onKeyDown}
+            onPaste={limit.onPaste}
+            onBlur={limit.dismiss}
             aria-label="Section title"
             placeholder="Section title"
-            maxLength={100}
-            className="h-8 flex-1 border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:ring-0"
+            maxLength={HEADING_TITLE_MAX}
+            className={cn(
+              "h-8 min-w-0 flex-1 border-0 bg-transparent px-1 text-sm shadow-none focus-visible:ring-0",
+              hidden ? "text-muted-foreground" : "font-semibold",
+            )}
           />
-          <Tooltip>
-            <TooltipTrigger
+          {limit.atLimit ? (
+            <span
+              aria-live="polite"
+              className="text-foreground shrink-0 text-xs font-medium"
+            >
+              Max {HEADING_TITLE_MAX}
+            </span>
+          ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger
               render={
-                <Toggle
-                  size="sm"
-                  pressed={link.isActive}
-                  aria-label={link.isActive ? "Hide heading" : "Show heading"}
-                  onPressedChange={(pressed) => {
-                    update.mutate({
-                      id: link.id,
-                      title: link.title,
-                      url: "",
-                      variant: link.variant,
-                      isActive: pressed,
-                      imageUrl: link.imageUrl,
-                    });
-                  }}
-                >
-                  {link.isActive ? <EyeIcon /> : <EyeClosedIcon />}
-                </Toggle>
+                <Button variant="ghost" size="icon-sm" aria-label="Heading actions" />
               }
-            />
-            <TooltipContent>
-              {link.isActive ? "Hide heading" : "Show heading"}
-            </TooltipContent>
-          </Tooltip>
-          <Button type="button" variant="ghost" size="sm" onClick={() => onArchive(link)}>
-            <ArchiveIcon />
-            Archive
-          </Button>
+            >
+              <DotsThreeVerticalIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-fit">
+              <DropdownMenuItem
+                onClick={() =>
+                  update.mutate({
+                    id: link.id,
+                    title: link.title,
+                    url: "",
+                    variant: link.variant,
+                    isActive: !link.isActive,
+                    imageUrl: link.imageUrl,
+                  })
+                }
+              >
+                {link.isActive ? <EyeClosedIcon /> : <EyeIcon />}
+                {link.isActive ? "Hide heading" : "Show heading"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onArchive(link)}>
+                <ArchiveIcon />
+                Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </>
       )}
     </div>

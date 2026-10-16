@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { useSrcImageFailure } from "@/components/use-image-failure";
-import { isLinkLike } from "@/lib/links/model";
+import { HEADING_TITLE_MAX, isLinkLike } from "@/lib/links/model";
+import { useHeadingLimitNotice } from "./use-heading-limit-notice";
 
 export function CategoryIcon({ item }: { item: CatalogItem }) {
   switch (item.id) {
@@ -111,6 +112,7 @@ export function AddLinkItemForm({
   onSubmitItem: (handle: string) => void;
   onAddMusicResult: (result: AppleMusicResult) => void;
 }) {
+  const limit = useHeadingLimitNotice();
   const [handle, setHandle] = useState("");
   const [searchResults, setSearchResults] = useState<Array<AppleMusicResult>>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -174,9 +176,20 @@ export function AddLinkItemForm({
               ref={handleRef}
               value={handle}
               onChange={(event) => setHandle(event.target.value)}
+              onKeyDown={limit.onKeyDown}
+              onPaste={limit.onPaste}
+              onBlur={limit.dismiss}
               placeholder="Section title"
               aria-label="Heading text"
+              maxLength={HEADING_TITLE_MAX}
             />
+            {limit.atLimit ? (
+              <InputGroupAddon align="inline-end">
+                <span aria-live="polite" className="text-foreground text-xs font-medium">
+                  Max {HEADING_TITLE_MAX}
+                </span>
+              </InputGroupAddon>
+            ) : null}
           </InputGroup>
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
           <DialogFooter>

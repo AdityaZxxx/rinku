@@ -164,7 +164,7 @@ export function LinksEditor({
       toast.error(error instanceof Error ? error.message : "Archiving this link failed.");
       return;
     }
-    toast("Link archived", {
+    toast(link.kind === "heading" ? "Heading archived" : "Link archived", {
       action: { label: "Undo", onClick: () => restore.mutate(link) },
       duration: 6000,
     });

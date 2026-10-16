@@ -42,8 +42,10 @@ Preconditions:
   seconds for the preview: the title derives from the page's Open Graph
   metadata. Click the "Add" button inside the dialog. The dialog closes and
   the new row appears in the list and in the preview pane beside it.
-- **Add a heading.** Same dialog, heading category: title only, no URL.
-  The row renders as text, not a button.
+- **Add a heading.** Same dialog, heading category: title only, no URL,
+  capped at 60 characters. A keystroke or paste that cannot fit flashes a
+  "Max 60" note for about two seconds and clears on blur; typing over a
+  selection stays quiet. The row renders as text, not a button.
 - **Edit.** Click a row (its selection control is labelled
   `Select <title>`) or "Expand link", change the title, confirm. The list
   and the preview show the new title.
@@ -52,10 +54,15 @@ Preconditions:
   helper that is `sr-only` until focused, so do not aim the drag at it: on
   rows with a thumbnail the artwork covers the grip's click point and the
   driver refuses. Drag row selector to row selector, for example
-  `agent-browser drag '#link-<id-1>' '#link-<id-2>' --human`. The list
-  order and the preview order both change, and positions stay sparse.
-- **Hide.** Toggle the row's active control (headings use
-  "Hide heading"/"Show heading"). The row leaves the public preview.
+  `agent-browser drag '#link-<id-1> > div' '#link-<id-2> > div' --human`.
+  An expanded row has no drag surface (it is a form first): collapse it
+  before dragging it or dropping onto it. The list order and the preview
+  order both change, and positions stay sparse.
+- **Hide.** Link rows toggle the row's active control inline; heading rows
+  find "Hide heading"/"Show heading" in the row's three-dot menu
+  ("Heading actions"), which also holds their Archive item. Hidden rows
+  dim: muted title text and a faded icon. The row leaves the public
+  preview.
 - **Schedule.** Open the row's schedule section and set a `visibleFrom` in
   the future. A single calendar click sets a one-day window
   (`visible_from` = that day's local midnight, `visible_until` = local
@@ -65,7 +72,8 @@ Preconditions:
   once (the header flips to "Visitors confirm they are 18+ ..."); the 13+,
   16+, 18+, and 21+ presets and the custom input write on click. The
   public page withholds the direct URL for the row.
-- **Archive.** Archive the row from its menu; it leaves the list. Open
+- **Archive.** Archive the link row from its controls; heading rows archive
+  from the same three-dot menu. It leaves the list. Open
   `/<username>/links/archive`, find it, restore it. It returns to its
   position.
 - **Proof.** After each mutation, second view with psql on the `verify-%`

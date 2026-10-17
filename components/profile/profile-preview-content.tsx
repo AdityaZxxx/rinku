@@ -385,10 +385,17 @@ export function ProfilePreviewContent({
               contrast and stays centered no matter the page's colors or
               alignment. */}
           <span className="inline-flex items-center gap-3 rounded-full bg-black/55 px-3.5 py-1.5 text-white backdrop-blur-sm">
-            <Link href="/terms" className="transition hover:opacity-70">
+            {/* prefetch={false}: legal pages are nearly never visited from
+                here, and prefetching them costs a round trip per link on
+                every profile view. */}
+            <Link href="/terms" prefetch={false} className="transition hover:opacity-70">
               Terms
             </Link>
-            <Link href="/privacy" className="transition hover:opacity-70">
+            <Link
+              href="/privacy"
+              prefetch={false}
+              className="transition hover:opacity-70"
+            >
               Privacy
             </Link>
           </span>

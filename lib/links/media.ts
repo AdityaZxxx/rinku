@@ -51,6 +51,9 @@ export function platformIconMedia(host: string): string | null {
   return null;
 }
 
+/** Every `icon:` id a platform match can emit, for compile-time sync checks. */
+export type PlatformIconId = (typeof PLATFORM_ICONS)[keyof typeof PLATFORM_ICONS];
+
 /** Brand icon for a full URL: an `icon:` id, or null. */
 export function platformIconMediaForUrl(url: string): string | null {
   try {

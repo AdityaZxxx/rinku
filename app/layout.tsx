@@ -16,6 +16,9 @@ const inter = Inter({
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+  // Preloads every face on every page, but no public profile renders mono
+  // text, so the woff2 was a wasted download there. Loaded on first use.
+  preload: false,
 });
 
 export const metadata: Metadata = {

@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { uploadLinkImage } from "@/app/actions/links/media";
-import { MediaIcon, MEDIA_ICON_IDS } from "@/components/media-icon";
+import { CatalogIcon, MEDIA_ICON_IDS } from "@/components/links/media-icon-catalog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useSrcImageFailure } from "@/components/use-image-failure";
-import { isIconMedia } from "@/lib/links/media";
+import { iconMediaId, isIconMedia } from "@/lib/links/media";
 import { imageMaxBytes } from "@/lib/profiles/schema";
 import { useUpdateLink } from "./use-link-mutations";
 
@@ -76,7 +76,7 @@ export function ThumbnailSection({ link }: { link: Link }) {
       <div className="flex items-center gap-3">
         <span className="border-input bg-muted inline-flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
           {isIconMedia(link.imageUrl) ? (
-            <MediaIcon imageUrl={link.imageUrl} className="size-5" />
+            <CatalogIcon id={iconMediaId(link.imageUrl)} className="size-5" />
           ) : link.imageUrl && !thumbBroken ? (
             // eslint-disable-next-line @next/next/no-img-element -- cross-host thumbnail preview: the optimizer cache never earns its keep for one-off hosts
             <img
@@ -126,7 +126,7 @@ export function ThumbnailSection({ link }: { link: Link }) {
                     }}
                     className="hover:bg-accent focus-visible:ring-ring/30 inline-flex aspect-square items-center justify-center rounded-xl border transition-colors focus-visible:ring-3 focus-visible:outline-none"
                   >
-                    <MediaIcon imageUrl={`icon:${id}`} className="size-5" />
+                    <CatalogIcon id={id} className="size-5" />
                   </button>
                 ))}
                 {filtered.length === 0 ? (

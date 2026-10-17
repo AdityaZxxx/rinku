@@ -5,6 +5,7 @@ import type { Profile } from "@/lib/db/schema";
 import type { EmbedMetadata } from "@/lib/links/embeds";
 import type { LinkMetadata } from "@/lib/links/music";
 import type { VideoMetadata } from "@/lib/links/video";
+import { RabbitIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { FontStylesheet } from "@/components/appearance/font-stylesheet";
 import { WallpaperLayer } from "@/components/appearance/wallpaper-layer";
@@ -16,6 +17,7 @@ import { MediaIcon } from "@/components/media-icon";
 import { AgeGateLink, AgeBadge } from "@/components/profile/age-gate-link";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { ShareLinkMenu } from "@/components/profile/share-link-menu";
+import { BRAND_NAME } from "@/lib/brand";
 import { isEmbedMetadata } from "@/lib/links/embeds";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl, scheduleStatus } from "@/lib/links/model";
@@ -331,7 +333,7 @@ export function ProfilePreviewContent({
                           >
                             {link.title}
                           </a>
-                          <ShareLinkMenu link={link} />
+                          <ShareLinkMenu link={link} username={profile.username} />
                         </div>
                       </>
                     ) : (
@@ -347,7 +349,11 @@ export function ProfilePreviewContent({
                         >
                           <LinkContent link={link} left={left} />
                         </a>
-                        <ShareLinkMenu link={link} className="mr-1.5" />
+                        <ShareLinkMenu
+                          link={link}
+                          username={profile.username}
+                          className="mr-1.5"
+                        />
                       </>
                     )}
                   </div>
@@ -380,10 +386,20 @@ export function ProfilePreviewContent({
             )}
           </div>
         </div>
-        <footer className="relative mt-auto flex justify-center pt-8 pb-6 text-xs">
-          {/* Platform chrome, not themed content: the pill carries its own
-              contrast and stays centered no matter the page's colors or
+        <footer className="relative mt-auto flex flex-col items-center gap-2.5 pt-8 pb-6 text-xs">
+          {/* Platform chrome, not themed content: the pills carry their own
+              contrast and stay centered no matter the page's colors or
               alignment. */}
+          <Link
+            href="/signup"
+            prefetch={false}
+            className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-black/70 px-3.5 py-2 font-medium text-white backdrop-blur-sm transition-[background-color,scale] duration-150 ease-out hover:bg-black/80 active:scale-[0.96]"
+          >
+            <RabbitIcon weight="fill" className="size-3.5 shrink-0" />
+            <span className="truncate">
+              Join {profile.username} on {BRAND_NAME}
+            </span>
+          </Link>
           <span className="inline-flex items-center gap-3 rounded-full bg-black/55 px-3.5 py-1.5 text-white backdrop-blur-sm">
             {/* prefetch={false}: legal pages are nearly never visited from
                 here, and prefetching them costs a round trip per link on

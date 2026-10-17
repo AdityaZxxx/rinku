@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { PreviewLink } from "./profile-preview-content";
 import {
   CheckIcon,
@@ -8,6 +9,7 @@ import {
   DotsThreeVerticalIcon,
   ShareNetworkIcon,
 } from "@phosphor-icons/react";
+import { RabbitIcon } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 
 import { Favicon } from "@/components/favicon";
@@ -20,7 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { siteUrl } from "@/lib/brand";
+import { Separator } from "@/components/ui/separator";
+import { BRAND_NAME, siteUrl } from "@/lib/brand";
 import { copyText } from "@/lib/copy";
 import { isIconMedia } from "@/lib/links/media";
 import { faviconUrl } from "@/lib/links/model";
@@ -37,9 +40,11 @@ function hostOf(url: string): string {
 
 export function ShareLinkMenu({
   link,
+  username,
   className,
 }: {
   link: PreviewLink;
+  username: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -190,6 +195,26 @@ export function ShareLinkMenu({
               Share via…
             </button>
           ) : null}
+          <Separator className="my-2" />
+          {/* Visitors who reach this dialog are the page's prime signup
+              audience, so the share surface doubles as the join surface. */}
+          <Link
+            href="/signup"
+            prefetch={false}
+            className="bg-muted hover:bg-foreground/10 focus-visible:ring-ring/30 flex items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition-colors duration-150 focus-visible:ring-3 focus-visible:outline-none"
+          >
+            <span className="bg-background border-input inline-flex size-9 shrink-0 items-center justify-center rounded-full border">
+              <RabbitIcon weight="fill" className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium">
+                Join {username} on {BRAND_NAME}
+              </span>
+              <span className="text-muted-foreground block text-xs">
+                Create your own page
+              </span>
+            </span>
+          </Link>
         </div>
       </DialogContent>
     </Dialog>

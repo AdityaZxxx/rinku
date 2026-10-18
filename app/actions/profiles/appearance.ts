@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { appearanceSchema } from "@/lib/profiles/appearance";
@@ -86,6 +85,6 @@ export async function updateAppearance(input: {
   if (updated.length === 0) {
     return { error: "This profile could not be saved." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }

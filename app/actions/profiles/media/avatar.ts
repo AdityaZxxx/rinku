@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
 import { getSaveMode } from "@/lib/db/editor";
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { profileDrafts, profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -108,6 +107,6 @@ export async function uploadProfileImage(
     }
   }
 
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { path, target: "avatar" };
 }

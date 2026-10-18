@@ -160,11 +160,13 @@ export function ProfilePreviewContent({
   links,
   interactive = true,
   bare = false,
+  fontsPreloaded = false,
 }: {
   profile: Profile;
   links: PreviewLink[];
   interactive?: boolean;
   bare?: boolean;
+  fontsPreloaded?: boolean;
 }) {
   // Mirrors the public RLS window: scheduled-but-not-live and expired rows
   // stay out of the visitor view and out of the owner's preview of it.
@@ -196,7 +198,11 @@ export function ProfilePreviewContent({
 
   return (
     <div className="relative flex min-h-full w-full flex-1 flex-col" style={headerStyle}>
-      <FontStylesheet font={look.font} />
+      {/* A not-yet-loaded `precedence` stylesheet suspends the nearest Suspense
+          boundary, which on editor routes is the route loading skeleton. Pages
+          that swap the previewed font live (the appearance editor) pass
+          `fontsPreloaded` and load every font themselves instead. */}
+      {fontsPreloaded ? null : <FontStylesheet font={look.font} />}
       {bare ? null : (
         <WallpaperLayer
           kind={look.wallpaper}

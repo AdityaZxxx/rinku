@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { links } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { profileIdSchema } from "@/lib/profiles/schema";
@@ -38,7 +37,7 @@ export async function archiveLink(input: {
   if (archived.length === 0) {
     return { error: "This link could not be archived." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -69,7 +68,7 @@ export async function archiveLinks(input: {
   if (archived.length === 0) {
     return { error: "These links could not be archived." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -102,7 +101,7 @@ export async function restoreLink(input: {
   if (restored.length === 0) {
     return { error: "This link could not be restored." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -129,7 +128,7 @@ export async function deleteLink(input: {
   if (deleted.length === 0) {
     return { error: "This link could not be deleted." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 

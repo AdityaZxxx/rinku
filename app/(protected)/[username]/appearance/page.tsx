@@ -46,6 +46,7 @@ export default async function AppearancePage({
               profileId={profile.id}
               initialProfile={profile}
               initialLinks={initialLinks}
+              fontsPreloaded
             />
           }
           username={username}
@@ -58,6 +59,7 @@ export default async function AppearancePage({
                   profileId={profile.id}
                   initialProfile={profile}
                   initialLinks={initialLinks}
+                  fontsPreloaded
                 />
               }
             />

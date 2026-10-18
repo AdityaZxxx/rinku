@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { eq, max } from "drizzle-orm";
 import * as z from "zod";
 
 import { getArchivedLinksByProfile, getLinksByProfile } from "@/lib/db/links";
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { links, type Link } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import {
@@ -234,7 +233,7 @@ export async function createLink(input: {
   if (!created) {
     return { error: "Adding this link failed. Try again." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return created;
 }
 
@@ -291,7 +290,7 @@ export async function createSectionHeading(input: {
   if (!created) {
     return { error: "Adding a heading failed. Try again." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return created;
 }
 
@@ -449,6 +448,6 @@ export async function updateLink(input: {
   if (!row) {
     return { error: "This link could not be saved." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true, kind: row.kind, platform: row.platform, metadata: row.metadata };
 }

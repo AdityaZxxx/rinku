@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { appearanceDrafts, profileDrafts, profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -192,7 +191,7 @@ export async function publishProfileSection(input: {
     );
     return { error: "Publishing failed. Try again." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -293,7 +292,7 @@ export async function publishAppearanceSection(input: {
     );
     return { error: "Publishing failed. Try again." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 

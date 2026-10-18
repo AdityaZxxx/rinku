@@ -44,5 +44,10 @@ because a raw connection bypasses RLS.
 
 ## Guardrails
 
-- `bun run check`: lint, format, typecheck, db:check, version check.
+- `bun run check`: lint, format, typecheck, db:check, version check, tests.
+- Mutation actions expire the public profile cache through
+  `expirePublicProfileCache()` (`lib/db/public-cache.ts`), never an inline
+  `updateTag`: an in-band revalidation makes the caller's route re-render into
+  the action response, remounting the editor mid-edit. The helper defers the
+  tag expiration past the response via `after()` with no staleness.
 - `.oxlintrc.json` caps non-vendor files at 500 lines, no exceptions.

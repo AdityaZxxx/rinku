@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { and, eq, sql } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -68,7 +67,7 @@ export async function renameProfile(input: {
   if (renamed.length === 0) {
     return { error: "Profile not found." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -186,6 +185,6 @@ export async function reclaimUsername(input: {
   if (reclaimed.length === 0) {
     return { error: "Profile not found." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }

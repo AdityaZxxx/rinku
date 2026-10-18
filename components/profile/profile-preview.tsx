@@ -13,11 +13,13 @@ export function ProfilePreview({
   profileId,
   initialProfile,
   initialLinks,
+  fontsPreloaded = false,
 }: {
   username: string;
   profileId: string;
   initialProfile: Profile;
   initialLinks: LinkData[];
+  fontsPreloaded?: boolean;
 }) {
   const { profile } = useProfileQuery(username, initialProfile);
   const { links } = useLinksQuery(profileId, initialLinks);
@@ -35,6 +37,11 @@ export function ProfilePreview({
   };
 
   return (
-    <ProfilePreviewContent profile={previewProfile} links={links} interactive={false} />
+    <ProfilePreviewContent
+      profile={previewProfile}
+      links={links}
+      interactive={false}
+      fontsPreloaded={fontsPreloaded}
+    />
   );
 }

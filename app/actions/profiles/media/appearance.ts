@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
 import { getSaveMode } from "@/lib/db/editor";
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { appearanceDrafts, profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -150,7 +149,7 @@ export async function uploadWallpaper(
     }
   }
 
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { path, target };
 }
 
@@ -248,7 +247,7 @@ export async function removeWallpaperMedia(input: {
       .set({ [column]: null, updatedAt: new Date() })
       .where(eq(profiles.id, parsed.data.profileId)),
   );
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -334,7 +333,7 @@ export async function uploadBanner(
     }
   }
 
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { path };
 }
 
@@ -389,7 +388,7 @@ export async function removeBanner(input: {
       .set({ bannerPath: null, updatedAt: new Date() })
       .where(eq(profiles.id, parsed.data.profileId)),
   );
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 

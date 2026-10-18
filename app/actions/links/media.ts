@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { links, profiles } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -69,6 +68,6 @@ export async function uploadLinkImage(
   if (updated.length === 0) {
     return { error: "Image upload failed. Try again." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { url };
 }

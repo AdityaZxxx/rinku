@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import * as z from "zod";
 
-import { PUBLIC_PROFILE_TAG } from "@/lib/db/public-cache";
+import { expirePublicProfileCache } from "@/lib/db/public-cache";
 import { profiles, type Profile } from "@/lib/db/schema";
 import { withUserDb } from "@/lib/db/with-user";
 import { log } from "@/lib/log";
@@ -63,7 +62,7 @@ export async function updateProfile(input: {
   if (updated.length === 0) {
     return { error: "This profile could not be saved." };
   }
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
 
@@ -90,7 +89,7 @@ export async function createProfile(input: {
     return { error: "Setting up your profile failed. Try again." };
   }
 
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { username: input.username };
 }
 
@@ -146,6 +145,6 @@ export async function deleteProfile(input: {
     return { error: "Profile not found." };
   }
 
-  updateTag(PUBLIC_PROFILE_TAG);
+  expirePublicProfileCache();
   return { ok: true };
 }
